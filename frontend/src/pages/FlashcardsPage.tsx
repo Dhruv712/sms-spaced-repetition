@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import FlashcardForm from '../components/FlashcardForm';
+import ReviewStats from '../components/ReviewStats';
 
 interface Flashcard {
   id: number;
@@ -59,6 +60,16 @@ const FlashcardsPage: React.FC = () => {
       )
     : flashcards;
 
+    const handleDelete = async (cardId: number) => {
+      try {
+        await axios.delete(`http://localhost:8000/flashcards/${cardId}`);
+        setFlashcards((prev) => prev.filter((card) => card.id !== cardId));
+      } catch (err) {
+        console.error("Failed to delete flashcard", err);
+      }
+    };
+    
+
   return (
     <div className="p-4">
       <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1rem' }}>
@@ -72,6 +83,7 @@ const FlashcardsPage: React.FC = () => {
         </label>
         <span>Dark Mode</span>
       </div>
+      <div><ReviewStats userId={1} /></div>
       <h1 className="text-2xl font-bold mb-4">Your Flashcards</h1>
       <FlashcardForm onSuccess={loadFlashcards} />
 
@@ -104,19 +116,25 @@ const FlashcardsPage: React.FC = () => {
       <ul>
         {visibleFlashcards.map((card) => (
           <li key={card.id} className="mb-3 p-3 border rounded shadow">
-            <div className="font-semibold">{card.concept}</div>
-            <div className="text-gray-700">{card.definition}</div>
-            <div className="text-sm text-blue-600 mt-1">
-              Tags:{' '}
-              {card.tags
-                ? card.tags
-                    .split(',')
-                    .map((t) => t.trim())
-                    .filter(Boolean)
-                    .join(', ')
-                : 'No tags'}
-            </div>
-          </li>
+          <div className="font-semibold">{card.concept}</div>
+          <div className="text-gray-700">{card.definition}</div>
+          <div className="text-sm text-blue-600 mt-1">
+            Tags:{' '}
+            {card.tags
+              ? card.tags
+                  .split(',')
+                  .map((t) => t.trim())
+                  .filter(Boolean)
+                  .join(', ')
+              : 'No tags'}
+          </div>
+          <button
+            onClick={() => handleDelete(card.id)}
+            className="mt-2 px-2 py-1 text-sm bg-red-500 text-white rounded"
+          >
+            Delete
+          </button>
+        </li>
         ))}
       </ul>
     </div>

@@ -61,13 +61,26 @@ async def receive_sms(
         )
 
         db.add(review)
-
-        # Reset state
-        state.state = "idle"
-        state.current_flashcard_id = None
+        
+        # Commit review first
         db.commit()
 
-        return _twiml_response(result["llm_feedback"])
+        # Try to fetch next card
+        next_card = get_next_due_flashcard(user.id, db)
+
+        if next_card:
+            set_conversation_state(user.id, next_card.id, db)
+            return _twiml_response(
+                f"{result['llm_feedback']}\n\nNext card: {next_card.concept}?\n(Reply with your answer)"
+            )
+        else:
+            # End session
+            state.state = "idle"
+            state.current_flashcard_id = None
+            db.commit()
+            return _twiml_response(
+                f"{result['llm_feedback']}\n\nYou're all caught up for now!"
+            )
 
     elif "yes" in body.lower():
         card = get_next_due_flashcard(user.id, db)

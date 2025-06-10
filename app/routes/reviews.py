@@ -37,3 +37,27 @@ def submit_review(payload: ReviewCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(review)
     return review
+
+@router.get("/{user_id}")
+def get_reviews_for_user(user_id: int, db: Session = Depends(get_db)):
+    return db.query(CardReview).filter_by(user_id=user_id).order_by(CardReview.created_at.desc()).all()
+
+from sqlalchemy import func, cast, Integer
+from sqlalchemy.types import Boolean
+@router.get("/stats/{user_id}")
+def get_review_stats(user_id: int, db: Session = Depends(get_db)):
+    stats = (
+    db.query(
+        func.count(CardReview.id).label("total"),
+        func.sum(cast(CardReview.was_correct, Integer)).label("correct"),
+        func.avg(CardReview.confidence_score).label("average_confidence"),
+    )
+    .filter(CardReview.user_id == user_id)
+    .first()
+    )
+
+    return {
+        "total": stats.total or 0,
+        "correct": int(stats.correct or 0),
+        "average_confidence": round(stats.average_confidence or 0, 2)
+    }

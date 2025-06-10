@@ -31,3 +31,16 @@ def get_due_flashcards(user_id: int, db: Session = Depends(get_db)):
     ).all()
 
     return due_cards
+
+from fastapi import HTTPException
+
+@router.delete("/{card_id}")
+def delete_flashcard(card_id: int, db: Session = Depends(get_db)):
+    card = db.query(Flashcard).filter_by(id=card_id).first()
+    if not card:
+        raise HTTPException(status_code=404, detail="Flashcard not found")
+    
+    db.delete(card)
+    db.commit()
+    return {"detail": "Flashcard deleted"}
+

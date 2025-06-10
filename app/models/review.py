@@ -2,6 +2,7 @@ from sqlalchemy import Column, Integer, String, Text, Boolean, Float, DateTime, 
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from app.database import Base
+from datetime import *
 
 class CardReview(Base):
     __tablename__ = "card_reviews"
@@ -9,6 +10,7 @@ class CardReview(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     flashcard_id = Column(Integer, ForeignKey("flashcards.id"), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
     user_response = Column(Text)
     was_correct = Column(Boolean)
     confidence_score = Column(Float)  # 0-1 from LLM evaluation
@@ -40,7 +42,11 @@ class ConversationState(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    current_flashcard_id = Column(Integer, ForeignKey("flashcards.id"))
+    current_flashcard_id = Column(
+    Integer,
+    ForeignKey("flashcards.id", ondelete="SET NULL"),
+    nullable=True
+)
     session_id = Column(Integer, ForeignKey("study_sessions.id"))
     state = Column(String(50))  # 'idle', 'waiting_for_batch_confirm', 'waiting_for_answer', 'session_complete'
     last_message_at = Column(DateTime(timezone=True), server_default=func.now())
