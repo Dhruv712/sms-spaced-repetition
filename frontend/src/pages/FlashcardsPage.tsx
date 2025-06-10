@@ -12,6 +12,21 @@ interface Flashcard {
 const FlashcardsPage: React.FC = () => {
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const [darkMode, setDarkMode] = useState<boolean>(false);
+
+  // Load dark mode preference from localStorage
+  useEffect(() => {
+    const stored = localStorage.getItem('darkMode');
+    if (stored) {
+      setDarkMode(stored === 'true');
+    }
+  }, []);
+
+  // Apply dark mode class to body
+  useEffect(() => {
+    document.body.classList.toggle('dark', darkMode);
+    localStorage.setItem('darkMode', darkMode.toString());
+  }, [darkMode]);
 
   const loadFlashcards = () => {
     axios
@@ -46,6 +61,17 @@ const FlashcardsPage: React.FC = () => {
 
   return (
     <div className="p-4">
+      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1rem' }}>
+        <label className="switch">
+          <input
+            type="checkbox"
+            checked={darkMode}
+            onChange={() => setDarkMode(!darkMode)}
+          />
+          <span className="slider" />
+        </label>
+        <span>Dark Mode</span>
+      </div>
       <h1 className="text-2xl font-bold mb-4">Your Flashcards</h1>
       <FlashcardForm onSuccess={loadFlashcards} />
 
