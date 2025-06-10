@@ -6,6 +6,7 @@ import os
 # Load .env values into environment variables
 load_dotenv()
 
+
 class Settings(BaseSettings):
     # Database
     DATABASE_URL: str
