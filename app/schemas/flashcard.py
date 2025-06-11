@@ -19,3 +19,10 @@ class FlashcardOut(BaseModel):
 
     class Config:
         orm_mode = True
+
+class FlashcardWithNextReviewOut(BaseModel):
+    id: int
+    concept: str
+    definition: str
+    tags: str
+    next_review_date: Optional[datetime]

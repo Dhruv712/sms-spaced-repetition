@@ -6,6 +6,7 @@ from app.routes.admin import router as admin_router
 from app.routes.sms import router as sms_router
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.routes.profile import router as profile_router
 
 
 
@@ -26,3 +27,5 @@ app.include_router(reviews_router, prefix="/reviews", tags=["Reviews"])
 
 app.include_router(admin_router, prefix="/admin", tags=["Admin"])
 app.include_router(sms_router, prefix="/sms", tags=["SMS"])
+
+app.include_router(profile_router, prefix="/users", tags=["Profile"])

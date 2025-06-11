@@ -42,14 +42,17 @@ async def receive_sms(
             correct_definition=card.definition,
             user_response=body
         )
-        
+
         from app.services.scheduler import compute_next_review
         next_review = compute_next_review(
             last_review_date=datetime.datetime.now(datetime.UTC),
             was_correct=result["was_correct"],
-            confidence_score=result["confidence_score"]
+            confidence_score=result["confidence_score"],
+            start_hour=user.preferred_start_hour,
+            end_hour=user.preferred_end_hour,
+            timezone_str=user.timezone
         )
-        print("Eval result:", result)
+
         review = CardReview(
             user_id=user.id,
             flashcard_id=card.id,
@@ -61,26 +64,11 @@ async def receive_sms(
         )
 
         db.add(review)
-        
-        # Commit review first
+        state.state = "idle"
+        state.current_flashcard_id = None
         db.commit()
 
-        # Try to fetch next card
-        next_card = get_next_due_flashcard(user.id, db)
-
-        if next_card:
-            set_conversation_state(user.id, next_card.id, db)
-            return _twiml_response(
-                f"{result['llm_feedback']}\n\nNext card: {next_card.concept}?\n(Reply with your answer)"
-            )
-        else:
-            # End session
-            state.state = "idle"
-            state.current_flashcard_id = None
-            db.commit()
-            return _twiml_response(
-                f"{result['llm_feedback']}\n\nYou're all caught up for now!"
-            )
+        return _twiml_response(result["llm_feedback"])
 
     elif "yes" in body.lower():
         card = get_next_due_flashcard(user.id, db)
@@ -91,6 +79,7 @@ async def receive_sms(
         return _twiml_response(f"{card.concept}?\n(Reply with your answer)")
 
     return _twiml_response("I didn't understand that. Reply 'Yes' to start a review session.")
+
 
 def _twiml_response(message: str) -> PlainTextResponse:
     xml = f"""<?xml version="1.0" encoding="UTF-8"?>

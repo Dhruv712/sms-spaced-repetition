@@ -32,6 +32,31 @@ def get_due_flashcards(user_id: int, db: Session = Depends(get_db)):
 
     return due_cards
 
+from sqlalchemy import func
+from app.schemas.flashcard import FlashcardWithNextReviewOut
+
+@router.get("/with-reviews/{user_id}", response_model=list[FlashcardWithNextReviewOut])
+def get_flashcards_with_next_review(user_id: int, db: Session = Depends(get_db)):
+    cards = db.query(Flashcard).filter(Flashcard.user_id == user_id).all()
+
+    result = []
+    for card in cards:
+        latest_review = db.query(CardReview).filter(
+            CardReview.user_id == user_id,
+            CardReview.flashcard_id == card.id
+        ).order_by(CardReview.created_at.desc()).first()
+
+        result.append({
+            "id": card.id,
+            "concept": card.concept,
+            "definition": card.definition,
+            "tags": card.tags,
+            "next_review_date": latest_review.next_review_date if latest_review else None
+        })
+
+    return result
+
+
 from fastapi import HTTPException
 
 @router.delete("/{card_id}")
@@ -43,4 +68,29 @@ def delete_flashcard(card_id: int, db: Session = Depends(get_db)):
     db.delete(card)
     db.commit()
     return {"detail": "Flashcard deleted"}
+
+from app.models import CardReview
+from datetime import datetime, timedelta
+
+@router.post("/{card_id}/mark-reviewed")
+def mark_flashcard_reviewed(card_id: int, db: Session = Depends(get_db)):
+    card = db.query(Flashcard).filter_by(id=card_id).first()
+    if not card:
+        raise HTTPException(status_code=404, detail="Flashcard not found")
+    
+    # Just pick the user_id from the card, or override if needed
+    user_id = card.user_id
+
+    review = CardReview(
+        user_id=user_id,
+        flashcard_id=card_id,
+        user_response="[manual override]",
+        was_correct=True,
+        confidence_score=1.0,
+        llm_feedback="Marked as reviewed manually.",
+        next_review_date=datetime.utcnow() + timedelta(days=7)
+    )
+    db.add(review)
+    db.commit()
+    return {"detail": "Card marked as reviewed."}
 

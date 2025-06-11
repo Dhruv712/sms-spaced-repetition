@@ -7,7 +7,8 @@ interface Flashcard {
   id: number;
   concept: string;
   definition: string;
-  tags: string; // stored as comma-separated string
+  tags: string;
+  next_review_date?: string | null; // optional because it might be null
 }
 
 const FlashcardsPage: React.FC = () => {
@@ -31,7 +32,7 @@ const FlashcardsPage: React.FC = () => {
 
   const loadFlashcards = () => {
     axios
-      .get('http://localhost:8000/admin/flashcards')
+      .get('http://localhost:8000/flashcards/with-reviews/1') // assuming user_id=1
       .then((res) => setFlashcards(res.data))
       .catch((err) => console.error('Error fetching flashcards:', err));
   };
@@ -128,6 +129,18 @@ const FlashcardsPage: React.FC = () => {
                   .join(', ')
               : 'No tags'}
           </div>
+          <div><strong>Next Review:</strong> {card.next_review_date ? new Date(card.next_review_date).toLocaleString() : "Not reviewed yet"}</div>
+          <button
+            onClick={() => {
+              axios.post(`http://localhost:8000/flashcards/${card.id}/mark-reviewed`)
+                .then(() => loadFlashcards())
+                .catch((err) => console.error('Error marking reviewed:', err));
+            }}
+            className="text-sm text-blue-600 hover:underline"
+          >
+            Mark Reviewed
+          </button>
+
           <button
             onClick={() => handleDelete(card.id)}
             className="mt-2 px-2 py-1 text-sm bg-red-500 text-white rounded"

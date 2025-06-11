@@ -16,3 +16,8 @@ class ReviewOut(BaseModel):
 
     class Config:
         orm_mode = True
+
+class ManualReviewSchema(BaseModel):
+    user_id: int
+    flashcard_id: int
+    answer: str

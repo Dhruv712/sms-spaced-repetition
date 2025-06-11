@@ -1,20 +1,24 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import FlashcardsPage from "./pages/FlashcardsPage";
+import ProfilePage from './pages/ProfilePage';
+import Navbar from './components/Navbar';
+import ReviewHistoryPage from "./pages/ReviewHistoryPage";
+import ManualReviewPage from "./pages/ManualReviewPage";
 
-function App() {
+
+const App: React.FC = () => {
   return (
     <Router>
-      <div className="p-4">
-        <nav className="mb-4">
-          <Link to="/" className="text-blue-600 underline">Flashcards</Link>
-        </nav>
-        <Routes>
-          <Route path="/" element={<FlashcardsPage />} />
-        </Routes>
-      </div>
+      <Navbar />
+      <Routes>
+        <Route path="/" element={<FlashcardsPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/history" element={<ReviewHistoryPage />} />
+        <Route path="/manual-review" element={<ManualReviewPage />} />
+      </Routes>
     </Router>
   );
-}
+};
 
 export default App;
