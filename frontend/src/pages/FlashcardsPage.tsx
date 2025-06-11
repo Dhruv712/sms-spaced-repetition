@@ -72,7 +72,7 @@ const FlashcardsPage: React.FC = () => {
     
 
   return (
-    <div className="p-4">
+    <div className="container">
       <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1rem' }}>
         <label className="switch">
           <input
@@ -94,9 +94,7 @@ const FlashcardsPage: React.FC = () => {
           <strong>Filter by tag:</strong>{' '}
           <button
             onClick={() => setSelectedTag(null)}
-            className={`mr-2 px-2 py-1 border rounded ${
-              selectedTag === null ? 'bg-blue-200' : ''
-            }`}
+            className={`btn-secondary mr-2 ${selectedTag === null ? 'opacity-70' : ''}`}
           >
             All
           </button>
@@ -104,9 +102,7 @@ const FlashcardsPage: React.FC = () => {
             <button
               key={tag}
               onClick={() => setSelectedTag(tag)}
-              className={`mr-2 px-2 py-1 border rounded ${
-                selectedTag === tag ? 'bg-blue-300' : ''
-              }`}
+              className={`btn-secondary mr-2 ${selectedTag === tag ? 'opacity-70' : ''}`}
             >
               {tag}
             </button>
@@ -116,7 +112,7 @@ const FlashcardsPage: React.FC = () => {
 
       <ul>
         {visibleFlashcards.map((card) => (
-          <li key={card.id} className="mb-3 p-3 border rounded shadow">
+          <li key={card.id} className="card">
           <div className="font-semibold">{card.concept}</div>
           <div className="text-gray-700">{card.definition}</div>
           <div className="text-sm text-blue-600 mt-1">
@@ -132,19 +128,17 @@ const FlashcardsPage: React.FC = () => {
           <div><strong>Next Review:</strong> {card.next_review_date ? new Date(card.next_review_date).toLocaleString() : "Not reviewed yet"}</div>
           <button
             onClick={() => {
-              axios.post(`http://localhost:8000/flashcards/${card.id}/mark-reviewed`)
+              axios
+                .post(`http://localhost:8000/flashcards/${card.id}/mark-reviewed`)
                 .then(() => loadFlashcards())
                 .catch((err) => console.error('Error marking reviewed:', err));
             }}
-            className="text-sm text-blue-600 hover:underline"
+            className="btn-secondary mr-2"
           >
             Mark Reviewed
           </button>
 
-          <button
-            onClick={() => handleDelete(card.id)}
-            className="mt-2 px-2 py-1 text-sm bg-red-500 text-white rounded"
-          >
+          <button onClick={() => handleDelete(card.id)} className="btn">
             Delete
           </button>
         </li>

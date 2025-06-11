@@ -41,16 +41,16 @@ const ManualReviewPage: React.FC = () => {
   };
 
   return (
-    <div className="p-6">
+    <div className="container">
       <h2 className="text-2xl font-bold mb-4">Manual Review</h2>
 
       {!selectedCard ? (
         <ul>
           {flashcards.map((card) => (
-            <li key={card.id} className="mb-2 border p-2 rounded">
+            <li key={card.id} className="card">
               <strong>{card.concept}</strong>
               <button
-                className="ml-4 px-2 py-1 bg-blue-500 text-white rounded"
+                className="btn ml-4"
                 onClick={() => {
                   setSelectedCard(card);
                   setFeedback(null);
@@ -62,7 +62,7 @@ const ManualReviewPage: React.FC = () => {
           ))}
         </ul>
       ) : (
-        <div className="border p-4 rounded">
+        <div className="card">
           <div className="mb-2"><strong>Concept:</strong> {selectedCard.concept}</div>
           <textarea
             className="w-full p-2 border rounded mb-2"
@@ -71,10 +71,10 @@ const ManualReviewPage: React.FC = () => {
             onChange={(e) => setAnswer(e.target.value)}
           />
           <div className="flex gap-2">
-            <button className="bg-green-600 text-white px-4 py-1 rounded" onClick={handleReview}>
+            <button className="btn" onClick={handleReview}>
               Submit Answer
             </button>
-            <button className="bg-gray-400 text-white px-4 py-1 rounded" onClick={() => setSelectedCard(null)}>
+            <button className="btn-secondary" onClick={() => setSelectedCard(null)}>
               Cancel
             </button>
           </div>
