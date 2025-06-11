@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from app.database import get_db
 from app.models import User
+from app.dependencies.auth import get_current_active_user
 
 router = APIRouter()
 
@@ -14,33 +15,32 @@ class UserProfile(BaseModel):
     preferred_end_hour: int
     timezone: str
 
-@router.get("/profile/{user_id}", response_model=UserProfile)
-def get_user_profile(user_id: int, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
+@router.get("/profile", response_model=UserProfile)
+def get_user_profile(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
     return UserProfile(
-        name=user.name,
-        study_mode=user.study_mode,
-        preferred_start_hour=user.preferred_start_hour,
-        preferred_end_hour=user.preferred_end_hour,
-        timezone=user.timezone
+        name=current_user.name,
+        study_mode=current_user.study_mode,
+        preferred_start_hour=current_user.preferred_start_hour,
+        preferred_end_hour=current_user.preferred_end_hour,
+        timezone=current_user.timezone
     )
 
-@router.put("/profile/{user_id}", response_model=UserProfile)
-def update_user_profile(user_id: int, profile: UserProfile, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    user.name = profile.name
-    user.study_mode = profile.study_mode
-    user.preferred_start_hour = profile.preferred_start_hour
-    user.preferred_end_hour = profile.preferred_end_hour
-    user.timezone = profile.timezone
+@router.put("/profile", response_model=UserProfile)
+def update_user_profile(
+    profile: UserProfile,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    current_user.name = profile.name
+    current_user.study_mode = profile.study_mode
+    current_user.preferred_start_hour = profile.preferred_start_hour
+    current_user.preferred_end_hour = profile.preferred_end_hour
+    current_user.timezone = profile.timezone
 
     db.commit()
-    db.refresh(user)
+    db.refresh(current_user)
 
     return profile

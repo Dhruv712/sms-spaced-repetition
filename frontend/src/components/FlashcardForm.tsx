@@ -4,6 +4,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
+import { useAuth } from '../contexts/AuthContext';
 
 interface Props {
   onSuccess: () => void;
@@ -15,21 +16,26 @@ const FlashcardForm: React.FC<Props> = ({ onSuccess }) => {
   const [tags, setTags] = useState('');
   const [nlInput, setNlInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const formEndRef = useRef<HTMLDivElement | null>(null);
-
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+  const formEndRef = useRef<HTMLDivElement | null>(null);
+  const { token } = useAuth();
 
   const handleManualSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (submitting) return;
+    if (submitting || !token) return;
   
     setSubmitting(true);
+    setError('');
     try {
       await axios.post('http://localhost:8000/flashcards/', {
-        user_id: 1,
         concept,
         definition,
         tags,
+      }, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       });
       setConcept('');
       setDefinition('');
@@ -37,27 +43,38 @@ const FlashcardForm: React.FC<Props> = ({ onSuccess }) => {
       onSuccess();
     } catch (err) {
       console.error('Error creating flashcard:', err);
+      setError('Failed to create flashcard. Please try again.');
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleNaturalSubmit = async () => {
+    if (!token) return;
+    
     setLoading(true);
+    setError('');
     try {
-      const res = await axios.post('http://localhost:8000/natural_flashcards/generate_flashcard', {
-        user_id: 1,
-        text: nlInput,
-      });
+      const res = await axios.post(
+        'http://localhost:8000/natural_flashcards/generate_flashcard',
+        {
+          text: nlInput,
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        }
+      );
 
       const { concept, definition, tags } = res.data;
       setConcept(concept);
       setDefinition(definition);
       setTags(tags || '');
-    //   onSuccess();
-    //   scrollToBottom();
+      scrollToBottom();
     } catch (err) {
       console.error('Error generating flashcard:', err);
+      setError('Failed to generate flashcard. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -70,56 +87,79 @@ const FlashcardForm: React.FC<Props> = ({ onSuccess }) => {
   };
 
   return (
-    <div style={{ marginBottom: '2rem' }}>
-      <h2 className="text-lg font-semibold mb-2">Add a New Flashcard</h2>
+    <div className="bg-white rounded-lg shadow-md p-6">
+      <h2 className="text-xl font-semibold mb-4">Add a New Flashcard</h2>
 
-      <textarea
-        placeholder="Type something like: 'Make a card about how Pretoria is Elon Musk's birthplace'"
-        value={nlInput}
-        onChange={(e) => setNlInput(e.target.value)}
-        rows={3}
-        style={{ display: 'block', marginBottom: '0.5rem', width: '100%' }}
-      />
-      <button
-        type="button"
-        className="btn mb-4"
-        onClick={handleNaturalSubmit}
-        disabled={loading}
-      >
-        {loading ? 'Generating...' : 'Generate from Natural Language'}
-      </button>
+      {error && (
+        <div className="mb-4 p-3 bg-red-50 text-red-700 rounded">
+          {error}
+        </div>
+      )}
 
-      <form onSubmit={handleManualSubmit} className="card">
-        <input
-          type="text"
-          placeholder="Concept"
-          value={concept}
-          onChange={(e) => setConcept(e.target.value)}
-          required
-          style={{ display: 'block', marginBottom: '0.5rem', width: '100%' }}
-        />
+      <div className="mb-6">
         <textarea
-          placeholder="Definition"
-          value={definition}
-          onChange={(e) => setDefinition(e.target.value)}
-          required
-          rows={4}
-          style={{ display: 'block', marginBottom: '0.5rem', width: '100%' }}
+          placeholder="Type something like: 'Make a card about how Pretoria is Elon Musk's birthplace'"
+          value={nlInput}
+          onChange={(e) => setNlInput(e.target.value)}
+          rows={3}
+          className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         />
-        <ReactMarkdown
-          children={definition}
-          remarkPlugins={[remarkMath]}
-          rehypePlugins={[rehypeKatex]}
-        />
-        <input
-          type="text"
-          placeholder="Tags (comma separated)"
-          value={tags}
-          onChange={(e) => setTags(e.target.value)}
-          style={{ display: 'block', marginBottom: '0.5rem', width: '100%' }}
-        />
-        <button type="submit" className="btn mt-2" disabled={submitting}>
-            {submitting ? 'Saving...' : 'Save Flashcard'}
+        <button
+          type="button"
+          onClick={handleNaturalSubmit}
+          disabled={loading || !token}
+          className="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+        >
+          {loading ? 'Generating...' : 'Generate from Natural Language'}
+        </button>
+      </div>
+
+      <form onSubmit={handleManualSubmit} className="space-y-4">
+        <div>
+          <input
+            type="text"
+            placeholder="Concept"
+            value={concept}
+            onChange={(e) => setConcept(e.target.value)}
+            required
+            className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
+        <div>
+          <textarea
+            placeholder="Definition"
+            value={definition}
+            onChange={(e) => setDefinition(e.target.value)}
+            required
+            rows={4}
+            className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
+          {definition && (
+            <div className="mt-2 p-2 bg-gray-50 rounded">
+              <ReactMarkdown
+                remarkPlugins={[remarkMath]}
+                rehypePlugins={[rehypeKatex]}
+              >
+                {definition}
+              </ReactMarkdown>
+            </div>
+          )}
+        </div>
+        <div>
+          <input
+            type="text"
+            placeholder="Tags (comma separated)"
+            value={tags}
+            onChange={(e) => setTags(e.target.value)}
+            className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
+        <button
+          type="submit"
+          disabled={submitting || !token}
+          className="w-full px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50"
+        >
+          {submitting ? 'Saving...' : 'Save Flashcard'}
         </button>
       </form>
       <div ref={formEndRef} />

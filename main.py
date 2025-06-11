@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.routes.profile import router as profile_router
 
+from app.routes.natural_flashcards import router as natural_flashcard_router
 
 
 app = FastAPI()
@@ -29,3 +30,4 @@ app.include_router(admin_router, prefix="/admin", tags=["Admin"])
 app.include_router(sms_router, prefix="/sms", tags=["SMS"])
 
 app.include_router(profile_router, prefix="/users", tags=["Profile"])
+app.include_router(natural_flashcard_router, prefix="/natural_flashcards", tags=["Natural_Flashcards"])

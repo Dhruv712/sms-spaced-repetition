@@ -9,7 +9,7 @@ load_dotenv()
 
 class Settings(BaseSettings):
     # Database
-    DATABASE_URL: str
+    DATABASE_URL: str = "sqlite:///./app.db"
 
     # Twilio
     TWILIO_ACCOUNT_SID: str = ""
@@ -24,9 +24,11 @@ class Settings(BaseSettings):
     REDIS_URL: str = "redis://localhost:6379/0"
     
     # App Settings
-    SECRET_KEY: str = "your-secret-key-change-this"
+    SECRET_KEY: str = "your-secret-key-here"  # Change this in production!
     DEBUG: bool = True
     ENVIRONMENT: str = "development"
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     
     # Server
     HOST: str = "0.0.0.0"

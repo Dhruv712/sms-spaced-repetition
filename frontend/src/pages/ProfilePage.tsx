@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import { useAuth } from '../contexts/AuthContext';
 
 interface UserProfile {
   name: string;
@@ -9,100 +10,146 @@ interface UserProfile {
   timezone: string;
 }
 
-const USER_ID = 1; // 🔒 TODO: Replace with real auth logic eventually
-
 const ProfilePage: React.FC = () => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+  const { token } = useAuth();
 
   useEffect(() => {
-    axios.get(`http://localhost:8000/users/profile/${USER_ID}`)
+    if (!token) return;
+
+    axios.get('http://localhost:8000/users/profile', {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
       .then(res => setProfile(res.data))
-      .catch(err => console.error("Failed to fetch profile", err));
-  }, []);
+      .catch(err => {
+        console.error("Failed to fetch profile", err);
+        setError('Failed to load profile. Please try again.');
+      });
+  }, [token]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     if (!profile) return;
     setProfile({ ...profile, [e.target.name]: e.target.value });
   };
 
-  const handleSave = () => {
-    if (!profile) return;
+  const handleSave = async () => {
+    if (!profile || !token) return;
     setIsSaving(true);
-    axios.put(`http://localhost:8000/users/profile/${USER_ID}`, profile)
-      .then(() => setMessage('Profile saved!'))
-      .catch(() => setMessage('Failed to save profile.'))
-      .finally(() => setIsSaving(false));
+    setError('');
+    setMessage('');
+
+    try {
+      await axios.put('http://localhost:8000/users/profile', profile, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      setMessage('Profile saved successfully!');
+    } catch (err) {
+      console.error('Failed to save profile:', err);
+      setError('Failed to save profile. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  if (!profile) return <div>Loading...</div>;
+  if (!profile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-xl text-gray-600">Loading profile...</div>
+      </div>
+    );
+  }
 
   return (
-    <div className="container">
-      <h1 className="text-2xl font-bold mb-4">User Profile</h1>
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-2xl font-bold mb-6">User Profile</h1>
 
-      <div className="card">
-        <div className="mb-4">
-          <label>Name:</label>
-          <input
-            name="name"
-            value={profile.name}
-            onChange={handleChange}
-            className="border p-1 ml-2"
-          />
-        </div>
+      <div className="bg-white rounded-lg shadow-md p-6 max-w-2xl">
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 text-red-700 rounded">
+            {error}
+          </div>
+        )}
+        {message && (
+          <div className="mb-4 p-3 bg-green-50 text-green-700 rounded">
+            {message}
+          </div>
+        )}
 
-        <div className="mb-4">
-          <label>Study Mode:</label>
-          <select
-            name="study_mode"
-            value={profile.study_mode}
-            onChange={handleChange}
-            className="border p-1 ml-2"
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+            <input
+              name="name"
+              value={profile.name}
+              onChange={handleChange}
+              className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Study Mode</label>
+            <select
+              name="study_mode"
+              value={profile.study_mode}
+              onChange={handleChange}
+              className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="batch">Batch</option>
+              <option value="distributed">Distributed</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Start Hour (24-hour format)</label>
+            <input
+              type="number"
+              name="preferred_start_hour"
+              value={profile.preferred_start_hour}
+              onChange={handleChange}
+              min="0"
+              max="23"
+              className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">End Hour (24-hour format)</label>
+            <input
+              type="number"
+              name="preferred_end_hour"
+              value={profile.preferred_end_hour}
+              onChange={handleChange}
+              min="0"
+              max="23"
+              className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Timezone</label>
+            <input
+              name="timezone"
+              value={profile.timezone}
+              onChange={handleChange}
+              className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+
+          <button
+            onClick={handleSave}
+            disabled={isSaving}
+            className="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
           >
-            <option value="batch">Batch</option>
-            <option value="distributed">Distributed</option>
-          </select>
+            {isSaving ? 'Saving...' : 'Save Changes'}
+          </button>
         </div>
-
-        <div className="mb-4">
-          <label>Start Hour:</label>
-          <input
-            type="number"
-            name="preferred_start_hour"
-            value={profile.preferred_start_hour}
-            onChange={handleChange}
-            className="border p-1 ml-2"
-          />
-        </div>
-
-        <div className="mb-4">
-          <label>End Hour:</label>
-          <input
-            type="number"
-            name="preferred_end_hour"
-            value={profile.preferred_end_hour}
-            onChange={handleChange}
-            className="border p-1 ml-2"
-          />
-        </div>
-
-        <div className="mb-4">
-          <label>Timezone:</label>
-          <input
-            name="timezone"
-            value={profile.timezone}
-            onChange={handleChange}
-            className="border p-1 ml-2"
-          />
-        </div>
-
-        <button onClick={handleSave} className="btn" disabled={isSaving}>
-          {isSaving ? 'Saving...' : 'Save'}
-        </button>
-
-        {message && <p className="mt-2">{message}</p>}
       </div>
     </div>
   );
