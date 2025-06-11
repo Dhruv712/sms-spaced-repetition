@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import axios from 'axios';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
@@ -13,15 +13,20 @@ const FlashcardForm: React.FC<Props> = ({ onSuccess }) => {
   const [concept, setConcept] = useState('');
   const [definition, setDefinition] = useState('');
   const [tags, setTags] = useState('');
-  const [naturalText, setNaturalText] = useState('');
+  const [nlInput, setNlInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [statusMessage, setStatusMessage] = useState('');
+  const formEndRef = useRef<HTMLDivElement | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleManualSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitting) return;
+  
+    setSubmitting(true);
     try {
       await axios.post('http://localhost:8000/flashcards/', {
-        user_id: 1, // 🔥 TEMP: hardcoded until we add auth
+        user_id: 1,
         concept,
         definition,
         tags,
@@ -29,51 +34,62 @@ const FlashcardForm: React.FC<Props> = ({ onSuccess }) => {
       setConcept('');
       setDefinition('');
       setTags('');
-      onSuccess(); // refresh list
+      onSuccess();
     } catch (err) {
       console.error('Error creating flashcard:', err);
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const handleNaturalSubmit = async () => {
-    if (!naturalText.trim()) return;
     setLoading(true);
-    setStatusMessage('');
     try {
       const res = await axios.post('http://localhost:8000/natural_flashcards/generate_flashcard', {
         user_id: 1,
-        text: naturalText,
+        text: nlInput,
       });
-      setNaturalText('');
-      setStatusMessage(`✅ Created card: ${res.data.concept}`);
-      onSuccess();
+
+      const { concept, definition, tags } = res.data;
+      setConcept(concept);
+      setDefinition(definition);
+      setTags(tags || '');
+    //   onSuccess();
+    //   scrollToBottom();
     } catch (err) {
       console.error('Error generating flashcard:', err);
-      setStatusMessage('❌ Failed to generate flashcard.');
     } finally {
       setLoading(false);
     }
   };
 
+  const scrollToBottom = () => {
+    setTimeout(() => {
+      formEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
+  };
+
   return (
-    <div className="card" style={{ marginBottom: '2rem' }}>
-      <h2 className="text-lg font-semibold mb-2">Natural Language Flashcard</h2>
-      <input
-        type="text"
-        placeholder='e.g. "Make a card about how mitochondria are the powerhouse of the cell"'
-        value={naturalText}
-        onChange={(e) => setNaturalText(e.target.value)}
+    <div style={{ marginBottom: '2rem' }}>
+      <h2 className="text-lg font-semibold mb-2">Add a New Flashcard</h2>
+
+      <textarea
+        placeholder="Type something like: 'Make a card about how Pretoria is Elon Musk's birthplace'"
+        value={nlInput}
+        onChange={(e) => setNlInput(e.target.value)}
+        rows={3}
         style={{ display: 'block', marginBottom: '0.5rem', width: '100%' }}
       />
-      <button type="button" onClick={handleNaturalSubmit} className="btn mb-4">
-        {loading ? 'Generating...' : 'Generate from Text'}
+      <button
+        type="button"
+        className="btn mb-4"
+        onClick={handleNaturalSubmit}
+        disabled={loading}
+      >
+        {loading ? 'Generating...' : 'Generate from Natural Language'}
       </button>
-      {statusMessage && <p className="text-sm">{statusMessage}</p>}
 
-      <hr className="my-4" />
-
-      <form onSubmit={handleSubmit}>
-        <h2 className="text-lg font-semibold mb-2">Add a Flashcard Manually</h2>
+      <form onSubmit={handleManualSubmit} className="card">
         <input
           type="text"
           placeholder="Concept"
@@ -102,8 +118,11 @@ const FlashcardForm: React.FC<Props> = ({ onSuccess }) => {
           onChange={(e) => setTags(e.target.value)}
           style={{ display: 'block', marginBottom: '0.5rem', width: '100%' }}
         />
-        <button type="submit" className="btn mt-2">Add Flashcard</button>
+        <button type="submit" className="btn mt-2" disabled={submitting}>
+            {submitting ? 'Saving...' : 'Save Flashcard'}
+        </button>
       </form>
+      <div ref={formEndRef} />
     </div>
   );
 };
