@@ -5,6 +5,7 @@ interface Review {
   id: number;
   flashcard: {
     concept: string;
+    definition: string;
   };
   user_response: string;
   was_correct: boolean;
@@ -33,6 +34,7 @@ const ReviewHistoryPage: React.FC = () => {
             <div><strong>Your Answer:</strong> {r.user_response}</div>
             <div><strong>Result:</strong> {r.was_correct ? '✅ Correct' : '❌ Incorrect'}</div>
             <div><strong>Confidence:</strong> {(r.confidence_score * 100).toFixed(0)}%</div>
+            <div><strong>True Definition:</strong> {r.flashcard?.definition || 'Unknown'}</div>
             <div><strong>Date:</strong> {new Date(r.created_at).toLocaleString()}</div>
             <div><strong>LLM Feedback:</strong> {r.llm_feedback}</div>
           </li>

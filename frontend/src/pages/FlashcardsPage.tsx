@@ -2,6 +2,10 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import FlashcardForm from '../components/FlashcardForm';
 import ReviewStats from '../components/ReviewStats';
+import ReactMarkdown from 'react-markdown';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import 'katex/dist/katex.min.css';
 
 interface Flashcard {
   id: number;
@@ -114,7 +118,14 @@ const FlashcardsPage: React.FC = () => {
         {visibleFlashcards.map((card) => (
           <li key={card.id} className="card">
           <div className="font-semibold">{card.concept}</div>
-          <div className="text-gray-700">{card.definition}</div>
+          <hr />
+          <ReactMarkdown
+          children={card.definition}
+          remarkPlugins={[remarkMath]}
+          rehypePlugins={[rehypeKatex]}
+          />
+
+          {/* <div className="text-gray-700">{card.definition}</div> */}
           <div className="text-sm text-blue-600 mt-1">
             Tags:{' '}
             {card.tags
