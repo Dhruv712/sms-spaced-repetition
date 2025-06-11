@@ -24,11 +24,11 @@ const ReviewHistoryPage: React.FC = () => {
   }, []);
 
   return (
-    <div className="p-4">
+    <div className="container">
       <h2 className="text-2xl font-bold mb-4">Review History</h2>
       <ul>
         {reviews.map((r) => (
-          <li key={r.id} className="mb-3 p-3 border rounded shadow">
+          <li key={r.id} className="card">
             <div><strong>Concept:</strong> {r.flashcard?.concept || 'Unknown'}</div>
             <div><strong>Your Answer:</strong> {r.user_response}</div>
             <div><strong>Result:</strong> {r.was_correct ? '✅ Correct' : '❌ Incorrect'}</div>

@@ -29,8 +29,8 @@ const FlashcardForm: React.FC<Props> = ({ onSuccess }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ marginBottom: '2rem' }}>
-      <h2>Add a New Flashcard</h2>
+    <form onSubmit={handleSubmit} style={{ marginBottom: '2rem' }} className="card">
+      <h2 className="text-lg font-semibold mb-2">Add a New Flashcard</h2>
       <input
         type="text"
         placeholder="Concept"
@@ -38,7 +38,7 @@ const FlashcardForm: React.FC<Props> = ({ onSuccess }) => {
         onChange={(e) => setConcept(e.target.value)}
         required
         style={{ display: 'block', marginBottom: '0.5rem', width: '100%' }}
-      />
+        />
       <textarea
         placeholder="Definition"
         value={definition}
@@ -54,7 +54,7 @@ const FlashcardForm: React.FC<Props> = ({ onSuccess }) => {
         onChange={(e) => setTags(e.target.value)}
         style={{ display: 'block', marginBottom: '0.5rem', width: '100%' }}
       />
-      <button type="submit">Add Flashcard</button>
+      <button type="submit" className="btn mt-2">Add Flashcard</button>
     </form>
   );
 };
