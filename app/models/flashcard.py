@@ -11,9 +11,12 @@ class Flashcard(Base):
     concept = Column(Text, nullable=False)
     definition = Column(Text, nullable=False)
     tags = Column(String(255))  # comma-separated for simplicity
+    source_url = Column(String(1024), nullable=True)  # URLs can be long
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     
     # Relationships
     user = relationship("User", back_populates="flashcards")
     reviews = relationship("CardReview", back_populates="flashcard", cascade="all, delete-orphan")
+    deck_id = Column(Integer, ForeignKey("decks.id"), nullable=True)
+    deck = relationship("Deck", back_populates="flashcards")

@@ -36,24 +36,24 @@ const ReviewStats: React.FC = () => {
   const avgConfidence = (stats.average_confidence * 100).toFixed(1);
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
-      <h2 className="text-xl font-semibold mb-4">📊 Review Stats</h2>
+    <div className="bg-white dark:bg-darksurface rounded-lg shadow-md p-6 border border-gray-200 dark:border-gray-700">
+      <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-darktext">📊 Review Stats</h2>
       <div className="grid grid-cols-2 gap-4">
-        <div className="p-4 bg-blue-50 rounded-lg">
-          <p className="text-sm text-gray-600">Total Reviews</p>
-          <p className="text-2xl font-bold text-blue-600">{stats.total}</p>
+        <div className="p-4 bg-secondary-50 dark:bg-secondary-700 rounded-lg">
+          <p className="text-sm text-secondary-600 dark:text-secondary-300">Total Reviews</p>
+          <p className="text-2xl font-bold text-primary-600 dark:text-primary-400">{stats.total}</p>
         </div>
-        <div className="p-4 bg-green-50 rounded-lg">
-          <p className="text-sm text-gray-600">Correct Answers</p>
-          <p className="text-2xl font-bold text-green-600">{stats.correct}</p>
+        <div className="p-4 bg-secondary-50 dark:bg-secondary-700 rounded-lg">
+          <p className="text-sm text-secondary-600 dark:text-secondary-300">Correct Answers</p>
+          <p className="text-2xl font-bold text-primary-600 dark:text-primary-400">{stats.correct}</p>
         </div>
-        <div className="p-4 bg-purple-50 rounded-lg">
-          <p className="text-sm text-gray-600">Win Rate</p>
-          <p className="text-2xl font-bold text-purple-600">{winRate}%</p>
+        <div className="p-4 bg-secondary-50 dark:bg-secondary-700 rounded-lg">
+          <p className="text-sm text-secondary-600 dark:text-secondary-300">Win Rate</p>
+          <p className="text-2xl font-bold text-primary-600 dark:text-primary-400">{winRate}%</p>
         </div>
-        <div className="p-4 bg-yellow-50 rounded-lg">
-          <p className="text-sm text-gray-600">Avg Confidence</p>
-          <p className="text-2xl font-bold text-yellow-600">{avgConfidence}%</p>
+        <div className="p-4 bg-secondary-50 dark:bg-secondary-700 rounded-lg">
+          <p className="text-sm text-secondary-600 dark:text-secondary-300">Avg Confidence</p>
+          <p className="text-2xl font-bold text-primary-600 dark:text-primary-400">{avgConfidence}%</p>
         </div>
       </div>
     </div>

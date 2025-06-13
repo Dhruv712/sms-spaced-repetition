@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 from app.services.auth import get_current_active_user
 from app.models import User
 from sqlalchemy import func
+from typing import Optional, List
 
 router = APIRouter()
 
@@ -17,6 +18,8 @@ def create_flashcard(flashcard: FlashcardCreate, db: Session = Depends(get_db), 
         concept=flashcard.concept,
         definition=flashcard.definition,
         tags=flashcard.tags,
+        deck_id=flashcard.deck_id,
+        source_url=flashcard.source_url
     )
     db.add(new_card)
     db.commit()
@@ -24,33 +27,52 @@ def create_flashcard(flashcard: FlashcardCreate, db: Session = Depends(get_db), 
     return new_card
 
 @router.get("/due", response_model=list[FlashcardOut])
-def get_due_flashcards(db: Session = Depends(get_db), current_user: User = Depends(get_current_active_user)):
+def get_due_flashcards(db: Session = Depends(get_db), current_user: User = Depends(get_current_active_user), deck_id: Optional[int] = None):
     now = datetime.utcnow()
+    
+    query = db.query(Flashcard).filter(Flashcard.user_id == current_user.id)
+    if deck_id is not None:
+        query = query.filter(Flashcard.deck_id == deck_id)
+
     subquery = db.query(CardReview.flashcard_id).filter(
         CardReview.user_id == current_user.id,
         CardReview.next_review_date > now
     ).subquery()
-    due_cards = db.query(Flashcard).filter(
-        Flashcard.user_id == current_user.id,
+    
+    due_cards = query.filter(
         ~Flashcard.id.in_(subquery)
     ).all()
     return due_cards
 
 @router.get("/with-reviews", response_model=list[FlashcardWithNextReviewOut])
-def get_flashcards_with_next_review(db: Session = Depends(get_db), current_user: User = Depends(get_current_active_user)):
-    cards = db.query(Flashcard).filter(Flashcard.user_id == current_user.id).all()
+def get_flashcards_with_next_review(db: Session = Depends(get_db), current_user: User = Depends(get_current_active_user), deck_id: Optional[int] = None, tags: Optional[str] = None):
+    query = db.query(Flashcard).filter(Flashcard.user_id == current_user.id)
+    if deck_id is not None:
+        query = query.filter(Flashcard.deck_id == deck_id)
+
+    if tags is not None:
+        query = query.filter(Flashcard.tags.ilike(f"%{tags}%"))
+
+    cards = query.all()
     result = []
     for card in cards:
         latest_review = db.query(CardReview).filter(
             CardReview.user_id == current_user.id,
             CardReview.flashcard_id == card.id
         ).order_by(CardReview.created_at.desc()).first()
+        # Ensure tags are a list of strings
+        if isinstance(card.tags, str):
+            parsed_tags = [tag.strip() for tag in card.tags.split(',') if tag.strip()]
+        else:
+            parsed_tags = card.tags if card.tags is not None else []
+
         result.append({
             "id": card.id,
             "concept": card.concept,
             "definition": card.definition,
-            "tags": card.tags,
-            "next_review_date": latest_review.next_review_date if latest_review else None
+            "tags": parsed_tags,
+            "next_review_date": latest_review.next_review_date if latest_review else None,
+            "deck_id": card.deck_id
         })
     return result
 
@@ -82,6 +104,9 @@ def mark_flashcard_reviewed(card_id: int, db: Session = Depends(get_db), current
     return {"detail": "Card marked as reviewed."}
 
 @router.get("/", response_model=list[FlashcardOut])
-def get_all_flashcards(db: Session = Depends(get_db), current_user: User = Depends(get_current_active_user)):
-    return db.query(Flashcard).filter(Flashcard.user_id == current_user.id).all()
+def get_all_flashcards(db: Session = Depends(get_db), current_user: User = Depends(get_current_active_user), deck_id: Optional[int] = None):
+    query = db.query(Flashcard).filter(Flashcard.user_id == current_user.id)
+    if deck_id is not None:
+        query = query.filter(Flashcard.deck_id == deck_id)
+    return query.all()
 

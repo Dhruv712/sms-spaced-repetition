@@ -24,3 +24,4 @@ class User(Base):
     reviews = relationship("CardReview", back_populates="user", cascade="all, delete-orphan")
     sessions = relationship("StudySession", back_populates="user", cascade="all, delete-orphan")
     conversation_state = relationship("ConversationState", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    decks = relationship("Deck", back_populates="user", cascade="all, delete-orphan")

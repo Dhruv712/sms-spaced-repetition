@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import Optional, List
 from datetime import datetime
+from app.schemas.flashcard import FlashcardOut
 
 class ManualReviewSchema(BaseModel):
     flashcard_id: int
@@ -21,7 +22,7 @@ class ReviewOut(BaseModel):
         from_attributes = True
 
 class ReviewWithFlashcard(ReviewOut):
-    flashcard: dict  # This will be populated with the flashcard data
+    flashcard: FlashcardOut
 
 class ReviewCreate(BaseModel):
     pass

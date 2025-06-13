@@ -60,46 +60,46 @@ const ProfilePage: React.FC = () => {
 
   if (!profile) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-xl text-gray-600">Loading profile...</div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-darkbg">
+        <div className="text-xl text-gray-600 dark:text-gray-300">Loading profile...</div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-6">User Profile</h1>
+    <div className="container mx-auto px-4 py-8 bg-gray-50 dark:bg-darkbg min-h-screen">
+      <h1 className="text-3xl font-bold mb-6 text-gray-900 dark:text-darktext">User Profile</h1>
 
-      <div className="bg-white rounded-lg shadow-md p-6 max-w-2xl">
+      <div className="bg-white dark:bg-darksurface rounded-lg shadow-xl p-8 max-w-2xl mx-auto border border-gray-200 dark:border-gray-700">
         {error && (
-          <div className="mb-4 p-3 bg-red-50 text-red-700 rounded">
+          <div className="mb-4 p-3 bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200 rounded-md">
             {error}
           </div>
         )}
         {message && (
-          <div className="mb-4 p-3 bg-green-50 text-green-700 rounded">
+          <div className="mb-4 p-3 bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200 rounded-md">
             {message}
           </div>
         )}
 
-        <div className="space-y-4">
+        <div className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name</label>
             <input
               name="name"
               value={profile.name}
               onChange={handleChange}
-              className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-800 dark:text-darktext dark:border-gray-600 transition-colors duration-200"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Study Mode</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Study Mode</label>
             <select
               name="study_mode"
               value={profile.study_mode}
               onChange={handleChange}
-              className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-800 dark:text-darktext dark:border-gray-600 appearance-none pr-8 transition-colors duration-200"
             >
               <option value="batch">Batch</option>
               <option value="distributed">Distributed</option>
@@ -107,7 +107,7 @@ const ProfilePage: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Start Hour (24-hour format)</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Start Hour (24-hour format)</label>
             <input
               type="number"
               name="preferred_start_hour"
@@ -115,12 +115,12 @@ const ProfilePage: React.FC = () => {
               onChange={handleChange}
               min="0"
               max="23"
-              className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-800 dark:text-darktext dark:border-gray-600 transition-colors duration-200"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">End Hour (24-hour format)</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">End Hour (24-hour format)</label>
             <input
               type="number"
               name="preferred_end_hour"
@@ -128,24 +128,24 @@ const ProfilePage: React.FC = () => {
               onChange={handleChange}
               min="0"
               max="23"
-              className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-800 dark:text-darktext dark:border-gray-600 transition-colors duration-200"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Timezone</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Timezone</label>
             <input
               name="timezone"
               value={profile.timezone}
               onChange={handleChange}
-              className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-800 dark:text-darktext dark:border-gray-600 transition-colors duration-200"
             />
           </div>
 
           <button
             onClick={handleSave}
             disabled={isSaving}
-            className="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+            className="w-full px-4 py-3 bg-primary-600 text-white rounded-md hover:bg-primary-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200"
           >
             {isSaving ? 'Saving...' : 'Save Changes'}
           </button>

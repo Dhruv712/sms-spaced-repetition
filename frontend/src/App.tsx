@@ -9,6 +9,7 @@ import { Login } from "./pages/Login";
 import { Register } from "./pages/Register";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AuthProvider } from "./contexts/AuthContext";
+import DecksPage from "./pages/DecksPage";
 
 const App: React.FC = () => {
   return (
@@ -20,6 +21,14 @@ const App: React.FC = () => {
           <Route path="/register" element={<Register />} />
           <Route
             path="/"
+            element={
+              <ProtectedRoute>
+                <FlashcardsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/flashcards/:deckId?"
             element={
               <ProtectedRoute>
                 <FlashcardsPage />
@@ -47,6 +56,14 @@ const App: React.FC = () => {
             element={
               <ProtectedRoute>
                 <ManualReviewPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/decks"
+            element={
+              <ProtectedRoute>
+                <DecksPage />
               </ProtectedRoute>
             }
           />

@@ -1,8 +1,12 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 body {
+  @apply bg-gray-50 text-gray-900 dark:bg-darkbg dark:text-darktext transition-colors duration-200;
   font-family: sans-serif;
   margin: 0;
   padding: 0;
-  background-color: #f7f7f7;
 }
 
 /* Dark mode */
@@ -33,7 +37,6 @@ body.dark button {
   display: inline-block;
   width: 40px;
   height: 20px;
-  margin-right: 0.5rem;
 }
 
 .switch input {
@@ -50,27 +53,35 @@ body.dark button {
   right: 0;
   bottom: 0;
   background-color: #ccc;
-  transition: 0.4s;
-  border-radius: 34px;
+  -webkit-transition: .4s;
+  transition: .4s;
+  border-radius: 20px; /* Make it round */
 }
 
 .slider:before {
   position: absolute;
   content: "";
-  height: 14px;
-  width: 14px;
-  left: 3px;
-  bottom: 3px;
+  height: 16px;
+  width: 16px;
+  left: 2px;
+  bottom: 2px;
   background-color: white;
-  transition: 0.4s;
-  border-radius: 50%;
+  -webkit-transition: .4s;
+  transition: .4s;
+  border-radius: 50%; /* Make it round */
 }
 
 input:checked + .slider {
-  background-color: #2196f3;
+  background-color: #6366f1; /* Primary color */
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px #6366f1;
 }
 
 input:checked + .slider:before {
+  -webkit-transform: translateX(20px);
+  -ms-transform: translateX(20px);
   transform: translateX(20px);
 }
 
@@ -88,7 +99,6 @@ input:checked + .slider:before {
   margin-bottom: 1rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
-
 
 body.dark .card {
   background-color: #2a2a2a;
@@ -120,4 +130,14 @@ body.dark .card {
 
 .btn-secondary:hover {
   background-color: #4b5563;
+}
+
+/* Optional: Adjust scrollbar for dark mode */
+/* This might require a modern browser and custom scrollbar styling */
+body::-webkit-scrollbar-track {
+  @apply bg-darkbg;
+}
+
+body::-webkit-scrollbar-thumb {
+  @apply bg-darksurface;
 }

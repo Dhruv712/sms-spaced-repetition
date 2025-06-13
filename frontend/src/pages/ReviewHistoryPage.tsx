@@ -1,6 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
+import ReactMarkdown from 'react-markdown';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import 'katex/dist/katex.min.css';
 
 interface Review {
   id: number;
@@ -46,75 +50,88 @@ const ReviewHistoryPage: React.FC = () => {
     fetchReviews();
   }, [token]);
 
+  const normalizeTags = (tags: string | string[] | undefined): string[] =>
+    Array.isArray(tags)
+      ? tags
+      : typeof tags === 'string'
+      ? tags.split(',').map((t: string) => t.trim())
+      : [];
+
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-xl text-gray-600">Loading review history...</div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-darkbg">
+        <div className="text-xl text-gray-600 dark:text-gray-300">Loading review history...</div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-xl text-red-600">{error}</div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-darkbg">
+        <div className="text-xl text-red-600 dark:text-red-400">{error}</div>
       </div>
     );
   }
 
   if (reviews.length === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-xl text-gray-600">No review history available.</div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-darkbg">
+        <div className="text-xl text-gray-600 dark:text-gray-300">No review history available.</div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-6">Review History</h1>
+    <div className="container mx-auto px-4 py-8 bg-gray-50 dark:bg-darkbg min-h-screen">
+      <h1 className="text-3xl font-bold mb-6 text-gray-900 dark:text-darktext">Review History</h1>
 
-      <div className="space-y-4">
+      <div className="space-y-6">
         {reviews.map((review) => (
-          <div key={review.id} className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex justify-between items-start mb-4">
-              <div>
-                <h3 className="text-lg font-semibold">{review.flashcard?.concept || '[Flashcard Missing]'}</h3>
-                <p className="text-gray-600 mt-1">{review.flashcard?.definition || ''}</p>
+          <div key={review.id} className="bg-white dark:bg-darksurface rounded-lg shadow-xl p-8 border border-gray-200 dark:border-gray-700">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
+              <div className="mb-4 md:mb-0">
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-darktext">{review.flashcard?.concept || '[Flashcard Missing]'}</h3>
+                <div className="mt-2 p-3 bg-gray-50 dark:bg-gray-700 rounded text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600">
+              <ReactMarkdown
+                remarkPlugins={[remarkMath]}
+                rehypePlugins={[rehypeKatex]}
+              >
+                {review.flashcard?.definition || ''}
+              </ReactMarkdown>
+            </div>
               </div>
-              <div className="flex items-center space-x-4">
-                <div className="text-sm text-gray-700">
+              <div className="flex flex-wrap gap-4 text-sm text-gray-700 dark:text-gray-300">
+                <div>
                   <strong>Your Answer:</strong> {review.user_response}
                 </div>
-                <div className="text-sm text-gray-700">
-                  <strong>Result:</strong> {review.was_correct ? '✅ Correct' : '❌ Incorrect'}
+                <div>
+                  <strong>Result:</strong>{' '}
+                  <span className={`font-medium ${review.was_correct ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                    {review.was_correct ? '✅ Correct' : '❌ Incorrect'}
+                  </span>
                 </div>
-                <div className="text-sm text-gray-700">
+                <div>
                   <strong>Confidence:</strong> {(review.confidence_score * 100).toFixed(0)}%
                 </div>
               </div>
             </div>
 
-            <div className="mb-4 p-3 bg-gray-50 rounded-lg text-gray-700">
-              <strong>LLM Feedback:</strong>
+            <div className="mb-4 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600">
+              <strong className="block text-lg font-medium text-gray-800 dark:text-darktext mb-2">LLM Feedback:</strong>
               <p className="mt-1 text-sm">{review.llm_feedback}</p>
             </div>
 
             {review.flashcard?.tags && (
               <div className="flex flex-wrap gap-2 mb-4">
-                {(
-                  Array.isArray(review.flashcard.tags)
-                    ? review.flashcard.tags
-                    : (review.flashcard.tags as string).split(',').map((t: string) => t.trim())
-                ).filter(Boolean).map((tag: string) => (
-                  <span key={tag} className="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-sm">
+                {normalizeTags(review.flashcard.tags).map((tag: string) => (
+                  <span key={tag} className="px-3 py-1 bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200 rounded-full text-sm font-medium">
                     {tag}
                   </span>
                 ))}
               </div>
             )}
 
-            <div className="text-sm text-gray-500">
+            <div className="text-sm text-gray-500 dark:text-gray-400">
               Reviewed on {new Date(review.created_at).toLocaleString()}
             </div>
           </div>

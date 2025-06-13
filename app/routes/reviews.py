@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func, cast, Integer
 from app.database import get_db
 from app.models import CardReview, Flashcard, User
-from app.schemas.review import ManualReviewSchema, ReviewOut
+from app.schemas.review import ManualReviewSchema, ReviewOut, ReviewWithFlashcard
 from app.services.evaluator import evaluate_answer
 from app.services.scheduler import compute_next_review
 from app.dependencies.auth import get_current_active_user
@@ -57,7 +57,7 @@ def manual_review(
     return review
 
 
-@router.get("/", response_model=list[ReviewOut])
+@router.get("/", response_model=list[ReviewWithFlashcard])
 def get_reviews_for_user(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)

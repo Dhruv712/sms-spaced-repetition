@@ -1,20 +1,30 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 from typing import Optional, List
 from datetime import datetime
 
 class FlashcardCreate(BaseModel):
     concept: str
     definition: str
-    tags: Optional[str] = None
+    tags: Optional[List[str]] = None
+    deck_id: Optional[int] = None
+    source_url: Optional[str] = None
 
 class FlashcardOut(BaseModel):
     id: int
     user_id: int
     concept: str
     definition: str
-    tags: Optional[str] = ""
+    tags: List[str]
+    source_url: Optional[str] = None
     created_at: datetime
     updated_at: datetime
+    deck_id: Optional[int] = None
+
+    @validator('tags', pre=True, always=True)
+    def parse_tags(cls, v):
+        if isinstance(v, str):
+            return [tag.strip() for tag in v.split(',') if tag.strip()]
+        return v
 
     class Config:
         orm_mode = True
@@ -23,5 +33,13 @@ class FlashcardWithNextReviewOut(BaseModel):
     id: int
     concept: str
     definition: str
-    tags: str
+    tags: List[str]
+    source_url: Optional[str] = None
     next_review_date: Optional[datetime]
+    deck_id: Optional[int] = None
+
+    @validator('tags', pre=True, always=True)
+    def parse_tags_for_review(cls, v):
+        if isinstance(v, str):
+            return [tag.strip() for tag in v.split(',') if tag.strip()]
+        return v
