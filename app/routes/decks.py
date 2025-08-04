@@ -22,8 +22,11 @@ def get_full_image_url(image_url: str | None) -> str | None:
     if image_url.startswith('http'):
         return image_url
     
+    # Get base URL from environment or use localhost as fallback
+    base_url = os.getenv("BASE_URL", "http://localhost:8000")
+    
     # Convert relative URL to full URL
-    return f"http://localhost:8000{image_url}"
+    return f"{base_url}{image_url}"
 
 def save_uploaded_image(file: UploadFile, deck_id: int) -> str:
     """Save uploaded image and return the file path"""
@@ -47,8 +50,11 @@ def save_uploaded_image(file: UploadFile, deck_id: int) -> str:
         # Save the resized image
         image.save(file_path, quality=85, optimize=True)
         
+        # Get base URL from environment or use localhost as fallback
+        base_url = os.getenv("BASE_URL", "http://localhost:8000")
+        
         # Return the full URL path
-        return f"http://localhost:8000/uploads/decks/{deck_id}/{filename}"
+        return f"{base_url}/uploads/decks/{deck_id}/{filename}"
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Invalid image file: {str(e)}")
 
