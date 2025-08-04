@@ -9,6 +9,7 @@ class Deck(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(255), index=True, nullable=False)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    image_url = Column(String(500), nullable=True)  # Path to uploaded preview image
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     user = relationship("User", back_populates="decks")

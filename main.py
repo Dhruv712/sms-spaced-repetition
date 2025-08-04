@@ -1,10 +1,12 @@
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
+import os
 from app.routes import flashcards
 from app.routes.users import router as users_router
 from app.routes.reviews import router as reviews_router
 from app.routes.admin import router as admin_router
 from app.routes.sms import router as sms_router
-from fastapi.middleware.cors import CORSMiddleware
 
 from app.routes.profile import router as profile_router
 
@@ -13,6 +15,12 @@ from app.routes.decks import router as decks_router
 
 
 app = FastAPI()
+
+# Create uploads directory if it doesn't exist
+os.makedirs("uploads", exist_ok=True)
+
+# Mount static files for uploaded images
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 app.add_middleware(
     CORSMiddleware,

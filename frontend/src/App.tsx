@@ -10,6 +10,7 @@ import { Register } from "./pages/Register";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AuthProvider } from "./contexts/AuthContext";
 import DecksPage from "./pages/DecksPage";
+import DeckReviewPage from './pages/DeckReviewPage';
 
 const App: React.FC = () => {
   return (
@@ -67,6 +68,7 @@ const App: React.FC = () => {
               </ProtectedRoute>
             }
           />
+          <Route path="/decks/:deck_id/review" element={<DeckReviewPage />} />
         </Routes>
       </AuthProvider>
     </Router>

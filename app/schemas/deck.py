@@ -10,6 +10,7 @@ class DeckOut(BaseModel):
     id: int
     name: str
     user_id: int
+    image_url: Optional[str] = None
     created_at: datetime
     flashcards_count: Optional[int] = None
 
@@ -17,6 +18,6 @@ class DeckOut(BaseModel):
         from_attributes = True
 
 class DeckWithFlashcards(DeckOut):
-    flashcards: List[FlashcardOut] = []
+    flashcards: List[dict]
 
 DeckWithFlashcards.model_rebuild() 

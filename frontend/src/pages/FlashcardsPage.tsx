@@ -25,11 +25,34 @@ interface DeckOut {
   user_id: number;
   created_at: string;
   flashcards_count: number;
+  image_url?: string;
 }
+
+const DeckTile: React.FC<{ deck: DeckOut; onClick: () => void; isActive: boolean }> = ({ deck, onClick, isActive }) => {
+  return (
+    <div
+      onClick={onClick}
+      className={`deck-tile p-4 rounded-lg shadow cursor-pointer border-2 ${isActive ? 'border-primary-600' : 'border-transparent'} bg-white dark:bg-secondary-800 transition-all flex flex-col items-center`}
+      style={{ minWidth: 160, minHeight: 120 }}
+    >
+      {/* Deck image - use uploaded image or fallback */}
+      <img
+        src={deck.image_url || "https://futureoflife.org/wp-content/uploads/2020/08/elon_musk_royal_society.jpg"}
+        alt={`${deck.name} preview`}
+        className="rounded mb-2 object-cover w-full h-20"
+        onError={(e) => {
+          console.error('Image failed to load:', deck.image_url);
+          e.currentTarget.src = "https://futureoflife.org/wp-content/uploads/2020/08/elon_musk_royal_society.jpg";
+        }}
+      />
+      <div className="font-bold text-lg mb-1 text-center">{deck.name}</div>
+      <div className="text-xs text-gray-500">{deck.flashcards_count} cards</div>
+    </div>
+  );
+};
 
 const FlashcardsPage: React.FC = () => {
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
-  const [darkMode, setDarkMode] = useState<boolean>(false);
   const [currentDeckName, setCurrentDeckName] = useState<string | null>(null);
   const [selectedTag, setSelectedTag] = useState<string | null>(null); // New state for tag filter
   const [uniqueTags, setUniqueTags] = useState<string[]>([]); // New state for unique tags
@@ -41,20 +64,6 @@ const FlashcardsPage: React.FC = () => {
   const deckId = queryParams.get('deckId');
 
   console.log('FlashcardsPage render:', { token, isAuthenticated });
-
-  // Load dark mode preference from localStorage
-  useEffect(() => {
-    const stored = localStorage.getItem('darkMode');
-    if (stored) {
-      setDarkMode(stored === 'true');
-    }
-  }, []);
-
-  // Apply dark mode class to body
-  useEffect(() => {
-    document.body.classList.toggle('dark', darkMode);
-    localStorage.setItem('darkMode', darkMode.toString());
-  }, [darkMode]);
 
   const loadFlashcards = async () => {
     if (!token) {
@@ -179,39 +188,38 @@ const FlashcardsPage: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 bg-gray-50 dark:bg-darkbg min-h-screen">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-800 dark:text-darktext">
-          {currentDeckName ? `Flashcards in ${currentDeckName}` : 'Your Flashcards'}
-        </h1>
-        <div className="flex items-center space-x-2">
-          <label className="switch">
-            <input
-              type="checkbox"
-              checked={darkMode}
-              onChange={() => setDarkMode(!darkMode)}
-            />
-            <span className="slider" />
-          </label>
-          <span className="text-gray-700 dark:text-gray-300">Dark Mode</span>
-        </div>
-      </div>
-
-      <div className="mb-8">
+    <div className="container mx-auto px-4 py-8 bg-gray-50 dark:bg-darkbg min-h-screen relative">
+      {/* ReviewStats in top right */}
+      <div className="fixed top-8 right-0 w-64 z-10 mr-8">
         <ReviewStats />
       </div>
-
-      <div className="mb-8">
-        <FlashcardForm onSuccess={loadFlashcards} />
+      {/* Centered FlashcardForm */}
+      <div className="flex flex-col items-center justify-center min-h-[40vh] mb-12">
+        <div className="w-full max-w-2xl">
+          <FlashcardForm onSuccess={loadFlashcards} />
+        </div>
       </div>
-
+      {/* Deck Tiles */}
+      <div className="mb-8">
+        <h2 className="text-xl font-semibold mb-3 text-gray-800">Your Decks</h2>
+        <div className="flex flex-wrap gap-4">
+          {decks.map(deck => (
+            <DeckTile
+              key={deck.id}
+              deck={deck}
+              onClick={() => handleDeckFilterClick(deck.id)}
+              isActive={!!deckId && parseInt(deckId) === deck.id}
+            />
+          ))}
+        </div>
+      </div>
       {/* Tag Filters */}
-      <div className="mb-8 p-4 bg-white dark:bg-darksurface rounded-lg shadow-md">
-        <h2 className="text-xl font-semibold mb-3 text-gray-800 dark:text-darktext">Filter by Tag</h2>
+      <div className="mb-8 p-4 bg-white dark:bg-secondary-800 rounded-lg shadow-md">
+        <h2 className="text-xl font-semibold mb-3 text-gray-800">Filter by Tag</h2>
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => handleTagFilterClick(null)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium ${selectedTag === null ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'} transition-colors duration-200`}
+            className={`px-4 py-2 rounded-lg text-sm font-medium ${selectedTag === null ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'} transition-colors duration-200`}
           >
             All Tags
           </button>
@@ -219,45 +227,23 @@ const FlashcardsPage: React.FC = () => {
             <button
               key={tag}
               onClick={() => handleTagFilterClick(tag)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium ${selectedTag === tag ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'} transition-colors duration-200`}
+              className={`px-4 py-2 rounded-lg text-sm font-medium ${selectedTag === tag ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'} transition-colors duration-200`}
             >
               {tag}
             </button>
           ))}
         </div>
       </div>
-
-      {/* Deck Filters */}
-      <div className="mb-8 p-4 bg-white dark:bg-darksurface rounded-lg shadow-md">
-        <h2 className="text-xl font-semibold mb-3 text-gray-800 dark:text-darktext">Filter by Deck</h2>
-        <div className="flex flex-wrap gap-2">
-          <button
-            onClick={() => handleDeckFilterClick(null)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium ${!deckId ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'} transition-colors duration-200`}
-          >
-            All Decks
-          </button>
-          {decks.map(deck => (
-            <button
-              key={deck.id}
-              onClick={() => handleDeckFilterClick(deck.id)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium ${deckId && parseInt(deckId) === deck.id ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'} transition-colors duration-200`}
-            >
-              {deck.name}
-            </button>
-          ))}
-        </div>
-      </div>
-      
+      {/* Flashcard Grid with Drag-and-Drop */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {flashcards.length === 0 ? (
-          <p className="text-gray-700 dark:text-gray-300 col-span-full">No flashcards found for this selection. Try adjusting your filters.</p>
+          <p className="text-gray-700 col-span-full">No flashcards found for this selection. Try adjusting your filters.</p>
         ) : (
           visibleFlashcards.map((card) => (
-            <div key={card.id} className="bg-white dark:bg-darksurface rounded-lg shadow-md p-6 border border-gray-200 dark:border-gray-700 transform hover:scale-102 transition-transform duration-200">
-              <div className="font-semibold text-lg mb-2 text-gray-900 dark:text-darktext">{card.concept}</div>
+            <div key={card.id} className="bg-white dark:bg-secondary-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-gray-700 transform hover:scale-102 transition-transform duration-200">
+              <div className="font-semibold text-lg mb-2 text-gray-900 dark:text-gray-100">{card.concept}</div>
               <hr className="my-2 border-gray-200 dark:border-gray-600" />
-              <div className="prose max-w-none text-gray-700 dark:text-gray-300">
+              <div className="prose max-w-none text-gray-700 dark:text-gray-200">
                 <ReactMarkdown
                   remarkPlugins={[remarkMath]}
                   rehypePlugins={[rehypeKatex]}
@@ -265,11 +251,11 @@ const FlashcardsPage: React.FC = () => {
                   {card.definition}
                 </ReactMarkdown>
               </div>
-              <div className="text-sm text-blue-600 dark:text-blue-400 mt-2">
+              <div className="text-sm text-blue-600 dark:text-blue-300 mt-2">
                 Tags:{' '}
                 {normalizeTags(card.tags).join(', ') || 'No tags'}
               </div>
-              <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              <div className="text-sm text-gray-600 dark:text-gray-300 mt-1">
                 <strong>Next Review:</strong>{' '}
                 {card.next_review_date
                   ? new Date(card.next_review_date).toLocaleString()

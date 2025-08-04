@@ -1,14 +1,33 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 const Navbar: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [darkMode, setDarkMode] = useState<boolean>(false);
+
+  useEffect(() => {
+    // On mount, set dark mode from localStorage
+    const stored = localStorage.getItem('darkMode');
+    if (stored) {
+      setDarkMode(stored === 'true');
+      document.body.classList.toggle('dark', stored === 'true');
+    }
+  }, []);
 
   const handleLogout = () => {
     logout();
     navigate('/login');
+  };
+
+  const toggleDarkMode = () => {
+    setDarkMode((prev) => {
+      const newMode = !prev;
+      document.body.classList.toggle('dark', newMode);
+      localStorage.setItem('darkMode', newMode.toString());
+      return newMode;
+    });
   };
 
   return (
@@ -44,17 +63,31 @@ const Navbar: React.FC = () => {
             </>
           )}
         </ul>
-        {user && (
-          <div className="flex items-center space-x-4">
-            <span className="text-gray-600 dark:text-gray-300">{user.email}</span>
-            <button
-              onClick={handleLogout}
-              className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 transition-colors duration-200"
-            >
-              Logout
-            </button>
-          </div>
-        )}
+        <div className="flex items-center space-x-4">
+          {/* Dark mode toggle button */}
+          <button
+            onClick={toggleDarkMode}
+            className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors duration-200"
+            title="Toggle dark mode"
+          >
+            {darkMode ? (
+              <span role="img" aria-label="Light mode">🌞</span>
+            ) : (
+              <span role="img" aria-label="Dark mode">🌙</span>
+            )}
+          </button>
+          {user && (
+            <>
+              <span className="text-gray-600 dark:text-gray-300">{user.email}</span>
+              <button
+                onClick={handleLogout}
+                className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 transition-colors duration-200"
+              >
+                Logout
+              </button>
+            </>
+          )}
+        </div>
       </div>
     </nav>
   );

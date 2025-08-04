@@ -120,7 +120,7 @@ const FlashcardForm: React.FC<Props> = ({ onSuccess }) => {
   };
 
   return (
-    <div className="bg-white dark:bg-darksurface rounded-lg shadow-md p-6 border border-gray-200 dark:border-gray-700">
+    <div className="bg-white dark:bg-darksurface rounded-lg shadow-md p-6 border border-gray-300 dark:border-gray-600">
       <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-darktext">Add a New Flashcard</h2>
 
       {error && (

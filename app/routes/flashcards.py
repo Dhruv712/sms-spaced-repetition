@@ -110,3 +110,8 @@ def get_all_flashcards(db: Session = Depends(get_db), current_user: User = Depen
         query = query.filter(Flashcard.deck_id == deck_id)
     return query.all()
 
+@router.get("/decks/{deck_id}/all-flashcards", response_model=List[FlashcardOut])
+def get_all_flashcards_in_deck(deck_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_active_user)):
+    cards = db.query(Flashcard).filter(Flashcard.user_id == current_user.id, Flashcard.deck_id == deck_id).all()
+    return cards
+

@@ -1,13 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 interface Deck {
   id: number;
   name: string;
   flashcards_count: number;
   created_at: string;
+  image_url?: string;
 }
 
 const DecksPage: React.FC = () => {
@@ -16,7 +18,10 @@ const DecksPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [creatingDeck, setCreatingDeck] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState<number | null>(null);
   const { token } = useAuth();
+  const navigate = useNavigate();
+  const fileInputRefs = useRef<{ [key: number]: HTMLInputElement | null }>({});
 
   useEffect(() => {
     fetchDecks();
@@ -36,6 +41,7 @@ const DecksPage: React.FC = () => {
           'Authorization': `Bearer ${token}`,
         },
       });
+      console.log('Fetched decks:', response.data);
       setDecks(response.data);
     } catch (err) {
       console.error('Error fetching decks:', err);
@@ -88,6 +94,57 @@ const DecksPage: React.FC = () => {
       setError('Failed to delete deck. Please try again.');
     } finally {
       setIsLoading(false); // Reset loading
+    }
+  };
+
+  const handleImageUpload = async (deckId: number, file: File) => {
+    if (!token) return;
+
+    setUploadingImage(deckId);
+    setError('');
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await axios.post(
+        `http://localhost:8000/decks/upload-image/${deckId}`,
+        formData,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+
+      // Update the deck in the local state
+      setDecks(prevDecks =>
+        prevDecks.map(deck =>
+          deck.id === deckId
+            ? { ...deck, image_url: response.data.image_url }
+            : deck
+        )
+      );
+      console.log('Image upload successful:', response.data.image_url);
+    } catch (err) {
+      console.error('Error uploading image:', err);
+      setError('Failed to upload image. Please try again.');
+    } finally {
+      setUploadingImage(null);
+    }
+  };
+
+  const triggerFileInput = (deckId: number) => {
+    if (fileInputRefs.current[deckId]) {
+      fileInputRefs.current[deckId]?.click();
+    }
+  };
+
+  const handleFileSelect = (deckId: number, event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      handleImageUpload(deckId, file);
     }
   };
 
@@ -148,9 +205,42 @@ const DecksPage: React.FC = () => {
             <div className="space-y-4">
               {decks.map(deck => (
                 <div key={deck.id} className="p-4 border border-secondary-200 dark:border-secondary-700 rounded-lg flex justify-between items-center bg-secondary-50 dark:bg-secondary-900/20">
-                  <div>
-                    <h3 className="text-lg font-medium text-secondary-900 dark:text-white">{deck.name} ({deck.flashcards_count || 0} cards)</h3>
-                    <p className="text-sm text-secondary-500 dark:text-secondary-400">Created: {new Date(deck.created_at).toLocaleDateString()}</p>
+                  <div className="flex items-center space-x-4">
+                    {/* Deck Preview Image */}
+                    <div className="relative">
+                      <img
+                        src={deck.image_url || "https://futureoflife.org/wp-content/uploads/2020/08/elon_musk_royal_society.jpg"}
+                        alt={`${deck.name} preview`}
+                        className="w-16 h-16 rounded-lg object-cover border border-secondary-200 dark:border-secondary-600"
+                        onError={(e) => {
+                          console.error('Image failed to load:', deck.image_url);
+                          e.currentTarget.src = "https://futureoflife.org/wp-content/uploads/2020/08/elon_musk_royal_society.jpg";
+                        }}
+                      />
+                      <button
+                        onClick={() => triggerFileInput(deck.id)}
+                        disabled={uploadingImage === deck.id}
+                        className="absolute -bottom-1 -right-1 bg-primary-600 hover:bg-primary-700 text-white rounded-full p-1 text-xs transition-colors duration-200 disabled:opacity-50"
+                        title="Upload preview image"
+                      >
+                        {uploadingImage === deck.id ? (
+                          <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin"></div>
+                        ) : (
+                          "📷"
+                        )}
+                      </button>
+                      <input
+                        ref={(el) => { fileInputRefs.current[deck.id] = el; }}
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleFileSelect(deck.id, e)}
+                        className="hidden"
+                      />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-medium text-secondary-900 dark:text-white">{deck.name} ({deck.flashcards_count || 0} cards)</h3>
+                      <p className="text-sm text-secondary-500 dark:text-secondary-400">Created: {new Date(deck.created_at).toLocaleDateString()}</p>
+                    </div>
                   </div>
                   <div className="flex space-x-2">
                     <Link
@@ -164,6 +254,12 @@ const DecksPage: React.FC = () => {
                       className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-sm font-medium"
                     >
                       Delete
+                    </button>
+                    <button
+                      className="review-deck-btn"
+                      onClick={() => navigate(`/decks/${deck.id}/review`)}
+                    >
+                      Review Deck
                     </button>
                   </div>
                 </div>
