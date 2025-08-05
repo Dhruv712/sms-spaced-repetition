@@ -57,7 +57,7 @@ const FlashcardForm: React.FC<Props> = ({ onSuccess }) => {
     setSubmitting(true);
     setError('');
     try {
-      const res = await axios.post(
+      await axios.post(
         'http://localhost:8000/flashcards/',
         {
           concept,

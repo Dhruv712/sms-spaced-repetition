@@ -117,7 +117,7 @@ const FlashcardsPage: React.FC = () => {
     if (token) {
       loadFlashcards();
     }
-  }, [loadFlashcards]); // Rerun when loadFlashcards changes
+  }, [loadFlashcards, token]); // Rerun when loadFlashcards or token changes
 
   const normalizeTags = (tags: string | string[] | undefined): string[] =>
     Array.isArray(tags)

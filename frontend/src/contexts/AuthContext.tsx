@@ -27,6 +27,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
   const navigate = useNavigate();
 
+  const logout = useCallback(() => {
+    console.log('Logging out...');
+    setToken(null);
+    setUser(null);
+    localStorage.removeItem('token');
+    navigate('/login');
+  }, [navigate]);
+
   const fetchUserProfile = useCallback(async () => {
     try {
       console.log('Attempting to fetch user profile...');
@@ -48,7 +56,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error('Error fetching user profile:', error);
       logout();
     }
-  }, [token]);
+  }, [token, logout]);
 
   useEffect(() => {
     console.log('Auth state changed:', { token, user });
@@ -153,14 +161,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.removeItem('token');
       throw error;
     }
-  };
-
-  const logout = () => {
-    console.log('Logging out...');
-    setToken(null);
-    setUser(null);
-    localStorage.removeItem('token');
-    navigate('/login');
   };
 
   const isAuthenticated = !!token && !!user;
