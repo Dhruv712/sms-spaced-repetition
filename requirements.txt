@@ -42,7 +42,7 @@ packaging==25.0
 pathspec==0.12.1
 Pillow==10.4.0
 platformdirs==4.3.8
-pluggy==0.6.0
+pluggy
 prompt_toolkit==3.0.51
 propcache==0.3.1
 psycopg2-binary==2.9.9
