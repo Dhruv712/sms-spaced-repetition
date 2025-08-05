@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { buildApiUrl } from '../config';
 
 interface User {
   email: string;
@@ -38,7 +39,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const fetchUserProfile = useCallback(async () => {
     try {
       console.log('Attempting to fetch user profile...');
-      const response = await fetch('http://localhost:8000/users/profile', {
+      const response = await fetch(buildApiUrl('/users/profile'), {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -76,7 +77,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, password: string) => {
     try {
       console.log('Attempting login for:', email);
-      const response = await fetch('http://localhost:8000/users/login', {
+      const response = await fetch(buildApiUrl('/users/login'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -95,7 +96,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem('token', newToken);
       
       // Fetch user profile immediately after login
-      const profileResponse = await fetch('http://localhost:8000/users/profile', {
+      const profileResponse = await fetch(buildApiUrl('/users/profile'), {
         headers: {
           'Authorization': `Bearer ${newToken}`
         }
@@ -121,7 +122,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const register = async (email: string, password: string, phone_number: string, name: string) => {
     try {
       console.log('Attempting registration for:', email);
-      const response = await fetch('http://localhost:8000/users/register', {
+      const response = await fetch(buildApiUrl('/users/register'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -140,7 +141,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem('token', newToken);
       
       // Fetch user profile immediately after registration
-      const profileResponse = await fetch('http://localhost:8000/users/profile', {
+      const profileResponse = await fetch(buildApiUrl('/users/profile'), {
         headers: {
           'Authorization': `Bearer ${newToken}`
         }

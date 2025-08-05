@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
+import { buildApiUrl } from '../config';
 
 interface Deck {
   id: number;
@@ -32,7 +33,7 @@ const DecksPage: React.FC = () => {
     setIsLoading(true);
     setError('');
     try {
-      const response = await axios.get('http://localhost:8000/decks/', {
+      const response = await axios.get(buildApiUrl('/decks/'), {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -59,7 +60,7 @@ const DecksPage: React.FC = () => {
     setError('');
     try {
       const response = await axios.post(
-        'http://localhost:8000/decks/',
+        buildApiUrl('/decks/'),
         { name: newDeckName },
         {
           headers: {
@@ -83,7 +84,7 @@ const DecksPage: React.FC = () => {
     setIsLoading(true); // Set loading to true while deleting
     setError('');
     try {
-      await axios.delete(`http://localhost:8000/decks/${deckId}`, {
+      await axios.delete(buildApiUrl(`/decks/${deckId}`), {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -108,7 +109,7 @@ const DecksPage: React.FC = () => {
 
     try {
       const response = await axios.post(
-        `http://localhost:8000/decks/upload-image/${deckId}`,
+        buildApiUrl(`/decks/upload-image/${deckId}`),
         formData,
         {
           headers: {

@@ -8,6 +8,7 @@ import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 import { useAuth } from '../contexts/AuthContext';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { buildApiUrl } from '../config';
 
 interface Flashcard {
   id: number;
@@ -83,7 +84,7 @@ const FlashcardsPage: React.FC = () => {
         params.tags = selectedTag;
       }
 
-      const response = await axios.get('http://localhost:8000/flashcards/with-reviews', {
+      const response = await axios.get(buildApiUrl('/flashcards/with-reviews'), {
         headers: {
           'Authorization': `Bearer ${token}`
         },
@@ -100,7 +101,7 @@ const FlashcardsPage: React.FC = () => {
       setUniqueTags(Array.from(allTags));
 
       // Fetch all decks for filtering
-      const decksResponse = await axios.get('http://localhost:8000/decks/', {
+      const decksResponse = await axios.get(buildApiUrl('/decks/'), {
         headers: {
           'Authorization': `Bearer ${token}`
         },
@@ -132,7 +133,7 @@ const FlashcardsPage: React.FC = () => {
     if (!token) return;
     
     try {
-      await axios.delete(`http://localhost:8000/flashcards/${cardId}`, {
+      await axios.delete(buildApiUrl(`/flashcards/${cardId}`), {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -148,7 +149,7 @@ const FlashcardsPage: React.FC = () => {
     
     try {
       await axios.post(
-        `http://localhost:8000/flashcards/${cardId}/mark-reviewed`,
+        buildApiUrl(`/flashcards/${cardId}/mark-reviewed`),
         {},
         {
           headers: {

@@ -5,6 +5,7 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 import { useAuth } from '../contexts/AuthContext';
+import { buildApiUrl } from '../config';
 
 interface Props {
   onSuccess: () => void;
@@ -33,7 +34,7 @@ const FlashcardForm: React.FC<Props> = ({ onSuccess }) => {
     if (!token) return;
     const fetchDecks = async () => {
       try {
-        const response = await axios.get('http://localhost:8000/decks/', {
+        const response = await axios.get(buildApiUrl('/decks/'), {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
@@ -58,7 +59,7 @@ const FlashcardForm: React.FC<Props> = ({ onSuccess }) => {
     setError('');
     try {
       await axios.post(
-        'http://localhost:8000/flashcards/',
+        buildApiUrl('/flashcards/'),
         {
           concept,
           definition,
@@ -88,7 +89,7 @@ const FlashcardForm: React.FC<Props> = ({ onSuccess }) => {
     setError('');
     try {
       const res = await axios.post(
-        'http://localhost:8000/natural_flashcards/generate_flashcard',
+        buildApiUrl('/natural_flashcards/generate_flashcard'),
         {
           text: nlInput,
         },
