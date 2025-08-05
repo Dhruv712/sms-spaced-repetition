@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
 import FlashcardForm from '../components/FlashcardForm';
 import ReviewStats from '../components/ReviewStats';
@@ -53,7 +53,6 @@ const DeckTile: React.FC<{ deck: DeckOut; onClick: () => void; isActive: boolean
 
 const FlashcardsPage: React.FC = () => {
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
-  const [currentDeckName, setCurrentDeckName] = useState<string | null>(null);
   const [selectedTag, setSelectedTag] = useState<string | null>(null); // New state for tag filter
   const [uniqueTags, setUniqueTags] = useState<string[]>([]); // New state for unique tags
   const [decks, setDecks] = useState<DeckOut[]>([]); // New state for decks
@@ -65,7 +64,7 @@ const FlashcardsPage: React.FC = () => {
 
   console.log('FlashcardsPage render:', { token, isAuthenticated });
 
-  const loadFlashcards = async () => {
+  const loadFlashcards = useCallback(async () => {
     if (!token) {
       console.log('No token available, skipping flashcard load');
       return;
@@ -108,28 +107,17 @@ const FlashcardsPage: React.FC = () => {
       });
       setDecks(decksResponse.data);
 
-      if (deckId) {
-        // Fetch deck name only if a deckId is present in URL
-        const deckResponse = await axios.get(`http://localhost:8000/decks/${deckId}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          },
-        });
-        setCurrentDeckName(deckResponse.data.name);
-      } else {
-        setCurrentDeckName(null);
-      }
     } catch (err) {
       console.error('Error fetching flashcards:', err);
     }
-  };
+  }, [token, deckId, selectedTag]);
 
   useEffect(() => {
     console.log('Token, deckId, or selectedTag changed, attempting to load flashcards');
     if (token) {
       loadFlashcards();
     }
-  }, [token, deckId, selectedTag]); // Rerun when token, deckId or selectedTag changes
+  }, [loadFlashcards]); // Rerun when loadFlashcards changes
 
   const normalizeTags = (tags: string | string[] | undefined): string[] =>
     Array.isArray(tags)

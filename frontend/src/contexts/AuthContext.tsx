@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 interface User {
@@ -27,22 +27,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
   const navigate = useNavigate();
 
-  useEffect(() => {
-    console.log('Auth state changed:', { token, user });
-  }, [token, user]);
-
-  useEffect(() => {
-    // If we have a token, try to get the user profile
-    if (token) {
-      console.log('Fetching user profile with token:', token);
-      fetchUserProfile();
-    } else {
-      // If no token, clear user
-      setUser(null);
-    }
-  }, [token]);
-
-  const fetchUserProfile = async () => {
+  const fetchUserProfile = useCallback(async () => {
     try {
       console.log('Attempting to fetch user profile...');
       const response = await fetch('http://localhost:8000/users/profile', {
@@ -63,7 +48,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error('Error fetching user profile:', error);
       logout();
     }
-  };
+  }, [token]);
+
+  useEffect(() => {
+    console.log('Auth state changed:', { token, user });
+  }, [token, user]);
+
+  useEffect(() => {
+    // If we have a token, try to get the user profile
+    if (token) {
+      console.log('Fetching user profile with token:', token);
+      fetchUserProfile();
+    } else {
+      // If no token, clear user
+      setUser(null);
+    }
+  }, [token, fetchUserProfile]);
 
   const login = async (email: string, password: string) => {
     try {

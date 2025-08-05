@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import { Link } from 'react-router-dom';
@@ -23,11 +23,7 @@ const DecksPage: React.FC = () => {
   const navigate = useNavigate();
   const fileInputRefs = useRef<{ [key: number]: HTMLInputElement | null }>({});
 
-  useEffect(() => {
-    fetchDecks();
-  }, [token]);
-
-  const fetchDecks = async () => {
+  const fetchDecks = useCallback(async () => {
     if (!token) {
       setError('Authentication token not found.');
       setIsLoading(false);
@@ -49,7 +45,11 @@ const DecksPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [token]);
+
+  useEffect(() => {
+    fetchDecks();
+  }, [fetchDecks]);
 
   const handleCreateDeck = async (e: React.FormEvent) => {
     e.preventDefault();
