@@ -7,7 +7,11 @@ console.log('Using API_BASE_URL:', API_BASE_URL);
 
 // Helper function to build API URLs
 export const buildApiUrl = (endpoint: string): string => {
-  const url = `${API_BASE_URL}${endpoint}`;
+  // Ensure we're always using HTTPS
+  const baseUrl = API_BASE_URL.startsWith('https://') ? API_BASE_URL : `https://${API_BASE_URL.replace(/^https?:\/\//, '')}`;
+  const url = `${baseUrl}${endpoint}`;
   console.log('Building API URL:', url);
+  console.log('URL protocol:', new URL(url).protocol);
+  console.log('URL hostname:', new URL(url).hostname);
   return url;
 }; 

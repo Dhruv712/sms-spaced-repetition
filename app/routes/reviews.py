@@ -6,7 +6,7 @@ from app.models import CardReview, Flashcard, User
 from app.schemas.review import ManualReviewSchema, ReviewOut, ReviewWithFlashcard
 from app.services.evaluator import evaluate_answer
 from app.services.scheduler import compute_next_review
-from app.dependencies.auth import get_current_active_user
+from app.services.auth import get_current_active_user
 import datetime
 
 router = APIRouter()
