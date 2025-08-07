@@ -1,130 +1,109 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
+import axios from 'axios';
+import { buildApiUrl } from '../config';
 
 interface Flashcard {
   id: number;
   concept: string;
   definition: string;
   tags: string[];
-  source_url?: string;
 }
 
 const DeckReviewPage: React.FC = () => {
   const { deck_id } = useParams<{ deck_id: string }>();
-  const { token } = useAuth();
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
-  const [current, setCurrent] = useState(0);
-  const [userAnswer, setUserAnswer] = useState('');
-  const [grading, setGrading] = useState(false);
-  const [grade, setGrade] = useState<any>(null);
-  const [finished, setFinished] = useState(false);
-  const [flipped, setFlipped] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [answer, setAnswer] = useState('');
+  const [feedback, setFeedback] = useState<string | null>(null);
+  const { token } = useAuth();
 
   useEffect(() => {
     if (!token || !deck_id) return;
-    axios.get(`http://localhost:8000/flashcards/decks/${deck_id}/all-flashcards`, {
-      headers: { Authorization: `Bearer ${token}` },
-    }).then(res => setFlashcards(res.data));
+
+    const fetchFlashcards = async () => {
+      try {
+        const response = await axios.get(buildApiUrl(`/flashcards/decks/${deck_id}/all-flashcards`), {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        setFlashcards(response.data);
+        if (response.data.length > 0) {
+          setCurrentIndex(0);
+        } else {
+          setError('No flashcards in this deck.');
+        }
+      } catch (err) {
+        console.error('Failed to fetch flashcards:', err);
+        setError('Failed to load flashcards. Please try again.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchFlashcards();
   }, [token, deck_id]);
 
-  const handleGrade = async () => {
-    setGrading(true);
-    setGrade(null);
+  const handleSubmit = async () => {
+    if (!token || currentIndex >= flashcards.length || !answer.trim()) return;
+    setError('');
+    setFeedback(null);
     try {
-      const res = await axios.post('http://localhost:8000/reviews/manual_review', {
-        flashcard_id: flashcards[current].id,
-        answer: userAnswer,
+      const res = await axios.post(buildApiUrl('/reviews/manual_review'), {
+        flashcard_id: flashcards[currentIndex].id,
+        answer,
       }, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       });
-      setGrade(res.data);
-    } catch (e) {
-      setGrade({ error: 'Grading failed.' });
+      setFeedback(res.data.llm_feedback || res.data.feedback || 'No feedback returned.');
+      setAnswer('');
+    } catch (err) {
+      console.error('Failed to submit review:', err);
+      setError('Failed to submit review. Please try again.');
     }
-    setGrading(false);
-  };
-
-  const handleNext = () => {
-    setUserAnswer('');
-    setGrade(null);
-    setFlipped(false);
-    if (current + 1 < flashcards.length) {
-      setCurrent(current + 1);
-    } else {
-      setFinished(true);
-    }
-  };
-
-  const handleFlip = () => {
-    setFlipped(true);
   };
 
   if (!token) return <div>Please log in.</div>;
+  if (isLoading) return <div>Loading flashcards...</div>;
+  if (error) return <div>{error}</div>;
   if (flashcards.length === 0) return <div>No flashcards in this deck.</div>;
-  if (finished) return <div>Review complete!</div>;
 
-  const card = flashcards[current];
+  const currentCard = flashcards[currentIndex];
 
   return (
     <div className="max-w-xl mx-auto p-6 bg-white dark:bg-gray-900 rounded shadow">
       <h2 className="text-xl font-bold mb-4">Review Deck</h2>
-      <div className="mb-2 text-sm text-gray-500 dark:text-gray-300">Card {current + 1} of {flashcards.length}</div>
+      <div className="mb-2 text-sm text-gray-500 dark:text-gray-300">Card {currentIndex + 1} of {flashcards.length}</div>
       <div className="mb-4">
         <div className="font-semibold">Concept:</div>
-        <div>{card.concept}</div>
+        <div>{currentCard.concept}</div>
       </div>
-      {!flipped && !grade && (
-        <>
-          <div className="mb-4">
-            <div className="font-semibold">Your Answer:</div>
-            <textarea
-              className="w-full border rounded p-2"
-              rows={3}
-              value={userAnswer}
-              onChange={e => setUserAnswer(e.target.value)}
-              disabled={grading || !!grade}
-            />
-          </div>
-          <button
-            className="bg-primary-500 text-white px-4 py-2 rounded mr-2"
-            onClick={handleGrade}
-            disabled={grading || !!grade}
-          >
-            {grading ? 'Grading...' : 'Submit Answer'}
-          </button>
-          <button
-            className="bg-secondary-500 text-white px-4 py-2 rounded"
-            onClick={handleFlip}
-            disabled={grading || !!grade}
-          >
-            Flip Card
-          </button>
-        </>
-      )}
-      {flipped && !grade && (
-        <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900 rounded">
-          <div className="font-semibold mb-2">Definition:</div>
-          <div className="mb-4">{card.definition}</div>
-          <button className="bg-secondary-500 text-white px-4 py-2 rounded" onClick={handleNext}>
-            {current + 1 < flashcards.length ? 'Next Card' : 'Finish Review'}
-          </button>
-        </div>
-      )}
-      {grade && (
+      <div className="mb-4">
+        <div className="font-semibold">Your Answer:</div>
+        <textarea
+          className="w-full border rounded p-2"
+          rows={3}
+          value={answer}
+          onChange={e => setAnswer(e.target.value)}
+          disabled={isLoading || !!feedback}
+        />
+      </div>
+      <button
+        className="bg-primary-500 text-white px-4 py-2 rounded mr-2"
+        onClick={handleSubmit}
+        disabled={isLoading || !!feedback}
+      >
+        {isLoading ? 'Submitting...' : 'Submit Answer'}
+      </button>
+      {feedback && (
         <div className="mt-4 p-3 bg-gray-100 rounded">
-          {grade.error ? (
-            <div className="text-red-600">{grade.error}</div>
-          ) : (
-            <>
-              <div><strong>Correct:</strong> {grade.was_correct !== undefined ? (grade.was_correct ? 'Yes' : 'No') : (grade.correct ? 'Yes' : 'No')}</div>
-              <div><strong>LLM Feedback:</strong> {grade.llm_feedback || grade.feedback || 'No feedback returned.'}</div>
-            </>
-          )}
-          <button className="mt-2 bg-secondary-500 text-white px-4 py-2 rounded" onClick={handleNext}>
-            {current + 1 < flashcards.length ? 'Next Card' : 'Finish Review'}
-          </button>
+          <div><strong>LLM Feedback:</strong> {feedback}</div>
         </div>
       )}
     </div>

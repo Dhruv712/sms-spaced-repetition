@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import axios from 'axios';
+import { buildApiUrl } from '../config';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
@@ -33,7 +34,7 @@ const ReviewHistoryPage: React.FC = () => {
 
     const fetchReviews = async () => {
       try {
-        const response = await axios.get('http://localhost:8000/reviews', {
+        const response = await axios.get(buildApiUrl('/reviews'), {
           headers: {
             'Authorization': `Bearer ${token}`
           }

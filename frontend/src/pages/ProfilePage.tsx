@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import axios from 'axios';
+import { buildApiUrl } from '../config';
 
 interface UserProfile {
   name: string;
@@ -20,7 +21,7 @@ const ProfilePage: React.FC = () => {
   useEffect(() => {
     if (!token) return;
 
-    axios.get('http://localhost:8000/users/profile', {
+    axios.get(buildApiUrl('/users/profile'), {
       headers: {
         'Authorization': `Bearer ${token}`
       }
@@ -44,7 +45,7 @@ const ProfilePage: React.FC = () => {
     setMessage('');
 
     try {
-      await axios.put('http://localhost:8000/users/profile', profile, {
+      await axios.put(buildApiUrl('/users/profile'), profile, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

@@ -6,7 +6,7 @@ from app.database import get_db
 from app.models.user import User
 from app.utils.config import settings
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="users/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="users/login/token")
 
 async def get_current_user(
     token: str = Depends(oauth2_scheme),

@@ -7,6 +7,7 @@ from app.routes.users import router as users_router
 from app.routes.reviews import router as reviews_router
 from app.routes.admin import router as admin_router
 from app.routes.sms import router as sms_router
+from app.routes.auth import router as auth_router
 
 from app.routes.profile import router as profile_router
 
@@ -49,6 +50,7 @@ app.include_router(reviews_router, prefix="/reviews", tags=["Reviews"])
 
 app.include_router(admin_router, prefix="/admin", tags=["Admin"])
 app.include_router(sms_router, prefix="/sms", tags=["SMS"])
+app.include_router(auth_router, prefix="/auth", tags=["Auth"])
 
 app.include_router(profile_router, prefix="/users", tags=["Profile"])
 app.include_router(natural_flashcard_router, prefix="/natural_flashcards", tags=["Natural_Flashcards"])

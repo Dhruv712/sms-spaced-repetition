@@ -1,36 +1,45 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import axios from 'axios';
+import { buildApiUrl } from '../config';
 
-interface ReviewStatsData {
+interface ReviewStats {
   total: number;
   correct: number;
   average_confidence: number;
 }
 
 const ReviewStats: React.FC = () => {
-  const [stats, setStats] = useState<ReviewStatsData | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [stats, setStats] = useState<ReviewStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const { token } = useAuth();
 
   useEffect(() => {
     if (!token) return;
 
-    axios
-      .get('http://localhost:8000/reviews/stats', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-      .then((res) => setStats(res.data))
-      .catch((err) => {
-        console.error(err);
-        setError('Failed to fetch stats');
-      });
+    const fetchStats = async () => {
+      try {
+        const response = await axios.get(buildApiUrl('/reviews/stats'), {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        setStats(response.data);
+      } catch (err) {
+        console.error('Failed to fetch stats:', err);
+        setError('Failed to load review stats.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
   }, [token]);
 
   if (error) return <div className="text-red-600">{error}</div>;
-  if (!stats) return <div>Loading review stats...</div>;
+  if (loading) return <div>Loading review stats...</div>;
+  if (!stats) return <div>No review stats available.</div>;
 
   const winRate = ((stats.correct / stats.total) * 100).toFixed(1);
   const avgConfidence = (stats.average_confidence * 100).toFixed(1);

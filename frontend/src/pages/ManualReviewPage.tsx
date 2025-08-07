@@ -5,6 +5,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
+import { buildApiUrl } from '../config';
 
 interface Flashcard {
   id: number;
@@ -27,7 +28,7 @@ const ManualReviewPage: React.FC = () => {
 
     const fetchFlashcards = async () => {
       try {
-        const response = await axios.get('http://localhost:8000/flashcards/due', {
+        const response = await axios.get(buildApiUrl('/flashcards/due'), {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -55,7 +56,7 @@ const ManualReviewPage: React.FC = () => {
     setFeedback(null);
     try {
       const response = await axios.post(
-        `http://localhost:8000/reviews/manual_review`,
+        buildApiUrl('/reviews/manual_review'),
         {
           flashcard_id: flashcards[currentIndex].id,
           answer,
