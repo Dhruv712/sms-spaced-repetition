@@ -13,6 +13,13 @@ from app.routes.profile import router as profile_router
 from app.routes.natural_flashcards import router as natural_flashcard_router
 from app.routes.decks import router as decks_router
 
+# Run database migrations on startup
+import subprocess
+try:
+    subprocess.run(["alembic", "upgrade", "head"], check=True)
+    print("Database migrations completed successfully")
+except Exception as e:
+    print(f"Migration error: {e}")
 
 app = FastAPI()
 
