@@ -13,13 +13,13 @@ from app.routes.profile import router as profile_router
 from app.routes.natural_flashcards import router as natural_flashcard_router
 from app.routes.decks import router as decks_router
 
-# Run database migrations on startup
-import subprocess
+# Run database setup on startup
 try:
-    subprocess.run(["alembic", "upgrade", "head"], check=True)
-    print("Database migrations completed successfully")
+    from create_tables import recreate_database
+    recreate_database()
+    print("Database setup completed successfully")
 except Exception as e:
-    print(f"Migration error: {e}")
+    print(f"Database setup error: {e}")
 
 app = FastAPI()
 

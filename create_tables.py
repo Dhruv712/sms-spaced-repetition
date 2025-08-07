@@ -2,14 +2,26 @@
 """
 Script to create database tables
 """
-from app.database import engine, Base
-from app.models import User, Flashcard, CardReview, StudySession, ConversationState
+import os
+from sqlalchemy import create_engine, text
+from app.models import Base
 
-def create_tables():
-    """Create all database tables"""
-    print("Creating database tables...")
-    Base.metadata.create_all(bind=engine)
-    print("Tables created successfully!")
+# Get database URL from environment
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:HKxMQCyIZjoNLhYHNuBGEtnqYUCSFFhW@postgres.railway.internal:5432/railway")
+
+engine = create_engine(DATABASE_URL)
+
+def recreate_database():
+    with engine.connect() as conn:
+        # Drop all tables
+        conn.execute(text("DROP SCHEMA public CASCADE;"))
+        conn.execute(text("CREATE SCHEMA public;"))
+        conn.commit()
+        print("Dropped all tables")
+        
+        # Create all tables
+        Base.metadata.create_all(engine)
+        print("Created all tables")
 
 if __name__ == "__main__":
-    create_tables()
+    recreate_database()
