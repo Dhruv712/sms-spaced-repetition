@@ -29,7 +29,7 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "start": "echo 'PORT is: $PORT' && if [ -d 'build' ]; then npx serve -s build -l ${PORT:-8080}; else react-scripts start; fi",
+    "start": "if [ -d 'build' ]; then npx serve -s build -l $PORT; else react-scripts start; fi",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
