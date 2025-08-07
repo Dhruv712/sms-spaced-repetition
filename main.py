@@ -25,6 +25,8 @@ app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 # Get allowed origins from environment or use defaults
 allowed_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,https://hopeful-adventure-production.up.railway.app").split(",")
 
+print(f"Allowed origins: {allowed_origins}")
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
