@@ -29,7 +29,7 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "start": "echo 'All env vars:' && env | grep -E '(PORT|RAILWAY)' && echo 'PORT var:' && echo $PORT && echo 'PORT length:' && echo ${#PORT} && if [ -d 'build' ]; then npx serve -s build -l $PORT; else react-scripts start; fi",
+    "start": "if [ -d 'build' ]; then npx serve -s build -l 8068; else react-scripts start; fi",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
