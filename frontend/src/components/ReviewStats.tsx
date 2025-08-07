@@ -3,14 +3,14 @@ import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
 import { buildApiUrl } from '../config';
 
-interface ReviewStats {
+interface ReviewStatsData {
   total: number;
   correct: number;
   average_confidence: number;
 }
 
 const ReviewStats: React.FC = () => {
-  const [stats, setStats] = useState<ReviewStats | null>(null);
+  const [stats, setStats] = useState<ReviewStatsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const { token } = useAuth();
