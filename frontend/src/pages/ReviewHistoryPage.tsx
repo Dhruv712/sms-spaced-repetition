@@ -34,7 +34,7 @@ const ReviewHistoryPage: React.FC = () => {
 
     const fetchReviews = async () => {
       try {
-        const response = await axios.get(buildApiUrl('/reviews'), {
+        const response = await axios.get(buildApiUrl('/reviews/'), {
           headers: {
             'Authorization': `Bearer ${token}`
           }
