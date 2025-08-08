@@ -9,6 +9,7 @@ interface UserProfile {
   preferred_start_hour: number;
   preferred_end_hour: number;
   timezone: string;
+  sms_opt_in: boolean;
 }
 
 const ProfilePage: React.FC = () => {
@@ -141,6 +142,23 @@ const ProfilePage: React.FC = () => {
               onChange={handleChange}
               className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-800 dark:text-darktext dark:border-gray-600 transition-colors duration-200"
             />
+          </div>
+
+          <div className="flex items-center">
+            <input
+              id="sms-opt-in"
+              name="sms_opt_in"
+              type="checkbox"
+              checked={profile.sms_opt_in}
+              onChange={(e) => setProfile({ ...profile, sms_opt_in: e.target.checked })}
+              className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+            />
+            <label htmlFor="sms-opt-in" className="ml-2 block text-sm text-gray-900 dark:text-darktext">
+              <span className="font-medium">Receive SMS notifications</span>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Get daily flashcard reminders and spaced repetition notifications via text message.
+              </p>
+            </label>
           </div>
 
           <button

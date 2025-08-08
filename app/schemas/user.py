@@ -8,6 +8,7 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     password: str
+    sms_opt_in: Optional[bool] = False
 
 class UserLogin(BaseModel):
     email: EmailStr
@@ -20,6 +21,7 @@ class UserOut(UserBase):
     preferred_start_hour: int
     preferred_end_hour: int
     timezone: str
+    sms_opt_in: bool
 
     class Config:
         from_attributes = True

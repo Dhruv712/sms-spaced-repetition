@@ -16,7 +16,7 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, phone_number: string, name: string) => Promise<void>;
+  register: (email: string, password: string, phone_number: string, name: string, sms_opt_in?: boolean) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
 }
@@ -119,7 +119,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const register = async (email: string, password: string, phone_number: string, name: string) => {
+  const register = async (email: string, password: string, phone_number: string, name: string, sms_opt_in: boolean = false) => {
     try {
       console.log('Attempting registration for:', email);
       const response = await fetch(buildApiUrl('/users/register'), {
@@ -127,7 +127,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password, phone_number, name }),
+        body: JSON.stringify({ email, password, phone_number, name, sms_opt_in }),
       });
 
       if (!response.ok) {

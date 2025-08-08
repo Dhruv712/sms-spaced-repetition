@@ -16,6 +16,7 @@ class User(Base):
     preferred_end_hour = Column(Integer, default=21)
     timezone = Column(String(50), default="UTC")
     is_active = Column(Boolean, default=True)
+    sms_opt_in = Column(Boolean, default=False)  # SMS opt-in preference
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     

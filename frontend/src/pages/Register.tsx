@@ -7,6 +7,7 @@ export const Register: React.FC = () => {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [smsOptIn, setSmsOptIn] = useState(false);
   const [error, setError] = useState('');
   const { register } = useAuth();
   const navigate = useNavigate();
@@ -14,7 +15,7 @@ export const Register: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await register(email, password, phoneNumber, name);
+      await register(email, password, phoneNumber, name, smsOptIn);
       navigate('/');
     } catch (err) {
       setError('Failed to create an account. Please try again.');
@@ -98,6 +99,24 @@ export const Register: React.FC = () => {
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
+          </div>
+
+          <div className="flex items-center">
+            <input
+              id="sms-opt-in"
+              name="sms-opt-in"
+              type="checkbox"
+              checked={smsOptIn}
+              onChange={(e) => setSmsOptIn(e.target.checked)}
+              className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+            />
+            <label htmlFor="sms-opt-in" className="ml-2 block text-sm text-gray-900 dark:text-darktext">
+              <span className="font-medium">Receive SMS notifications</span>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Get daily flashcard reminders and spaced repetition notifications via text message. 
+                You can change this preference anytime in your profile.
+              </p>
+            </label>
           </div>
 
           <div>

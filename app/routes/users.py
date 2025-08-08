@@ -24,7 +24,8 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
         email=user.email,
         password_hash=hashed_password,
         phone_number=user.phone_number,
-        name=user.name
+        name=user.name,
+        sms_opt_in=user.sms_opt_in or False
     )
     db.add(db_user)
     db.commit()
