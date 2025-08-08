@@ -18,10 +18,13 @@ from app.routes.decks import router as decks_router
 try:
     from app.database import engine
     from app.models import Base
+    # Drop and recreate all tables to ensure schema is current
+    Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
-    print("Database tables verified/created successfully")
+    print("Database tables recreated successfully")
 except Exception as e:
     print(f"Database setup error: {e}")
+    raise e  # Re-raise the exception to prevent startup with broken DB
 
 app = FastAPI(redirect_slashes=False)
 
