@@ -23,7 +23,7 @@ try:
 except Exception as e:
     print(f"Database setup error: {e}")
 
-app = FastAPI()
+app = FastAPI(redirect_slashes=False)
 
 # Create uploads directory if it doesn't exist
 os.makedirs("uploads", exist_ok=True)
