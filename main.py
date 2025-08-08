@@ -14,11 +14,12 @@ from app.routes.profile import router as profile_router
 from app.routes.natural_flashcards import router as natural_flashcard_router
 from app.routes.decks import router as decks_router
 
-# Run database setup on startup
+# Safe database setup - only create tables if they don't exist
 try:
-    from create_tables import recreate_database
-    recreate_database()
-    print("Database setup completed successfully")
+    from app.database import engine
+    from app.models import Base
+    Base.metadata.create_all(bind=engine)
+    print("Database tables verified/created successfully")
 except Exception as e:
     print(f"Database setup error: {e}")
 
