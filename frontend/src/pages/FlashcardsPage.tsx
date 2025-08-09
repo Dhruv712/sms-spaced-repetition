@@ -147,25 +147,6 @@ const FlashcardsPage: React.FC = () => {
     }
   };
 
-  const handleMarkReviewed = async (cardId: number) => {
-    if (!token) return;
-    
-    try {
-      await axios.post(
-        buildApiUrl(`/flashcards/${cardId}/mark-reviewed`),
-        {},
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        }
-      );
-      loadFlashcards();
-    } catch (err) {
-      console.error('Error marking reviewed:', err);
-    }
-  };
-
   const handleTagFilterClick = (tag: string | null) => {
     setSelectedTag(tag);
   };
@@ -274,12 +255,6 @@ const FlashcardsPage: React.FC = () => {
                   className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors duration-200"
                 >
                   Edit
-                </button>
-                <button
-                  onClick={() => handleMarkReviewed(card.id)}
-                  className="px-4 py-2 bg-secondary-500 text-white rounded hover:bg-secondary-600 focus:outline-none focus:ring-2 focus:ring-secondary-500 focus:ring-opacity-50 transition-colors duration-200"
-                >
-                  Mark Reviewed
                 </button>
                 <button
                   onClick={() => handleDelete(card.id)}
