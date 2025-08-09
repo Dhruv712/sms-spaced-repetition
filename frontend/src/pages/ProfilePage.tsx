@@ -151,7 +151,7 @@ const ProfilePage: React.FC = () => {
               type="checkbox"
               checked={profile.sms_opt_in}
               onChange={(e) => setProfile({ ...profile, sms_opt_in: e.target.checked })}
-              className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+              className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600 dark:checked:bg-primary-600 dark:checked:border-primary-600"
             />
             <label htmlFor="sms-opt-in" className="ml-2 block text-sm text-gray-900 dark:text-darktext">
               <span className="font-medium">Receive SMS notifications</span>
