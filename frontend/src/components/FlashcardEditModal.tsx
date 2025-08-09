@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
@@ -53,13 +53,7 @@ const FlashcardEditModal: React.FC<Props> = ({ flashcard, isOpen, onClose, onSuc
     }
   }, [isOpen, flashcard]);
 
-  useEffect(() => {
-    if (isOpen && token) {
-      fetchDecks();
-    }
-  }, [isOpen, token]);
-
-  const fetchDecks = async () => {
+  const fetchDecks = useCallback(async () => {
     try {
       const response = await axios.get(buildApiUrl('/decks/'), {
         headers: {
@@ -70,7 +64,13 @@ const FlashcardEditModal: React.FC<Props> = ({ flashcard, isOpen, onClose, onSuc
     } catch (err) {
       console.error('Error fetching decks:', err);
     }
-  };
+  }, [token]);
+
+  useEffect(() => {
+    if (isOpen && token) {
+      fetchDecks();
+    }
+  }, [isOpen, token, fetchDecks]);
 
   const handleSave = async () => {
     if (!flashcard || !token) return;
