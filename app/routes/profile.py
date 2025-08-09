@@ -14,6 +14,7 @@ class UserProfile(BaseModel):
     preferred_start_hour: int
     preferred_end_hour: int
     timezone: str
+    sms_opt_in: bool
 
 @router.get("/profile", response_model=UserProfile)
 def get_user_profile(
@@ -25,7 +26,8 @@ def get_user_profile(
         study_mode=current_user.study_mode,
         preferred_start_hour=current_user.preferred_start_hour,
         preferred_end_hour=current_user.preferred_end_hour,
-        timezone=current_user.timezone
+        timezone=current_user.timezone,
+        sms_opt_in=current_user.sms_opt_in
     )
 
 @router.put("/profile", response_model=UserProfile)
@@ -39,6 +41,7 @@ def update_user_profile(
     current_user.preferred_start_hour = profile.preferred_start_hour
     current_user.preferred_end_hour = profile.preferred_end_hour
     current_user.timezone = profile.timezone
+    current_user.sms_opt_in = profile.sms_opt_in
 
     db.commit()
     db.refresh(current_user)
