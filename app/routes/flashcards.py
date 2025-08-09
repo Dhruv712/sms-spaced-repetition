@@ -80,6 +80,50 @@ def get_flashcards_with_next_review(db: Session = Depends(get_db), current_user:
         })
     return result
 
+@router.get("/", response_model=list[FlashcardOut])
+def get_all_flashcards(db: Session = Depends(get_db), current_user: User = Depends(get_current_active_user), deck_id: Optional[int] = None):
+    query = db.query(Flashcard).filter(Flashcard.user_id == current_user.id)
+    if deck_id is not None:
+        query = query.filter(Flashcard.deck_id == deck_id)
+    return query.all()
+
+@router.get("/decks/{deck_id}/all-flashcards", response_model=List[FlashcardOut])
+def get_all_flashcards_in_deck(deck_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_active_user)):
+    cards = db.query(Flashcard).filter(Flashcard.user_id == current_user.id, Flashcard.deck_id == deck_id).all()
+    return cards
+
+@router.get("/{card_id}", response_model=FlashcardOut)
+def get_flashcard(
+    card_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    card = db.query(Flashcard).filter_by(id=card_id, user_id=current_user.id).first()
+    if not card:
+        raise HTTPException(status_code=404, detail="Flashcard not found or not authorized")
+    return card
+
+@router.put("/{card_id}", response_model=FlashcardOut)
+def update_flashcard(
+    card_id: int, 
+    flashcard_update: FlashcardCreate, 
+    db: Session = Depends(get_db), 
+    current_user: User = Depends(get_current_active_user)
+):
+    card = db.query(Flashcard).filter_by(id=card_id, user_id=current_user.id).first()
+    if not card:
+        raise HTTPException(status_code=404, detail="Flashcard not found or not authorized")
+    
+    card.concept = flashcard_update.concept
+    card.definition = flashcard_update.definition
+    card.tags = flashcard_update.tags
+    card.deck_id = flashcard_update.deck_id
+    card.source_url = flashcard_update.source_url
+    
+    db.commit()
+    db.refresh(card)
+    return card
+
 @router.delete("/{card_id}")
 def delete_flashcard(card_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_active_user)):
     card = db.query(Flashcard).filter_by(id=card_id, user_id=current_user.id).first()
@@ -107,39 +151,6 @@ def mark_flashcard_reviewed(card_id: int, db: Session = Depends(get_db), current
     db.commit()
     return {"detail": "Card marked as reviewed."}
 
-@router.get("/", response_model=list[FlashcardOut])
-def get_all_flashcards(db: Session = Depends(get_db), current_user: User = Depends(get_current_active_user), deck_id: Optional[int] = None):
-    query = db.query(Flashcard).filter(Flashcard.user_id == current_user.id)
-    if deck_id is not None:
-        query = query.filter(Flashcard.deck_id == deck_id)
-    return query.all()
-
-@router.get("/decks/{deck_id}/all-flashcards", response_model=List[FlashcardOut])
-def get_all_flashcards_in_deck(deck_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_active_user)):
-    cards = db.query(Flashcard).filter(Flashcard.user_id == current_user.id, Flashcard.deck_id == deck_id).all()
-    return cards
-
-@router.put("/{card_id}", response_model=FlashcardOut)
-def update_flashcard(
-    card_id: int, 
-    flashcard_update: FlashcardCreate, 
-    db: Session = Depends(get_db), 
-    current_user: User = Depends(get_current_active_user)
-):
-    card = db.query(Flashcard).filter_by(id=card_id, user_id=current_user.id).first()
-    if not card:
-        raise HTTPException(status_code=404, detail="Flashcard not found or not authorized")
-    
-    card.concept = flashcard_update.concept
-    card.definition = flashcard_update.definition
-    card.tags = flashcard_update.tags
-    card.deck_id = flashcard_update.deck_id
-    card.source_url = flashcard_update.source_url
-    
-    db.commit()
-    db.refresh(card)
-    return card
-
 @router.patch("/{card_id}/assign-deck")
 def assign_flashcard_to_deck(
     card_id: int,
@@ -162,15 +173,4 @@ def assign_flashcard_to_deck(
     db.commit()
     db.refresh(card)
     return {"detail": "Flashcard assigned to deck successfully"}
-
-@router.get("/{card_id}", response_model=FlashcardOut)
-def get_flashcard(
-    card_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
-):
-    card = db.query(Flashcard).filter_by(id=card_id, user_id=current_user.id).first()
-    if not card:
-        raise HTTPException(status_code=404, detail="Flashcard not found or not authorized")
-    return card
 
