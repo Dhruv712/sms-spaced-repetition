@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
 import FlashcardForm from '../components/FlashcardForm';
+import FlashcardEditModal from '../components/FlashcardEditModal';
 import ReviewStats from '../components/ReviewStats';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
@@ -57,6 +58,8 @@ const FlashcardsPage: React.FC = () => {
   const [selectedTag, setSelectedTag] = useState<string | null>(null); // New state for tag filter
   const [uniqueTags, setUniqueTags] = useState<string[]>([]); // New state for unique tags
   const [decks, setDecks] = useState<DeckOut[]>([]); // New state for decks
+  const [editingFlashcard, setEditingFlashcard] = useState<Flashcard | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const { token, isAuthenticated } = useAuth();
   const location = useLocation();
   const navigate = useNavigate(); // Initialize useNavigate hook
@@ -176,6 +179,20 @@ const FlashcardsPage: React.FC = () => {
     // The deckId from URL will automatically trigger loadFlashcards due to useEffect dependency
   };
 
+  const handleEditFlashcard = (flashcard: Flashcard) => {
+    setEditingFlashcard(flashcard);
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditModalClose = () => {
+    setIsEditModalOpen(false);
+    setEditingFlashcard(null);
+  };
+
+  const handleEditSuccess = () => {
+    loadFlashcards(); // Reload flashcards to show updated data
+  };
+
   return (
     <div className="container mx-auto px-4 py-8 bg-gray-50 dark:bg-darkbg min-h-screen">
       {/* ReviewStats Banner at the top */}
@@ -253,6 +270,12 @@ const FlashcardsPage: React.FC = () => {
               </div>
               <div className="mt-4 flex space-x-2">
                 <button
+                  onClick={() => handleEditFlashcard(card)}
+                  className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors duration-200"
+                >
+                  Edit
+                </button>
+                <button
                   onClick={() => handleMarkReviewed(card.id)}
                   className="px-4 py-2 bg-secondary-500 text-white rounded hover:bg-secondary-600 focus:outline-none focus:ring-2 focus:ring-secondary-500 focus:ring-opacity-50 transition-colors duration-200"
                 >
@@ -269,6 +292,14 @@ const FlashcardsPage: React.FC = () => {
           ))
         )}
       </div>
+      
+      {/* Edit Modal */}
+      <FlashcardEditModal
+        flashcard={editingFlashcard}
+        isOpen={isEditModalOpen}
+        onClose={handleEditModalClose}
+        onSuccess={handleEditSuccess}
+      />
     </div>
   );
 };
