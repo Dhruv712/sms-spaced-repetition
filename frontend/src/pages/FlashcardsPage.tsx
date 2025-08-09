@@ -177,11 +177,12 @@ const FlashcardsPage: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 bg-gray-50 dark:bg-darkbg min-h-screen relative">
-      {/* ReviewStats in top right */}
-      <div className="fixed top-8 right-0 w-64 z-10 mr-8">
+    <div className="container mx-auto px-4 py-8 bg-gray-50 dark:bg-darkbg min-h-screen">
+      {/* ReviewStats Banner at the top */}
+      <div className="mb-8">
         <ReviewStats />
       </div>
+      
       {/* Centered FlashcardForm */}
       <div className="flex flex-col items-center justify-center min-h-[40vh] mb-12">
         <div className="w-full max-w-2xl">
