@@ -5,7 +5,7 @@ from typing import Optional, Dict, Any
 from datetime import datetime
 from sqlalchemy.orm import Session
 from app.models import User, Flashcard, CardReview
-from app.services.session_manager import get_next_due_flashcard
+from app.services.session_manager import get_next_due_flashcard, set_conversation_state
 from dotenv import load_dotenv
 
 # Load environment variables
