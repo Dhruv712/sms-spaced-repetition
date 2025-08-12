@@ -118,17 +118,24 @@ async def handle_flashcard_response(
     Handle user's response to a flashcard question
     """
     try:
+        print(f"🔍 Processing flashcard response: user_id={user.id}, flashcard_id={flashcard_id}")
+        
         # Get the flashcard
         card = db.query(Flashcard).filter_by(id=flashcard_id).first()
         if not card:
+            print(f"❌ Flashcard {flashcard_id} not found")
             return "Hmm, we lost track of your flashcard. Say 'Yes' to start again."
         
+        print(f"✅ Found flashcard: {card.concept}")
+        
         # Evaluate the answer
+        print(f"🧠 Evaluating answer: '{user_response}'")
         result = evaluate_answer(
             concept=card.concept,
             correct_definition=card.definition,
             user_response=user_response
         )
+        print(f"✅ LLM evaluation result: {result}")
         
         # Compute next review date
         from app.services.scheduler import compute_next_review
@@ -140,6 +147,7 @@ async def handle_flashcard_response(
             end_hour=user.preferred_end_hour,
             timezone_str=user.timezone
         )
+        print(f"📅 Next review scheduled for: {next_review}")
         
         # Save the review
         review = CardReview(
@@ -153,22 +161,29 @@ async def handle_flashcard_response(
         )
         
         db.add(review)
+        print(f"💾 Review saved to database")
         
         # Clear conversation state
         state = db.query(ConversationState).filter_by(user_id=user.id).first()
         if state:
             state.state = "idle"
             state.current_flashcard_id = None
+            print(f"🔄 Conversation state cleared")
         
         db.commit()
+        print(f"✅ Database committed")
         
         # Send feedback to user
-        service.send_feedback(user.phone_number, result["llm_feedback"])
+        print(f"📤 Sending feedback to {user.phone_number}")
+        feedback_result = service.send_feedback(user.phone_number, result["llm_feedback"])
+        print(f"📤 Feedback send result: {feedback_result}")
         
         return f"Response processed. Feedback sent to {user.phone_number}"
         
     except Exception as e:
         print(f"❌ Error handling flashcard response: {e}")
+        import traceback
+        traceback.print_exc()
         return "Sorry, there was an error processing your answer."
 
 async def handle_start_session(user: User, service: LoopMessageService, db: Session) -> str:
