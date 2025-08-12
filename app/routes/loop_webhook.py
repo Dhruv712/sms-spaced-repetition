@@ -32,16 +32,15 @@ async def receive_loop_webhook(
         body = await request.json()
         print(f"📥 Received LoopMessage webhook: {json.dumps(body, indent=2)}")
         
-        # Extract webhook data
-        webhook_type = body.get("type")
-        message_data = body.get("message", {})
+        # Extract webhook data - LoopMessage uses "alert_type" not "type"
+        webhook_type = body.get("alert_type")
         
         if webhook_type == "message_inbound":
-            return await handle_inbound_message(message_data, db)
+            return await handle_inbound_message(body, db)
         elif webhook_type == "message_sent":
-            return await handle_message_sent(message_data, db)
+            return await handle_message_sent(body, db)
         elif webhook_type == "message_failed":
-            return await handle_message_failed(message_data, db)
+            return await handle_message_failed(body, db)
         else:
             print(f"⚠️ Unknown webhook type: {webhook_type}")
             return JSONResponse(content={"status": "ignored"}, status_code=200)
@@ -55,8 +54,8 @@ async def handle_inbound_message(message_data: Dict[str, Any], db: Session) -> J
     Handle incoming messages from users
     """
     try:
-        # Extract message details
-        phone = normalize_phone(message_data.get("from", ""))
+        # Extract message details from LoopMessage webhook format
+        phone = normalize_phone(message_data.get("recipient", ""))
         body = message_data.get("text", "").strip()
         passthrough = message_data.get("passthrough", "")
         
