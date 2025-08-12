@@ -84,22 +84,29 @@ async def process_user_message(user: User, body: str, passthrough: str, db: Sess
     try:
         service = LoopMessageService()
         
+        print(f"🔍 Processing message: passthrough='{passthrough}', body='{body}'")
+        
         # Check if this is a response to a flashcard
         if passthrough and passthrough.startswith("flashcard_id:"):
             flashcard_id = int(passthrough.split(":")[1])
+            print(f"📎 Found flashcard_id in passthrough: {flashcard_id}")
             return await handle_flashcard_response(user, flashcard_id, body, service, db)
         
         # Check conversation state
         state = db.query(ConversationState).filter_by(user_id=user.id).first()
+        print(f"🗣️ Conversation state: {state.state if state else 'None'}")
         
         if state and state.state == "waiting_for_answer":
+            print(f"⏳ User is waiting for answer, flashcard_id: {state.current_flashcard_id}")
             return await handle_flashcard_response(user, state.current_flashcard_id, body, service, db)
         
         # Handle general commands
         if "yes" in body.lower():
+            print(f"✅ User said 'yes', starting session")
             return await handle_start_session(user, service, db)
         
         # Default response
+        print(f"❓ Unknown message, sending default response")
         return "I didn't understand that. Reply 'Yes' to start a review session."
         
     except Exception as e:

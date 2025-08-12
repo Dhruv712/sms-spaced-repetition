@@ -165,6 +165,9 @@ def send_due_flashcards_to_user(user_id: int, db: Session) -> Dict[str, Any]:
                 "details": result
             }
         else:
+            # Set conversation state to waiting for answer
+            set_conversation_state(user_id, due_card.id, db)
+            
             # Send the due flashcard
             result = service.send_flashcard(user.phone_number, due_card)
             return {
