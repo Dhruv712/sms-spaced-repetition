@@ -16,6 +16,14 @@ class Settings(BaseSettings):
     TWILIO_AUTH_TOKEN: str = ""
     TWILIO_PHONE_NUMBER: str = ""
     
+    # LoopMessage
+    LOOPMESSAGE_AUTH_KEY: Optional[str] = None
+    LOOPMESSAGE_SECRET_KEY: Optional[str] = None
+    LOOPMESSAGE_SENDER_NAME: Optional[str] = None
+    
+    # Test
+    TEST_PHONE_NUMBER: Optional[str] = None
+    
     # LLM APIs
     OPENAI_API_KEY: Optional[str] = None
     ANTHROPIC_API_KEY: Optional[str] = None
