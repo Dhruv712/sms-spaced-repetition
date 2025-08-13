@@ -65,18 +65,9 @@ async def migrate_sm2_columns_public() -> Dict[str, Any]:
     try:
         # SQL to add the SM-2 columns
         sql_commands = [
-            """
-            ALTER TABLE card_reviews 
-            ADD COLUMN IF NOT EXISTS repetition_count INTEGER DEFAULT 0;
-            """,
-            """
-            ALTER TABLE card_reviews 
-            ADD COLUMN IF NOT EXISTS ease_factor FLOAT DEFAULT 2.5;
-            """,
-            """
-            ALTER TABLE card_reviews 
-            ADD COLUMN IF NOT EXISTS interval_days INTEGER DEFAULT 0;
-            """
+            "ALTER TABLE card_reviews ADD COLUMN IF NOT EXISTS repetition_count INTEGER DEFAULT 0;",
+            "ALTER TABLE card_reviews ADD COLUMN IF NOT EXISTS ease_factor FLOAT DEFAULT 2.5;",
+            "ALTER TABLE card_reviews ADD COLUMN IF NOT EXISTS interval_days INTEGER DEFAULT 0;"
         ]
         
         results = []
