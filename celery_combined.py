@@ -19,7 +19,8 @@ def run_worker():
     """Run the Celery worker"""
     from app.utils.celery_app import celery_app
     print("🚀 Starting Celery worker...")
-    celery_app.worker_main(['worker', '--loglevel=info'])
+    # Use fewer processes to reduce memory usage
+    celery_app.worker_main(['worker', '--loglevel=info', '--concurrency=1'])
 
 def run_beat():
     """Run the Celery beat scheduler"""
@@ -29,6 +30,10 @@ def run_beat():
 
 if __name__ == "__main__":
     print("🔧 Starting combined Celery worker and beat scheduler...")
+    
+    # Print Redis URL for debugging
+    redis_url = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
+    print(f"🔗 Using Redis URL: {redis_url}")
     
     # Start beat scheduler in a separate thread
     beat_thread = threading.Thread(target=run_beat, daemon=True)
