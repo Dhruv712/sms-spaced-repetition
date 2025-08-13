@@ -107,6 +107,9 @@ class LoopMessageService:
         
         if passthrough:
             payload["passthrough"] = passthrough
+            print(f"🔧 Adding passthrough to payload: {passthrough}")
+        
+        print(f"📤 Sending message payload: {json.dumps(payload, indent=2)}")
         
         try:
             response = requests.post(self.base_url, headers=headers, json=payload)

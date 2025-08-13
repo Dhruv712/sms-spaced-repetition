@@ -19,21 +19,36 @@ def get_next_due_flashcard(user_id: int, db: Session) -> Flashcard | None:
 def set_conversation_state(user_id: int, flashcard_id: int, db: Session):
     print(f"🔧 set_conversation_state called: user_id={user_id}, flashcard_id={flashcard_id}")
     
-    state = db.query(ConversationState).filter_by(user_id=user_id).first()
+    try:
+        state = db.query(ConversationState).filter_by(user_id=user_id).first()
 
-    if not state:
-        print(f"📝 Creating new conversation state for user {user_id}")
-        state = ConversationState(user_id=user_id)
-    else:
-        print(f"📝 Updating existing conversation state for user {user_id}")
+        if not state:
+            print(f"📝 Creating new conversation state for user {user_id}")
+            state = ConversationState(user_id=user_id)
+        else:
+            print(f"📝 Updating existing conversation state for user {user_id}")
 
-    state.current_flashcard_id = flashcard_id
-    state.state = "waiting_for_answer"
-    state.last_message_at = datetime.utcnow()
+        state.current_flashcard_id = flashcard_id
+        state.state = "waiting_for_answer"
+        state.last_message_at = datetime.utcnow()
 
-    print(f"💾 Saving conversation state: user_id={user_id}, flashcard_id={flashcard_id}, state=waiting_for_answer")
+        print(f"💾 Saving conversation state: user_id={user_id}, flashcard_id={flashcard_id}, state=waiting_for_answer")
 
-    db.add(state)
-    db.commit()
-    
-    print(f"✅ Conversation state saved successfully")
+        db.add(state)
+        db.commit()
+        
+        print(f"✅ Conversation state saved successfully")
+        
+        # Verify the state was saved
+        verification_state = db.query(ConversationState).filter_by(user_id=user_id).first()
+        if verification_state:
+            print(f"✅ Verification: State found - user_id={verification_state.user_id}, flashcard_id={verification_state.current_flashcard_id}, state={verification_state.state}")
+        else:
+            print(f"❌ Verification: No state found after saving!")
+            
+    except Exception as e:
+        print(f"❌ Error in set_conversation_state: {e}")
+        import traceback
+        traceback.print_exc()
+        db.rollback()
+        raise

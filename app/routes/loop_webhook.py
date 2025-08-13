@@ -77,10 +77,18 @@ async def handle_inbound_message(message_data: Dict[str, Any], db: Session) -> J
         # Extract message details from LoopMessage webhook format
         phone = normalize_phone(message_data.get("recipient", ""))
         body = message_data.get("text", "").strip()
+        
+        # Try different possible locations for passthrough data
         passthrough = message_data.get("passthrough", "")
+        if not passthrough:
+            # Check if passthrough is nested in a message object
+            message_obj = message_data.get("message", {})
+            if isinstance(message_obj, dict):
+                passthrough = message_obj.get("passthrough", "")
         
         print(f"📱 Inbound message from {phone}: {body}")
         print(f"📎 Passthrough data: {passthrough}")
+        print(f"🔍 Full webhook payload for debugging: {json.dumps(message_data, indent=2)}")
         
         # Find user by phone number
         user = db.query(User).filter_by(phone_number=phone).first()
@@ -130,18 +138,31 @@ async def process_user_message(user: User, body: str, passthrough: str, db: Sess
             print(f"🗣️ Conversation state lookup for user {user.id}: {state.state if state else 'None'}")
             if state:
                 print(f"🗣️ State details: user_id={state.user_id}, flashcard_id={state.current_flashcard_id}, state={state.state}")
+                print(f"🗣️ Current time: {datetime.datetime.now()}")
+                print(f"🗣️ Last message at: {state.last_message_at}")
         except Exception as e:
             print(f"❌ Error looking up conversation state: {e}")
+            import traceback
+            traceback.print_exc()
             state = None
         
-        if state and state.state == "waiting_for_answer":
+        # Fallback: If no passthrough but conversation state exists, use that
+        if state and state.state == "waiting_for_answer" and state.current_flashcard_id:
             print(f"⏳ User is waiting for answer, flashcard_id: {state.current_flashcard_id}")
+            print(f"📎 Using conversation state as fallback (no passthrough data)")
             return await handle_flashcard_response(user, state.current_flashcard_id, body, service, db)
         
         # Handle general commands
         if "yes" in body.lower():
             print(f"✅ User said 'yes', starting session")
             return await handle_start_session(user, service, db)
+        
+        # If we have a conversation state but it's not waiting for answer, clear it
+        if state and state.state != "waiting_for_answer":
+            print(f"🔄 Clearing stale conversation state: {state.state}")
+            state.state = "idle"
+            state.current_flashcard_id = None
+            db.commit()
         
         # Default response
         print(f"❓ Unknown message, sending default response")
