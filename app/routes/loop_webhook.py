@@ -107,7 +107,9 @@ async def process_user_message(user: User, body: str, passthrough: str, db: Sess
         
         # Check conversation state
         state = db.query(ConversationState).filter_by(user_id=user.id).first()
-        print(f"🗣️ Conversation state: {state.state if state else 'None'}")
+        print(f"🗣️ Conversation state lookup for user {user.id}: {state.state if state else 'None'}")
+        if state:
+            print(f"🗣️ State details: user_id={state.user_id}, flashcard_id={state.current_flashcard_id}, state={state.state}")
         
         if state and state.state == "waiting_for_answer":
             print(f"⏳ User is waiting for answer, flashcard_id: {state.current_flashcard_id}")
