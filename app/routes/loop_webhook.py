@@ -146,6 +146,8 @@ async def process_user_message(user: User, body: str, passthrough: str, db: Sess
                 print(f"🗣️ State details: user_id={state.user_id}, flashcard_id={state.current_flashcard_id}, state={state.state}")
                 print(f"🗣️ Current time: {datetime.datetime.now()}")
                 print(f"🗣️ Last message at: {state.last_message_at}")
+                print(f"🗣️ State is waiting_for_answer: {state.state == 'waiting_for_answer'}")
+                print(f"🗣️ Has flashcard_id: {state.current_flashcard_id is not None}")
         except Exception as e:
             print(f"❌ Error looking up conversation state: {e}")
             import traceback
@@ -153,15 +155,29 @@ async def process_user_message(user: User, body: str, passthrough: str, db: Sess
             state = None
         
         # Fallback: If no passthrough but conversation state exists, use that
+        print(f"🔍 Checking conversation state fallback...")
+        print(f"   - State exists: {state is not None}")
+        if state:
+            print(f"   - State is waiting_for_answer: {state.state == 'waiting_for_answer'}")
+            print(f"   - Has flashcard_id: {state.current_flashcard_id is not None}")
+            print(f"   - Flashcard_id: {state.current_flashcard_id}")
+        
         if state and state.state == "waiting_for_answer" and state.current_flashcard_id:
             print(f"⏳ User is waiting for answer, flashcard_id: {state.current_flashcard_id}")
             print(f"📎 Using conversation state as fallback (no passthrough data)")
             # Only process if there's actual user input
             if body and body.strip():
+                print(f"📝 Processing response with conversation state fallback")
                 return await handle_flashcard_response(user, state.current_flashcard_id, body, service, db)
             else:
                 print(f"⚠️ Empty body received with conversation state, ignoring")
                 return "No user input received"
+        else:
+            print(f"❌ Conversation state fallback conditions not met")
+            print(f"   - State exists: {state is not None}")
+            if state:
+                print(f"   - State: {state.state}")
+                print(f"   - Flashcard ID: {state.current_flashcard_id}")
         
         # Handle general commands
         if "yes" in body.lower():
