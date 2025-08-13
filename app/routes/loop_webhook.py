@@ -129,7 +129,12 @@ async def process_user_message(user: User, body: str, passthrough: str, db: Sess
         if passthrough and passthrough.startswith("flashcard_id:"):
             flashcard_id = int(passthrough.split(":")[1])
             print(f"📎 Found flashcard_id in passthrough: {flashcard_id}")
-            return await handle_flashcard_response(user, flashcard_id, body, service, db)
+            # Only process if there's actual user input
+            if body and body.strip():
+                return await handle_flashcard_response(user, flashcard_id, body, service, db)
+            else:
+                print(f"⚠️ Empty body received with passthrough, ignoring")
+                return "No user input received"
         
         # Check conversation state
         try:
@@ -150,7 +155,12 @@ async def process_user_message(user: User, body: str, passthrough: str, db: Sess
         if state and state.state == "waiting_for_answer" and state.current_flashcard_id:
             print(f"⏳ User is waiting for answer, flashcard_id: {state.current_flashcard_id}")
             print(f"📎 Using conversation state as fallback (no passthrough data)")
-            return await handle_flashcard_response(user, state.current_flashcard_id, body, service, db)
+            # Only process if there's actual user input
+            if body and body.strip():
+                return await handle_flashcard_response(user, state.current_flashcard_id, body, service, db)
+            else:
+                print(f"⚠️ Empty body received with conversation state, ignoring")
+                return "No user input received"
         
         # Handle general commands
         if "yes" in body.lower():
@@ -264,11 +274,15 @@ async def handle_start_session(user: User, service: LoopMessageService, db: Sess
         # Get next due flashcard
         card = get_next_due_flashcard(user.id, db)
         if not card:
-            if service:
-                service.send_feedback(user.phone_number, "You're all caught up! No flashcards due right now.")
-            else:
-                print(f"📤 LoopMessage service not initialized, skipping reminder.")
-            return "No due flashcards. Reminder sent."
+            # If no due flashcards, get any available flashcard
+            from app.models import Flashcard
+            card = db.query(Flashcard).filter_by(user_id=user.id).first()
+            if not card:
+                if service:
+                    service.send_feedback(user.phone_number, "You don't have any flashcards yet. Create some first!")
+                else:
+                    print(f"📤 LoopMessage service not initialized, skipping reminder.")
+                return "No flashcards available."
         
         # Set conversation state
         set_conversation_state(user.id, card.id, db)
