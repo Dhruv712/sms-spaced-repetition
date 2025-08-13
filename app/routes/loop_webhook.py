@@ -54,6 +54,8 @@ async def handle_inbound_message(message_data: Dict[str, Any], db: Session) -> J
     Handle incoming messages from users
     """
     try:
+        print(f"🔍 Starting handle_inbound_message with data: {message_data}")
+        
         # Extract message details from LoopMessage webhook format
         phone = normalize_phone(message_data.get("recipient", ""))
         body = message_data.get("text", "").strip()
@@ -68,13 +70,18 @@ async def handle_inbound_message(message_data: Dict[str, Any], db: Session) -> J
             print(f"❌ No user found for phone: {phone}")
             return JSONResponse(content={"status": "user_not_found"}, status_code=200)
         
+        print(f"✅ Found user: {user.email} (ID: {user.id})")
+        
         # Handle the message based on conversation state
         response = await process_user_message(user, body, passthrough, db)
         
+        print(f"📤 Returning response: {response}")
         return JSONResponse(content={"status": "processed", "response": response}, status_code=200)
         
     except Exception as e:
         print(f"❌ Error handling inbound message: {e}")
+        import traceback
+        traceback.print_exc()
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
 async def process_user_message(user: User, body: str, passthrough: str, db: Session) -> str:
@@ -82,9 +89,15 @@ async def process_user_message(user: User, body: str, passthrough: str, db: Sess
     Process user message and return appropriate response
     """
     try:
-        service = LoopMessageService()
-        
         print(f"🔍 Processing message: passthrough='{passthrough}', body='{body}'")
+        
+        # Initialize LoopMessage service
+        try:
+            service = LoopMessageService()
+            print(f"✅ LoopMessage service initialized successfully")
+        except Exception as e:
+            print(f"❌ Failed to initialize LoopMessage service: {e}")
+            return "Sorry, there was an error with the messaging service. Please try again."
         
         # Check if this is a response to a flashcard
         if passthrough and passthrough.startswith("flashcard_id:"):
@@ -111,6 +124,8 @@ async def process_user_message(user: User, body: str, passthrough: str, db: Sess
         
     except Exception as e:
         print(f"❌ Error processing user message: {e}")
+        import traceback
+        traceback.print_exc()
         return "Sorry, there was an error processing your message. Please try again."
 
 async def handle_flashcard_response(
