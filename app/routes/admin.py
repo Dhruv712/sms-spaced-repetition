@@ -1,12 +1,60 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from app.database import get_db
+from app.database import get_db, engine
 from app.models import User
 from app.services.auth import get_current_active_user
 from app.services.scheduler_service import send_due_flashcards_to_all_users, get_user_flashcard_stats
 from typing import Dict, Any
 
 router = APIRouter(tags=["Admin"])
+
+@router.post("/migrate-sm2-columns")
+async def migrate_sm2_columns(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+) -> Dict[str, Any]:
+    """
+    Add SM-2 columns to card_reviews table
+    (Admin only)
+    """
+    # Check if user is admin
+    if current_user.email != "dhruv.sumathi@gmail.com":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    try:
+        # SQL to add the SM-2 columns
+        sql_commands = [
+            """
+            ALTER TABLE card_reviews 
+            ADD COLUMN IF NOT EXISTS repetition_count INTEGER DEFAULT 0;
+            """,
+            """
+            ALTER TABLE card_reviews 
+            ADD COLUMN IF NOT EXISTS ease_factor FLOAT DEFAULT 2.5;
+            """,
+            """
+            ALTER TABLE card_reviews 
+            ADD COLUMN IF NOT EXISTS interval_days INTEGER DEFAULT 0;
+            """
+        ]
+        
+        results = []
+        with engine.connect() as conn:
+            for i, sql in enumerate(sql_commands, 1):
+                try:
+                    conn.execute(sql)
+                    conn.commit()
+                    results.append(f"✅ SQL command {i} executed successfully")
+                except Exception as e:
+                    results.append(f"⚠️ SQL command {i} result: {e}")
+        
+        return {
+            "success": True,
+            "message": "SM-2 columns migration completed",
+            "results": results
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error migrating database: {str(e)}")
 
 @router.post("/send-due-flashcards")
 async def trigger_scheduled_flashcards(
