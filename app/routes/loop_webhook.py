@@ -11,7 +11,7 @@ from app.services.evaluator import evaluate_answer
 from app.services.loop_message_service import LoopMessageService
 from typing import Dict, Any
 
-router = APIRouter(prefix="/loop-webhook", tags=["loop-webhook"])
+router = APIRouter(tags=["loop-webhook"])
 
 def normalize_phone(number: str) -> str:
     """Normalize phone number format"""
