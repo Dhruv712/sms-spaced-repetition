@@ -97,7 +97,8 @@ async def process_user_message(user: User, body: str, passthrough: str, db: Sess
             print(f"✅ LoopMessage service initialized successfully")
         except Exception as e:
             print(f"❌ Failed to initialize LoopMessage service: {e}")
-            return "Sorry, there was an error with the messaging service. Please try again."
+            # If service fails, we can still process the message but can't send feedback
+            service = None
         
         # Check if this is a response to a flashcard
         if passthrough and passthrough.startswith("flashcard_id:"):
@@ -198,8 +199,11 @@ async def handle_flashcard_response(
         
         # Send feedback to user
         print(f"📤 Sending feedback to {user.phone_number}")
-        feedback_result = service.send_feedback(user.phone_number, result["llm_feedback"])
-        print(f"📤 Feedback send result: {feedback_result}")
+        if service:
+            feedback_result = service.send_feedback(user.phone_number, result["llm_feedback"])
+            print(f"📤 Feedback send result: {feedback_result}")
+        else:
+            print(f"📤 LoopMessage service not initialized, skipping feedback.")
         
         return f"Response processed. Feedback sent to {user.phone_number}"
         
@@ -217,19 +221,25 @@ async def handle_start_session(user: User, service: LoopMessageService, db: Sess
         # Get next due flashcard
         card = get_next_due_flashcard(user.id, db)
         if not card:
-            service.send_feedback(user.phone_number, "You're all caught up! No flashcards due right now.")
+            if service:
+                service.send_feedback(user.phone_number, "You're all caught up! No flashcards due right now.")
+            else:
+                print(f"📤 LoopMessage service not initialized, skipping reminder.")
             return "No due flashcards. Reminder sent."
         
         # Set conversation state
         set_conversation_state(user.id, card.id, db)
         
         # Send the flashcard
-        result = service.send_flashcard(user.phone_number, card)
-        
-        if result.get("success"):
-            return f"Flashcard sent to {user.phone_number}"
+        if service:
+            result = service.send_flashcard(user.phone_number, card)
+            if result.get("success"):
+                return f"Flashcard sent to {user.phone_number}"
+            else:
+                return f"Failed to send flashcard: {result.get('error')}"
         else:
-            return f"Failed to send flashcard: {result.get('error')}"
+            print(f"📤 LoopMessage service not initialized, skipping sending flashcard.")
+            return "Sorry, there was an error starting your session."
             
     except Exception as e:
         print(f"❌ Error starting session: {e}")
