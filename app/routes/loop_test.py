@@ -20,10 +20,13 @@ async def send_test_flashcard(db: Session = Depends(get_db)):
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
         
-        # Find any flashcard
-        flashcard = db.query(Flashcard).filter_by(user_id=user.id).first()
+        # Find the DNA flashcard (ID 4)
+        flashcard = db.query(Flashcard).filter_by(user_id=user.id, id=4).first()
         if not flashcard:
-            raise HTTPException(status_code=404, detail="No flashcards found")
+            # Fallback to any flashcard
+            flashcard = db.query(Flashcard).filter_by(user_id=user.id).first()
+            if not flashcard:
+                raise HTTPException(status_code=404, detail="No flashcards found")
         
         # Set conversation state
         set_conversation_state(user.id, flashcard.id, db)
