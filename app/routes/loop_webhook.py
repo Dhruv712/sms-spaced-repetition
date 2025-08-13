@@ -1,3 +1,6 @@
+import asyncio
+import json
+import datetime
 from fastapi import APIRouter, Request, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
@@ -6,11 +9,9 @@ from app.models import User, Flashcard, ConversationState, CardReview
 from app.services.session_manager import get_next_due_flashcard, set_conversation_state
 from app.services.evaluator import evaluate_answer
 from app.services.loop_message_service import LoopMessageService
-import datetime
-import json
 from typing import Dict, Any
 
-router = APIRouter()
+router = APIRouter(prefix="/loop-webhook", tags=["loop-webhook"])
 
 def normalize_phone(number: str) -> str:
     """Normalize phone number format"""
@@ -18,6 +19,23 @@ def normalize_phone(number: str) -> str:
     if not number.startswith("+") and number.isdigit():
         number = "+" + number
     return number
+
+async def initialize_loop_service_with_timeout():
+    """Initialize LoopMessageService with a timeout"""
+    try:
+        # Use asyncio.wait_for to add a timeout
+        loop = asyncio.get_event_loop()
+        service = await asyncio.wait_for(
+            loop.run_in_executor(None, lambda: LoopMessageService()),
+            timeout=5.0  # 5 second timeout
+        )
+        return service
+    except asyncio.TimeoutError:
+        print("⏰ LoopMessageService initialization timed out after 5 seconds")
+        return None
+    except Exception as e:
+        print(f"❌ Failed to initialize LoopMessageService: {e}")
+        return None
 
 @router.post("/webhook")
 async def receive_loop_webhook(
@@ -91,14 +109,13 @@ async def process_user_message(user: User, body: str, passthrough: str, db: Sess
     try:
         print(f"🔍 Processing message: passthrough='{passthrough}', body='{body}'")
         
-        # Initialize LoopMessage service
-        try:
-            service = LoopMessageService()
+        # Initialize LoopMessage service with timeout
+        print(f"🔧 Initializing LoopMessage service with timeout...")
+        service = await initialize_loop_service_with_timeout()
+        if service:
             print(f"✅ LoopMessage service initialized successfully")
-        except Exception as e:
-            print(f"❌ Failed to initialize LoopMessage service: {e}")
-            # If service fails, we can still process the message but can't send feedback
-            service = None
+        else:
+            print(f"⚠️ LoopMessage service initialization failed or timed out")
         
         # Check if this is a response to a flashcard
         if passthrough and passthrough.startswith("flashcard_id:"):
@@ -107,10 +124,15 @@ async def process_user_message(user: User, body: str, passthrough: str, db: Sess
             return await handle_flashcard_response(user, flashcard_id, body, service, db)
         
         # Check conversation state
-        state = db.query(ConversationState).filter_by(user_id=user.id).first()
-        print(f"🗣️ Conversation state lookup for user {user.id}: {state.state if state else 'None'}")
-        if state:
-            print(f"🗣️ State details: user_id={state.user_id}, flashcard_id={state.current_flashcard_id}, state={state.state}")
+        try:
+            print(f"🗣️ Looking up conversation state for user {user.id}...")
+            state = db.query(ConversationState).filter_by(user_id=user.id).first()
+            print(f"🗣️ Conversation state lookup for user {user.id}: {state.state if state else 'None'}")
+            if state:
+                print(f"🗣️ State details: user_id={state.user_id}, flashcard_id={state.current_flashcard_id}, state={state.state}")
+        except Exception as e:
+            print(f"❌ Error looking up conversation state: {e}")
+            state = None
         
         if state and state.state == "waiting_for_answer":
             print(f"⏳ User is waiting for answer, flashcard_id: {state.current_flashcard_id}")
