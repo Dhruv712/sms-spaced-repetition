@@ -300,7 +300,30 @@ async def handle_flashcard_response(
         else:
             print(f"📤 LoopMessage service not initialized, skipping feedback.")
         
-        return f"Response processed. Feedback sent to {user.phone_number}"
+        # Check if there are more due flashcards and send the next one
+        print(f"🔍 Checking for more due flashcards...")
+        next_card = get_next_due_flashcard(user.id, db)
+        if next_card:
+            print(f"📚 Found next due flashcard: {next_card.concept} (ID: {next_card.id})")
+            
+            # Set conversation state for the next card
+            set_conversation_state(user.id, next_card.id, db)
+            
+            # Send the next flashcard
+            if service:
+                next_result = service.send_flashcard(user.phone_number, next_card)
+                if next_result.get("success"):
+                    print(f"📤 Next flashcard sent successfully: {next_card.concept}")
+                    return f"Response processed. Feedback sent. Next flashcard sent: {next_card.concept}"
+                else:
+                    print(f"❌ Failed to send next flashcard: {next_result.get('error')}")
+                    return f"Response processed. Feedback sent. Error sending next flashcard."
+            else:
+                print(f"📤 LoopMessage service not initialized, skipping next flashcard.")
+                return f"Response processed. Feedback sent. Error sending next flashcard."
+        else:
+            print(f"📭 No more due flashcards")
+            return f"Response processed. Feedback sent. You're all caught up!"
         
     except Exception as e:
         print(f"❌ Error handling flashcard response: {e}")
