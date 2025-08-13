@@ -56,6 +56,7 @@ async def receive_loop_webhook(
         if webhook_type == "message_inbound":
             return await handle_inbound_message(body, db)
         elif webhook_type == "message_sent":
+            print(f"📤 Processing message_sent webhook - this should NOT trigger response processing")
             return await handle_message_sent(body, db)
         elif webhook_type == "message_failed":
             return await handle_message_failed(body, db)
@@ -214,19 +215,41 @@ async def handle_flashcard_response(
         )
         print(f"✅ LLM evaluation result: {result}")
         
-        # Compute next review date
-        from app.services.scheduler import compute_next_review
+        # Get the previous review for this flashcard to get SM-2 data
+        previous_review = db.query(CardReview).filter_by(
+            user_id=user.id, 
+            flashcard_id=card.id
+        ).order_by(CardReview.review_date.desc()).first()
+        
+        # Get SM-2 data from previous review, or use defaults
+        repetition_count = previous_review.repetition_count if previous_review else 0
+        ease_factor = previous_review.ease_factor if previous_review else 2.5
+        interval_days = previous_review.interval_days if previous_review else 0
+        
+        # Compute next review date using SM-2 algorithm
+        from app.services.scheduler import compute_next_review, compute_sm2_next_review
         next_review = compute_next_review(
             last_review_date=datetime.datetime.now(datetime.UTC),
             was_correct=result["was_correct"],
             confidence_score=result["confidence_score"],
             start_hour=user.preferred_start_hour,
             end_hour=user.preferred_end_hour,
-            timezone_str=user.timezone
+            timezone_str=user.timezone,
+            repetition_count=repetition_count,
+            ease_factor=ease_factor,
+            interval_days=interval_days
         )
-        print(f"📅 Next review scheduled for: {next_review}")
         
-        # Save the review
+        # Compute new SM-2 values
+        new_repetition_count, new_ease_factor, new_interval_days = compute_sm2_next_review(
+            repetition_count, ease_factor, interval_days, 
+            result["was_correct"], result["confidence_score"]
+        )
+        
+        print(f"📅 Next review scheduled for: {next_review}")
+        print(f"🔄 SM-2: rep={new_repetition_count}, ease={new_ease_factor:.2f}, interval={new_interval_days} days")
+        
+        # Save the review with SM-2 data
         review = CardReview(
             user_id=user.id,
             flashcard_id=card.id,
@@ -234,7 +257,10 @@ async def handle_flashcard_response(
             was_correct=result["was_correct"],
             confidence_score=result["confidence_score"],
             llm_feedback=result["llm_feedback"],
-            next_review_date=next_review
+            next_review_date=next_review,
+            repetition_count=new_repetition_count,
+            ease_factor=new_ease_factor,
+            interval_days=new_interval_days
         )
         
         db.add(review)
@@ -274,15 +300,11 @@ async def handle_start_session(user: User, service: LoopMessageService, db: Sess
         # Get next due flashcard
         card = get_next_due_flashcard(user.id, db)
         if not card:
-            # If no due flashcards, get any available flashcard
-            from app.models import Flashcard
-            card = db.query(Flashcard).filter_by(user_id=user.id).first()
-            if not card:
-                if service:
-                    service.send_feedback(user.phone_number, "You don't have any flashcards yet. Create some first!")
-                else:
-                    print(f"📤 LoopMessage service not initialized, skipping reminder.")
-                return "No flashcards available."
+            if service:
+                service.send_feedback(user.phone_number, "You're all caught up! No flashcards due right now.")
+            else:
+                print(f"📤 LoopMessage service not initialized, skipping reminder.")
+            return "No due flashcards. Reminder sent."
         
         # Set conversation state
         set_conversation_state(user.id, card.id, db)
@@ -305,6 +327,8 @@ async def handle_start_session(user: User, service: LoopMessageService, db: Sess
 async def handle_message_sent(message_data: Dict[str, Any], db: Session) -> JSONResponse:
     """Handle message sent confirmation"""
     print(f"✅ Message sent: {message_data.get('message_id')}")
+    print(f"📤 message_sent webhook - this should ONLY acknowledge, not process responses")
+    print(f"📤 message_sent data: {json.dumps(message_data, indent=2)}")
     return JSONResponse(content={"status": "acknowledged"}, status_code=200)
 
 async def handle_message_failed(message_data: Dict[str, Any], db: Session) -> JSONResponse:

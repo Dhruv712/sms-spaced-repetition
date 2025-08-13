@@ -17,6 +17,11 @@ class CardReview(Base):
     llm_feedback = Column(Text)
     review_date = Column(DateTime(timezone=True), server_default=func.now())
     next_review_date = Column(DateTime(timezone=True), nullable=False)
+    
+    # SM-2 Algorithm fields
+    repetition_count = Column(Integer, default=0)  # Number of successful repetitions
+    ease_factor = Column(Float, default=2.5)  # Ease factor (starts at 2.5)
+    interval_days = Column(Integer, default=0)  # Current interval in days
         
     # Relationships
     user = relationship("User", back_populates="reviews")
