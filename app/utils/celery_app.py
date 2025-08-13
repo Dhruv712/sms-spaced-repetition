@@ -1,9 +1,10 @@
 from celery import Celery
 from celery.schedules import crontab
 from app.utils.config import settings
+import os
 
-# Use Railway Redis URL if available, otherwise fallback to local
-redis_url = getattr(settings, 'REDIS_URL', 'redis://localhost:6379/0')
+# Get Redis URL from environment
+redis_url = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
 
 celery_app = Celery(
     "sms_spaced_repetition", 
@@ -14,7 +15,7 @@ celery_app = Celery(
 celery_app.autodiscover_tasks(["app.services"])
 
 # Configure Celery to run tasks synchronously in development
-if getattr(settings, 'ENVIRONMENT', 'development') == 'development':
+if os.getenv('ENVIRONMENT', 'development') == 'development':
     celery_app.conf.update(
         task_always_eager=True,
         task_eager_propagates=True,
