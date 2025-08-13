@@ -22,7 +22,7 @@ def main():
         
         print(f"📤 {datetime.now()}: Sending due flashcards...")
         
-        response = requests.post(f"{app_url}/cron/send-flashcards")
+        response = requests.post(f"{app_url}/admin/cron/send-flashcards")
         
         if response.status_code == 200:
             result = response.json()

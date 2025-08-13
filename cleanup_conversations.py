@@ -22,7 +22,7 @@ def main():
         
         print(f"🧹 {datetime.now()}: Cleaning up old conversations...")
         
-        response = requests.post(f"{app_url}/cron/cleanup")
+        response = requests.post(f"{app_url}/admin/cron/cleanup")
         
         if response.status_code == 200:
             result = response.json()
