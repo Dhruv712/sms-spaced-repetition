@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy import text
 from app.database import get_db, engine
 from app.models import User
 from app.services.auth import get_current_active_user
@@ -42,7 +43,7 @@ async def migrate_sm2_columns(
         with engine.connect() as conn:
             for i, sql in enumerate(sql_commands, 1):
                 try:
-                    conn.execute(sql)
+                    conn.execute(text(sql))
                     conn.commit()
                     results.append(f"✅ SQL command {i} executed successfully")
                 except Exception as e:
@@ -65,16 +66,16 @@ async def migrate_sm2_columns_public() -> Dict[str, Any]:
     try:
         # SQL to add the SM-2 columns
         sql_commands = [
-            "ALTER TABLE card_reviews ADD COLUMN IF NOT EXISTS repetition_count INTEGER DEFAULT 0;",
-            "ALTER TABLE card_reviews ADD COLUMN IF NOT EXISTS ease_factor FLOAT DEFAULT 2.5;",
-            "ALTER TABLE card_reviews ADD COLUMN IF NOT EXISTS interval_days INTEGER DEFAULT 0;"
+            "ALTER TABLE card_reviews ADD COLUMN IF NOT EXISTS repetition_count INTEGER DEFAULT 0",
+            "ALTER TABLE card_reviews ADD COLUMN IF NOT EXISTS ease_factor FLOAT DEFAULT 2.5",
+            "ALTER TABLE card_reviews ADD COLUMN IF NOT EXISTS interval_days INTEGER DEFAULT 0"
         ]
         
         results = []
         with engine.connect() as conn:
             for i, sql in enumerate(sql_commands, 1):
                 try:
-                    conn.execute(sql)
+                    conn.execute(text(sql))
                     conn.commit()
                     results.append(f"✅ SQL command {i} executed successfully")
                 except Exception as e:
