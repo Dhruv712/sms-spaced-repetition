@@ -10,8 +10,37 @@ from app.models import User, Flashcard, CardReview
 from app.services.loop_message_service import LoopMessageService
 from app.services.session_manager import get_next_due_flashcard, set_conversation_state
 from app.services.reminder import send_study_reminder
+from app.utils.celery_app import celery_app
 
 logger = logging.getLogger(__name__)
+
+@celery_app.task
+def scheduled_flashcard_task():
+    """
+    Celery task for sending due flashcards to all users
+    This will be called by the scheduler
+    """
+    logger.info("🕐 Celery task: Starting scheduled flashcard sending...")
+    try:
+        result = send_due_flashcards_to_all_users()
+        logger.info(f"✅ Celery task completed: {result}")
+        return result
+    except Exception as e:
+        logger.error(f"❌ Celery task failed: {e}")
+        raise
+
+@celery_app.task
+def cleanup_conversation_states_task():
+    """
+    Celery task for cleaning up old conversation states
+    """
+    logger.info("🧹 Celery task: Cleaning up old conversation states...")
+    try:
+        cleanup_old_conversation_states()
+        logger.info("✅ Celery task: Cleanup completed")
+    except Exception as e:
+        logger.error(f"❌ Celery task: Cleanup failed: {e}")
+        raise
 
 def send_due_flashcards_to_all_users():
     """

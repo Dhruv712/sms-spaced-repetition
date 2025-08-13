@@ -112,6 +112,26 @@ async def trigger_scheduled_flashcards(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error sending flashcards: {str(e)}")
 
+@router.post("/trigger-scheduled-flashcards")
+async def trigger_scheduled_flashcards_manual() -> Dict[str, Any]:
+    """
+    Manually trigger the scheduled flashcard sending
+    (Temporary public endpoint for testing)
+    """
+    try:
+        from app.services.scheduler_service import scheduled_flashcard_task
+        
+        # Run the task synchronously for immediate feedback
+        result = scheduled_flashcard_task.delay()
+        
+        return {
+            "success": True,
+            "message": "Scheduled flashcard task triggered",
+            "task_id": result.id
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error triggering task: {str(e)}")
+
 @router.get("/user-stats/{user_id}")
 async def get_user_stats(
     user_id: int,
