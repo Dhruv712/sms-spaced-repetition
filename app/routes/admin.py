@@ -132,6 +132,26 @@ async def trigger_scheduled_flashcards_manual() -> Dict[str, Any]:
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error triggering task: {str(e)}")
 
+@router.post("/trigger-scheduled-flashcards-direct")
+async def trigger_scheduled_flashcards_direct() -> Dict[str, Any]:
+    """
+    Manually trigger the scheduled flashcard sending directly
+    (Temporary public endpoint for testing)
+    """
+    try:
+        from app.services.scheduler_service import send_due_flashcards_to_all_users
+        
+        # Call the function directly (synchronously)
+        result = send_due_flashcards_to_all_users()
+        
+        return {
+            "success": True,
+            "message": "Scheduled flashcard sending completed",
+            "result": result
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error triggering scheduling: {str(e)}")
+
 @router.get("/user-stats/{user_id}")
 async def get_user_stats(
     user_id: int,
@@ -178,3 +198,41 @@ async def send_flashcards_to_user(
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error sending flashcards: {str(e)}")
+
+@router.post("/cron/send-flashcards")
+async def cron_send_flashcards() -> Dict[str, Any]:
+    """
+    Cron endpoint for sending due flashcards
+    This can be called by Railway's cron service
+    """
+    try:
+        from app.services.scheduler_service import send_due_flashcards_to_all_users
+        
+        # Call the function directly
+        result = send_due_flashcards_to_all_users()
+        
+        return {
+            "success": True,
+            "message": "Cron flashcard sending completed",
+            "result": result
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error in cron task: {str(e)}")
+
+@router.post("/cron/cleanup")
+async def cron_cleanup() -> Dict[str, Any]:
+    """
+    Cron endpoint for cleaning up old conversation states
+    """
+    try:
+        from app.services.scheduler_service import cleanup_old_conversation_states
+        
+        # Call the function directly
+        cleanup_old_conversation_states()
+        
+        return {
+            "success": True,
+            "message": "Cron cleanup completed"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error in cron cleanup: {str(e)}")
