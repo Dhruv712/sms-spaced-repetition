@@ -147,7 +147,7 @@ async def process_user_message(user: User, body: str, passthrough: str, db: Sess
             print(f"🗣️ Conversation state lookup for user {user.id}: {state.state if state else 'None'}")
             if state:
                 print(f"🗣️ State details: user_id={state.user_id}, flashcard_id={state.current_flashcard_id}, state={state.state}")
-                print(f"🗣️ Current time: {datetime.datetime.now()}")
+                print(f"🗣️ Current time: {datetime.now()}")
                 print(f"🗣️ Last message at: {state.last_message_at}")
                 print(f"🗣️ State is waiting_for_answer: {state.state == 'waiting_for_answer'}")
                 print(f"🗣️ State is waiting_for_flashcard_confirmation: {state.state == 'waiting_for_flashcard_confirmation'}")
@@ -186,6 +186,7 @@ async def process_user_message(user: User, body: str, passthrough: str, db: Sess
         
         # Handle flashcard confirmation FIRST (before general commands)
         if state and state.state == "waiting_for_flashcard_confirmation":
+            print(f"🎯 Found flashcard confirmation state for user {user.id}")
             if "save" in body.lower():
                 print(f"✅ User confirmed flashcard creation")
                 return await handle_flashcard_confirmation(user, state, service, db)
@@ -200,6 +201,8 @@ async def process_user_message(user: User, body: str, passthrough: str, db: Sess
                 return "Flashcard cancelled. Send 'NEW' followed by your flashcard request to try again."
             else:
                 return "Please reply 'SAVE' to save the flashcard or 'NO' to try again."
+        else:
+            print(f"❌ No flashcard confirmation state found. State: {state.state if state else 'None'}")
         
         # Handle general commands
         if "yes" in body.lower():
@@ -509,8 +512,17 @@ Now convert this into a flashcard:
         state.last_message_at = datetime.utcnow()
         state.context = json.dumps(card_data)  # Store flashcard data as JSON
         
+        print(f"💾 Saving conversation state: user_id={user.id}, state=waiting_for_flashcard_confirmation, context={state.context}")
+        
         db.add(state)
         db.commit()
+        
+        # Verify the state was saved
+        verification_state = db.query(ConversationState).filter_by(user_id=user.id).first()
+        if verification_state:
+            print(f"✅ Verification: State saved successfully - user_id={verification_state.user_id}, state={verification_state.state}, context={verification_state.context}")
+        else:
+            print(f"❌ Verification: No state found after saving!")
 
         # Send the generated flashcard for confirmation
         concept = card_data["concept"]
