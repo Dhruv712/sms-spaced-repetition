@@ -15,8 +15,8 @@ def delete_user_remote():
     try:
         print("🗑️ Deleting user ID 2 (waterfire712@gmail.com)...")
         
-        # Call the delete endpoint
-        response = requests.delete(f"{base_url}/admin/delete-user/2")
+        # Call the public delete endpoint
+        response = requests.delete(f"{base_url}/admin/delete-user-2-public")
         
         print(f"📡 Response status: {response.status_code}")
         print(f"📡 Response text: {response.text}")

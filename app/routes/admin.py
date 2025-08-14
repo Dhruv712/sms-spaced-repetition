@@ -288,3 +288,46 @@ async def delete_user_admin(
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Error deleting user: {str(e)}")
+
+@router.delete("/delete-user-2-public")
+async def delete_user_2_public(db: Session = Depends(get_db)) -> Dict[str, Any]:
+    """
+    Delete user ID 2 (waterfire712@gmail.com) - public endpoint for one-time use
+    """
+    try:
+        from app.models import User, Flashcard, CardReview, ConversationState
+        
+        # Find the user to delete
+        user_to_delete = db.query(User).filter_by(id=2).first()
+        if not user_to_delete:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Count associated data
+        flashcard_count = db.query(Flashcard).filter_by(user_id=2).count()
+        review_count = db.query(CardReview).filter_by(user_id=2).count()
+        conversation_count = db.query(ConversationState).filter_by(user_id=2).count()
+        
+        # Delete associated data first (foreign key constraints)
+        db.query(ConversationState).filter_by(user_id=2).delete()
+        db.query(CardReview).filter_by(user_id=2).delete()
+        db.query(Flashcard).filter_by(user_id=2).delete()
+        
+        # Delete the user
+        db.delete(user_to_delete)
+        db.commit()
+        
+        return {
+            "success": True,
+            "message": f"User {user_to_delete.email} deleted successfully",
+            "deleted_data": {
+                "user_id": 2,
+                "email": user_to_delete.email,
+                "flashcards_deleted": flashcard_count,
+                "reviews_deleted": review_count,
+                "conversations_deleted": conversation_count
+            }
+        }
+        
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error deleting user: {str(e)}")
