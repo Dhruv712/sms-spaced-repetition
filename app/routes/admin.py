@@ -236,3 +236,55 @@ async def cron_cleanup() -> Dict[str, Any]:
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error in cron cleanup: {str(e)}")
+
+@router.delete("/delete-user/{user_id}")
+async def delete_user_admin(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+) -> Dict[str, Any]:
+    """
+    Delete a user and all their associated data
+    (Admin only)
+    """
+    # Check if user is admin
+    if current_user.email != "dhruv.sumathi@gmail.com":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    try:
+        from app.models import User, Flashcard, CardReview, ConversationState
+        
+        # Find the user to delete
+        user_to_delete = db.query(User).filter_by(id=user_id).first()
+        if not user_to_delete:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Count associated data
+        flashcard_count = db.query(Flashcard).filter_by(user_id=user_id).count()
+        review_count = db.query(CardReview).filter_by(user_id=user_id).count()
+        conversation_count = db.query(ConversationState).filter_by(user_id=user_id).count()
+        
+        # Delete associated data first (foreign key constraints)
+        db.query(ConversationState).filter_by(user_id=user_id).delete()
+        db.query(CardReview).filter_by(user_id=user_id).delete()
+        db.query(Flashcard).filter_by(user_id=user_id).delete()
+        
+        # Delete the user
+        db.delete(user_to_delete)
+        db.commit()
+        
+        return {
+            "success": True,
+            "message": f"User {user_to_delete.email} deleted successfully",
+            "deleted_data": {
+                "user_id": user_id,
+                "email": user_to_delete.email,
+                "flashcards_deleted": flashcard_count,
+                "reviews_deleted": review_count,
+                "conversations_deleted": conversation_count
+            }
+        }
+        
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error deleting user: {str(e)}")
