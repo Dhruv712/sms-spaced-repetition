@@ -150,7 +150,9 @@ async def process_user_message(user: User, body: str, passthrough: str, db: Sess
                 print(f"🗣️ Current time: {datetime.datetime.now()}")
                 print(f"🗣️ Last message at: {state.last_message_at}")
                 print(f"🗣️ State is waiting_for_answer: {state.state == 'waiting_for_answer'}")
+                print(f"🗣️ State is waiting_for_flashcard_confirmation: {state.state == 'waiting_for_flashcard_confirmation'}")
                 print(f"🗣️ Has flashcard_id: {state.current_flashcard_id is not None}")
+                print(f"🗣️ Context: {state.context}")
         except Exception as e:
             print(f"❌ Error looking up conversation state: {e}")
             import traceback
@@ -184,10 +186,10 @@ async def process_user_message(user: User, body: str, passthrough: str, db: Sess
         
         # Handle flashcard confirmation FIRST (before general commands)
         if state and state.state == "waiting_for_flashcard_confirmation":
-            if "yes" in body.lower():
+            if "save" in body.lower():
                 print(f"✅ User confirmed flashcard creation")
                 return await handle_flashcard_confirmation(user, state, service, db)
-            elif "no" in body.lower():
+            elif "no" in body.lower() or "cancel" in body.lower():
                 print(f"❌ User rejected flashcard creation")
                 # Clear the state and ask for new input
                 state.state = "idle"
@@ -197,7 +199,7 @@ async def process_user_message(user: User, body: str, passthrough: str, db: Sess
                     service.send_feedback(user.phone_number, "Flashcard cancelled. Send 'NEW' followed by your flashcard request to try again.")
                 return "Flashcard cancelled. Send 'NEW' followed by your flashcard request to try again."
             else:
-                return "Please reply 'Yes' to save the flashcard or 'No' to try again."
+                return "Please reply 'SAVE' to save the flashcard or 'NO' to try again."
         
         # Handle general commands
         if "yes" in body.lower():
@@ -518,7 +520,7 @@ Now convert this into a flashcard:
         confirmation_message = f"Generated flashcard:\n\nConcept: {concept}\nDefinition: {definition}"
         if tags:
             confirmation_message += f"\nTags: {tags}"
-        confirmation_message += "\n\nReply 'Yes' to save or 'No' to try again."
+        confirmation_message += "\n\nReply 'SAVE' to save or 'NO' to try again."
 
         if service:
             service.send_feedback(user.phone_number, confirmation_message)
