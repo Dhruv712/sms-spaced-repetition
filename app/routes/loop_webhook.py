@@ -466,6 +466,8 @@ Important:
 - Return only a raw JSON object with no explanation.
 - Always include a source_url field, even if empty.
 
+Lastly, if the user has provided their own definition, remain as close to theirs as possible, prioritizing concision and making sure to not be verbose.
+
 Now convert this into a flashcard:
 "{natural_text}"
 """
