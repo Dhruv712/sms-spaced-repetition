@@ -215,8 +215,8 @@ async def process_user_message(user: User, body: str, passthrough: str, db: Sess
             else:
                 return "Please provide a description after 'NEW'. Example: 'NEW Create a flashcard about photosynthesis'"
         
-        # If we have a conversation state but it's not waiting for answer, clear it
-        if state and state.state != "waiting_for_answer":
+        # If we have a conversation state but it's not waiting for answer or flashcard confirmation, clear it
+        if state and state.state not in ["waiting_for_answer", "waiting_for_flashcard_confirmation"]:
             print(f"🔄 Clearing stale conversation state: {state.state}")
             state.state = "idle"
             state.current_flashcard_id = None
