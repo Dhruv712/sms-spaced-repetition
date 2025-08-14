@@ -182,12 +182,7 @@ async def process_user_message(user: User, body: str, passthrough: str, db: Sess
                 print(f"   - State: {state.state}")
                 print(f"   - Flashcard ID: {state.current_flashcard_id}")
         
-        # Handle general commands
-        if "yes" in body.lower():
-            print(f"✅ User said 'yes', starting session")
-            return await handle_start_session(user, service, db)
-        
-        # Handle flashcard confirmation
+        # Handle flashcard confirmation FIRST (before general commands)
         if state and state.state == "waiting_for_flashcard_confirmation":
             if "yes" in body.lower():
                 print(f"✅ User confirmed flashcard creation")
@@ -203,6 +198,11 @@ async def process_user_message(user: User, body: str, passthrough: str, db: Sess
                 return "Flashcard cancelled. Send 'NEW' followed by your flashcard request to try again."
             else:
                 return "Please reply 'Yes' to save the flashcard or 'No' to try again."
+        
+        # Handle general commands
+        if "yes" in body.lower():
+            print(f"✅ User said 'yes', starting session")
+            return await handle_start_session(user, service, db)
         
         # Handle NEW flashcard creation
         if body.strip().upper().startswith("NEW"):
