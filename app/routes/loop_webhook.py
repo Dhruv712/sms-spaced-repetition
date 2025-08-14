@@ -9,7 +9,7 @@ from app.services.session_manager import get_next_due_flashcard, set_conversatio
 from app.services.evaluator import evaluate_answer
 from app.services.loop_message_service import LoopMessageService
 from typing import Dict, Any
-from app.services.scheduler import compute_next_review
+from app.services.scheduler import compute_next_review, compute_sm2_next_review
 from datetime import datetime, timezone
 import logging
 
