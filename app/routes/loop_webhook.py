@@ -278,7 +278,7 @@ async def handle_flashcard_response(
         
         # Compute next review date using SM-2 algorithm
         next_review = compute_next_review(
-            last_review_date=datetime.datetime.now(datetime.UTC),
+            last_review_date=datetime.now(datetime.UTC),
             was_correct=result["was_correct"],
             confidence_score=result["confidence_score"],
             start_hour=user.preferred_start_hour,
