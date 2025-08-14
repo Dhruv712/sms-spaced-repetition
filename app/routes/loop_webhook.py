@@ -10,6 +10,9 @@ from app.services.session_manager import get_next_due_flashcard, set_conversatio
 from app.services.evaluator import evaluate_answer
 from app.services.loop_message_service import LoopMessageService
 from typing import Dict, Any
+from app.services.scheduler import compute_next_review
+from datetime import datetime
+import logging
 
 router = APIRouter(tags=["loop-webhook"])
 
@@ -184,6 +187,32 @@ async def process_user_message(user: User, body: str, passthrough: str, db: Sess
             print(f"✅ User said 'yes', starting session")
             return await handle_start_session(user, service, db)
         
+        # Handle flashcard confirmation
+        if state and state.state == "waiting_for_flashcard_confirmation":
+            if "yes" in body.lower():
+                print(f"✅ User confirmed flashcard creation")
+                return await handle_flashcard_confirmation(user, state, service, db)
+            elif "no" in body.lower():
+                print(f"❌ User rejected flashcard creation")
+                # Clear the state and ask for new input
+                state.state = "idle"
+                state.context = None
+                db.commit()
+                if service:
+                    service.send_feedback(user.phone_number, "Flashcard cancelled. Send 'NEW' followed by your flashcard request to try again.")
+                return "Flashcard cancelled. Send 'NEW' followed by your flashcard request to try again."
+            else:
+                return "Please reply 'Yes' to save the flashcard or 'No' to try again."
+        
+        # Handle NEW flashcard creation
+        if body.strip().upper().startswith("NEW"):
+            print(f"🎯 User wants to create a new flashcard")
+            natural_text = body.strip()[3:].strip()  # Remove "NEW" prefix
+            if natural_text:
+                return await handle_natural_flashcard_creation(user, natural_text, service, db)
+            else:
+                return "Please provide a description after 'NEW'. Example: 'NEW Create a flashcard about photosynthesis'"
+        
         # If we have a conversation state but it's not waiting for answer, clear it
         if state and state.state != "waiting_for_answer":
             print(f"🔄 Clearing stale conversation state: {state.state}")
@@ -193,7 +222,7 @@ async def process_user_message(user: User, body: str, passthrough: str, db: Sess
         
         # Default response
         print(f"❓ Unknown message, sending default response")
-        return "I didn't understand that. Reply 'Yes' to start a review session."
+        return "I didn't understand that. Reply 'Yes' to start a review session, or 'NEW' followed by a description to create a flashcard."
         
     except Exception as e:
         print(f"❌ Error processing user message: {e}")
@@ -243,7 +272,6 @@ async def handle_flashcard_response(
         interval_days = previous_review.interval_days if previous_review else 0
         
         # Compute next review date using SM-2 algorithm
-        from app.services.scheduler import compute_next_review, compute_sm2_next_review
         next_review = compute_next_review(
             last_review_date=datetime.datetime.now(datetime.UTC),
             was_correct=result["was_correct"],
@@ -374,3 +402,186 @@ async def handle_message_failed(message_data: Dict[str, Any], db: Session) -> JS
     """Handle message failure"""
     print(f"❌ Message failed: {message_data.get('message_id')} - {message_data.get('error')}")
     return JSONResponse(content={"status": "acknowledged"}, status_code=200) 
+
+async def handle_natural_flashcard_creation(user: User, natural_text: str, service: LoopMessageService, db: Session) -> str:
+    """
+    Handle creation of flashcard from natural language via SMS
+    """
+    try:
+        from openai import OpenAI
+        import os
+        import json
+        import re
+        
+        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        
+        print(f"🎯 Creating flashcard from natural language: '{natural_text}'")
+        
+        # Use the same prompt as the web interface
+        prompt = f"""
+You are an assistant that extracts flashcards from natural language.
+
+Each flashcard has three fields:
+- concept: what the user is trying to remember
+- definition: the answer, explanation, or formula (use LaTeX if the definition is a formula)
+- tags: tags requested by the user, comma-separated. If no tags requested, this is an empty string.
+- source_url: the URL of the source you used to verify the information. If no source was used, this should be an empty string.
+
+Return ONLY a JSON object with these fields. No text before or after it.
+
+Examples:
+
+Input: "make a card about how Pretoria is Elon Musk's birthplace, with biography and Elon tags"
+Output: {{
+  "concept": "Elon Musk's birthplace",
+  "definition": "Pretoria",
+  "tags": "biography, Elon",
+  "source_url": "https://example.com/elon-musk-biography"
+}}
+
+Input: "create a card for the capital of Japan"
+Output: {{
+  "concept": "Capital of Japan",
+  "definition": "Tokyo",
+  "tags": "",
+  "source_url": "https://example.com/japan-capital"
+}}
+
+Input: "create a card for Ohm's law"
+Output: {{
+  "concept": "Ohm's law",
+  "definition": "$$ V = IR $$",
+  "tags": "",
+  "source_url": ""
+}}
+
+Important:
+- Use double quotes around all keys and string values.
+- Escape all backslashes in LaTeX as \\\\ (double-escaped for JSON validity).
+- Return only a raw JSON object with no explanation.
+- Always include a source_url field, even if empty.
+
+Now convert this into a flashcard:
+"{natural_text}"
+"""
+
+        # Generate flashcard using GPT
+        completion = client.chat.completions.create(
+            model="gpt-4o-search-preview",
+            messages=[{"role": "user", "content": prompt}],
+        )
+        response_text = completion.choices[0].message.content.strip()
+        print(f"🤖 GPT response: {response_text}")
+
+        # Parse JSON response
+        if response_text.startswith("```json"):
+            response_text = response_text[7:]
+        if response_text.startswith("```"):
+            response_text = response_text[3:]
+        if response_text.endswith("```"):
+            response_text = response_text[:-3]
+        response_text = response_text.strip()
+
+        try:
+            card_data = json.loads(response_text)
+        except json.JSONDecodeError as e:
+            # Fallback: escape single backslashes and try again
+            safe_text = re.sub(r'(?<!\\)\\(?![\\ntr"])', r'\\\\', response_text)
+            try:
+                card_data = json.loads(safe_text)
+            except json.JSONDecodeError as e2:
+                return "Sorry, I couldn't generate a flashcard from that. Please try again with different wording."
+
+        # Validate required fields
+        if "concept" not in card_data or "definition" not in card_data:
+            return "Sorry, I couldn't generate a proper flashcard. Please try again."
+
+        # Set conversation state to waiting for confirmation
+        state = db.query(ConversationState).filter_by(user_id=user.id).first()
+        if not state:
+            state = ConversationState(user_id=user.id)
+        
+        # Store the generated flashcard data in context
+        state.state = "waiting_for_flashcard_confirmation"
+        state.current_flashcard_id = None
+        state.last_message_at = datetime.utcnow()
+        state.context = json.dumps(card_data)  # Store flashcard data as JSON
+        
+        db.add(state)
+        db.commit()
+
+        # Send the generated flashcard for confirmation
+        concept = card_data["concept"]
+        definition = card_data["definition"]
+        tags = card_data.get("tags", "")
+        
+        confirmation_message = f"Generated flashcard:\n\nConcept: {concept}\nDefinition: {definition}"
+        if tags:
+            confirmation_message += f"\nTags: {tags}"
+        confirmation_message += "\n\nReply 'Yes' to save or 'No' to try again."
+
+        if service:
+            service.send_feedback(user.phone_number, confirmation_message)
+        
+        return f"Flashcard generated and sent for confirmation to {user.phone_number}"
+        
+    except Exception as e:
+        print(f"❌ Error creating natural flashcard: {e}")
+        import traceback
+        traceback.print_exc()
+        return "Sorry, there was an error creating your flashcard. Please try again."
+
+async def handle_flashcard_confirmation(user: User, state: ConversationState, service: LoopMessageService, db: Session) -> str:
+    """
+    Handle user confirmation of flashcard creation
+    """
+    try:
+        print(f"💾 Saving confirmed flashcard for user {user.id}")
+        
+        # Get the flashcard data from context
+        if not state.context:
+            return "Error: No flashcard data found. Please try creating the flashcard again."
+        
+        card_data = json.loads(state.context)
+        
+        # Create the flashcard
+        from app.models import Flashcard
+        
+        # Sanitize source_url
+        source_url = card_data.get("source_url", "").lstrip('@').strip()
+        
+        new_flashcard = Flashcard(
+            user_id=user.id,
+            concept=card_data["concept"],
+            definition=card_data["definition"],
+            tags=card_data.get("tags", ""),
+            source_url=source_url
+        )
+        
+        db.add(new_flashcard)
+        db.commit()
+        db.refresh(new_flashcard)
+        
+        print(f"✅ Flashcard saved: ID {new_flashcard.id}, Concept: {new_flashcard.concept}")
+        
+        # Clear the conversation state
+        state.state = "idle"
+        state.context = None
+        state.current_flashcard_id = None
+        db.commit()
+        
+        # Send confirmation to user
+        confirmation_message = f"✅ Flashcard saved successfully!\n\nConcept: {new_flashcard.concept}\nDefinition: {new_flashcard.definition}"
+        if new_flashcard.tags:
+            confirmation_message += f"\nTags: {new_flashcard.tags}"
+        
+        if service:
+            service.send_feedback(user.phone_number, confirmation_message)
+        
+        return f"Flashcard saved successfully! ID: {new_flashcard.id}"
+        
+    except Exception as e:
+        print(f"❌ Error saving flashcard: {e}")
+        import traceback
+        traceback.print_exc()
+        return "Sorry, there was an error saving your flashcard. Please try again." 
