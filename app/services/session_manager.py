@@ -1,10 +1,10 @@
 from sqlalchemy.orm import Session
 from app.models import ConversationState, Flashcard, CardReview
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import and_
 
 def get_next_due_flashcard(user_id: int, db: Session) -> Flashcard | None:
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     
     subquery = db.query(CardReview.flashcard_id).filter(
         CardReview.user_id == user_id,
@@ -30,7 +30,7 @@ def set_conversation_state(user_id: int, flashcard_id: int, db: Session):
 
         state.current_flashcard_id = flashcard_id
         state.state = "waiting_for_answer"
-        state.last_message_at = datetime.utcnow()
+        state.last_message_at = datetime.now(timezone.utc)
 
         print(f"💾 Saving conversation state: user_id={user_id}, flashcard_id={flashcard_id}, state=waiting_for_answer")
 

@@ -1,6 +1,5 @@
 import asyncio
 import json
-import datetime
 from fastapi import APIRouter, Request, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
@@ -11,7 +10,7 @@ from app.services.evaluator import evaluate_answer
 from app.services.loop_message_service import LoopMessageService
 from typing import Dict, Any
 from app.services.scheduler import compute_next_review
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 
 router = APIRouter(tags=["loop-webhook"])
@@ -278,7 +277,7 @@ async def handle_flashcard_response(
         
         # Compute next review date using SM-2 algorithm
         next_review = compute_next_review(
-            last_review_date=datetime.now(datetime.UTC),
+            last_review_date=datetime.now(timezone.utc),
             was_correct=result["was_correct"],
             confidence_score=result["confidence_score"],
             start_hour=user.preferred_start_hour,
@@ -511,7 +510,7 @@ Now convert this into a flashcard:
         # Store the generated flashcard data in context
         state.state = "waiting_for_flashcard_confirmation"
         state.current_flashcard_id = None
-        state.last_message_at = datetime.utcnow()
+        state.last_message_at = datetime.now(timezone.utc)
         state.context = json.dumps(card_data)  # Store flashcard data as JSON
         
         print(f"💾 Saving conversation state: user_id={user.id}, state=waiting_for_flashcard_confirmation, context={state.context}")
