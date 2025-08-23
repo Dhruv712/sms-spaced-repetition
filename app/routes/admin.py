@@ -4,7 +4,8 @@ from sqlalchemy import text
 from app.database import get_db, engine
 from app.models import User
 from app.services.auth import get_current_active_user
-from app.services.scheduler_service import send_due_flashcards_to_all_users, get_user_flashcard_stats
+from app.services.scheduler_service import send_due_flashcards_to_all_users, send_due_flashcards_to_user, get_user_flashcard_stats, cleanup_old_conversation_states
+from app.services.summary_service import send_daily_summary_to_user, get_daily_review_summary
 from typing import Dict, Any
 
 router = APIRouter(tags=["Admin"])
@@ -221,21 +222,71 @@ async def cron_send_flashcards() -> Dict[str, Any]:
 
 @router.post("/cron/cleanup")
 async def cron_cleanup() -> Dict[str, Any]:
-    """
-    Cron endpoint for cleaning up old conversation states
-    """
+    """Railway cron endpoint for cleaning up old conversation states"""
     try:
-        from app.services.scheduler_service import cleanup_old_conversation_states
+        print("🧹 Starting cleanup of old conversation states...")
+        result = cleanup_old_conversation_states()
+        print(f"✅ Cleanup completed: {result}")
+        return {"success": True, "message": "Cleanup completed", "result": result}
+    except Exception as e:
+        print(f"❌ Error during cleanup: {e}")
+        return {"success": False, "error": str(e)}
+
+@router.post("/cron/daily-summary")
+async def cron_daily_summary(db: Session = Depends(get_db)) -> Dict[str, Any]:
+    """Railway cron endpoint for sending daily summaries to all users"""
+    try:
+        print("📊 Starting daily summary generation...")
         
-        # Call the function directly
-        cleanup_old_conversation_states()
+        # Get all users with SMS opt-in
+        users = db.query(User).filter_by(sms_opt_in=True).all()
+        print(f"📱 Found {len(users)} users with SMS opt-in")
+        
+        results = []
+        for user in users:
+            try:
+                result = send_daily_summary_to_user(user, db)
+                results.append(result)
+                print(f"📤 Summary sent to {user.phone_number}: {result.get('success', False)}")
+            except Exception as e:
+                print(f"❌ Error sending summary to {user.phone_number}: {e}")
+                results.append({
+                    "success": False,
+                    "user_id": user.id,
+                    "phone": user.phone_number,
+                    "error": str(e)
+                })
+        
+        successful = sum(1 for r in results if r.get("success", False))
+        print(f"✅ Daily summary completed: {successful}/{len(users)} successful")
         
         return {
-            "success": True,
-            "message": "Cron cleanup completed"
+            "success": True, 
+            "message": f"Daily summary sent to {successful}/{len(users)} users",
+            "results": results
         }
+        
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error in cron cleanup: {str(e)}")
+        print(f"❌ Error during daily summary: {e}")
+        return {"success": False, "error": str(e)}
+
+@router.get("/daily-summary/{user_id}")
+async def get_user_daily_summary(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+) -> Dict[str, Any]:
+    """Get daily summary for a specific user (requires auth)"""
+    try:
+        user = db.query(User).filter_by(id=user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        summary = get_daily_review_summary(user_id, db)
+        return {"success": True, "summary": summary}
+        
+    except Exception as e:
+        return {"success": False, "error": str(e)}
 
 @router.delete("/delete-user/{user_id}")
 async def delete_user_admin(
