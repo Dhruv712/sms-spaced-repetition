@@ -44,23 +44,41 @@ def get_daily_review_summary(user_id: int, db: Session, date: datetime = None) -
             "message": "No reviews today. Time to start studying!"
         }
     
-    # Calculate basic stats
-    total_reviews = len(reviews)
-    correct_reviews = sum(1 for review in reviews if review.was_correct)
+    # Calculate basic stats - count unique flashcards reviewed
+    unique_flashcards_reviewed = set(review.flashcard_id for review in reviews)
+    total_reviews = len(unique_flashcards_reviewed)
+    
+    # For correctness, count the most recent review for each flashcard
+    correct_reviews = 0
+    for flashcard_id in unique_flashcards_reviewed:
+        # Get the most recent review for this flashcard today
+        latest_review = max([r for r in reviews if r.flashcard_id == flashcard_id], 
+                           key=lambda r: r.review_date)
+        if latest_review.was_correct:
+            correct_reviews += 1
+    
     percent_correct = (correct_reviews / total_reviews) * 100 if total_reviews > 0 else 0
     
     # Get problem areas (cards with low confidence scores)
-    problem_reviews = [r for r in reviews if r.confidence_score < 0.7]
     problem_areas = []
     
-    for review in problem_reviews[:5]:  # Top 5 problem areas
-        flashcard = db.query(Flashcard).filter_by(id=review.flashcard_id).first()
-        if flashcard:
-            problem_areas.append({
-                "concept": flashcard.concept,
-                "confidence_score": review.confidence_score,
-                "user_response": review.user_response
-            })
+    for flashcard_id in unique_flashcards_reviewed:
+        # Get the most recent review for this flashcard today
+        latest_review = max([r for r in reviews if r.flashcard_id == flashcard_id], 
+                           key=lambda r: r.review_date)
+        
+        if latest_review.confidence_score < 0.7:
+            flashcard = db.query(Flashcard).filter_by(id=flashcard_id).first()
+            if flashcard:
+                problem_areas.append({
+                    "concept": flashcard.concept,
+                    "confidence_score": latest_review.confidence_score,
+                    "user_response": latest_review.user_response
+                })
+    
+    # Sort by confidence score (lowest first) and take top 5
+    problem_areas.sort(key=lambda x: x["confidence_score"])
+    problem_areas = problem_areas[:5]
     
     # Calculate streak (consecutive days with reviews)
     streak_days = calculate_streak_days(user_id, db)
@@ -111,11 +129,20 @@ def count_next_due_cards(user_id: int, db: Session) -> int:
     """Count cards due for review"""
     now = datetime.now(timezone.utc)
     
-    # Get cards that are due (next_review_date <= now)
-    due_cards = db.query(CardReview).filter(
+    # Get unique flashcards that are due (next_review_date <= now)
+    # Use the same logic as get_next_due_flashcard but count all due cards
+    subquery = db.query(CardReview.flashcard_id).filter(
         and_(
             CardReview.user_id == user_id,
-            CardReview.next_review_date <= now
+            CardReview.next_review_date > now
+        )
+    ).subquery()
+
+    # Count flashcards that are NOT in the subquery (i.e., are due)
+    due_cards = db.query(Flashcard).filter(
+        and_(
+            Flashcard.user_id == user_id,
+            ~Flashcard.id.in_(subquery)
         )
     ).count()
     
