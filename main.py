@@ -35,8 +35,17 @@ os.makedirs("uploads", exist_ok=True)
 # Mount static files for uploaded images
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
-# Get allowed origins from environment or use defaults
-allowed_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,https://hopeful-adventure-production.up.railway.app,https://sms-spaced-repetition-production.up.railway.app,https://trycue.xyz").split(",")
+"""CORS configuration
+
+We accept a comma-separated list of origins from the ALLOWED_ORIGINS env var.
+Whitespace around items is stripped to avoid subtle mismatches that would
+cause CORS failures (e.g., " https://trycue.xyz").
+"""
+allowed_origins_raw = os.getenv(
+    "ALLOWED_ORIGINS",
+    "http://localhost:3000,https://hopeful-adventure-production.up.railway.app,https://sms-spaced-repetition-production.up.railway.app,https://trycue.xyz",
+)
+allowed_origins = [origin.strip() for origin in allowed_origins_raw.split(",") if origin.strip()]
 
 print(f"Allowed origins: {allowed_origins}")
 
