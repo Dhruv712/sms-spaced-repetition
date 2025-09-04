@@ -26,6 +26,9 @@ def get_full_image_url(image_url: str | None) -> str | None:
     base_url = os.getenv("BASE_URL", "https://sms-spaced-repetition-production.up.railway.app")
     
     # Convert relative URL to full URL
+    # Ensure image_url starts with / for proper concatenation
+    if not image_url.startswith('/'):
+        image_url = '/' + image_url
     return f"{base_url}{image_url}"
 
 def save_uploaded_image(file: UploadFile, deck_id: int) -> str:
@@ -53,8 +56,8 @@ def save_uploaded_image(file: UploadFile, deck_id: int) -> str:
         # Get base URL from environment or use Railway backend URL as fallback
         base_url = os.getenv("BASE_URL", "https://sms-spaced-repetition-production.up.railway.app")
         
-        # Return the full URL path
-        return f"{base_url}/uploads/decks/{deck_id}/{filename}"
+        # Return the relative path (will be converted to full URL by get_full_image_url)
+        return f"/uploads/decks/{deck_id}/{filename}"
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Invalid image file: {str(e)}")
 
