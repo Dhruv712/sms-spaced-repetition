@@ -22,18 +22,28 @@ const DailySummary: React.FC = () => {
   const { token, user } = useAuth();
 
   useEffect(() => {
-    if (!token || !user) return;
+    if (!token) return;
 
     const fetchDailySummary = async () => {
       try {
-        const response = await axios.get(buildApiUrl(`/admin/daily-summary/${user.id}`), {
+        // First get the user data to get the ID
+        const userResponse = await axios.get(buildApiUrl('/auth/me'), {
           headers: {
             'Authorization': `Bearer ${token}`
           }
         });
         
-        if (response.data.success) {
-          setSummary(response.data.summary);
+        const userId = userResponse.data.id;
+        
+        // Then get the daily summary
+        const summaryResponse = await axios.get(buildApiUrl(`/admin/daily-summary/${userId}`), {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (summaryResponse.data.success) {
+          setSummary(summaryResponse.data.summary);
         } else {
           setError('Failed to load daily summary.');
         }
@@ -46,7 +56,7 @@ const DailySummary: React.FC = () => {
     };
 
     fetchDailySummary();
-  }, [token, user]);
+  }, [token]);
 
   if (error) return <div className="text-red-600">{error}</div>;
   if (loading) return <div>Loading daily summary...</div>;
