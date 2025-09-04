@@ -3,6 +3,7 @@ import axios from 'axios';
 import FlashcardForm from '../components/FlashcardForm';
 import FlashcardEditModal from '../components/FlashcardEditModal';
 import ReviewStats from '../components/ReviewStats';
+import DailySummary from '../components/DailySummary';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
@@ -179,6 +180,11 @@ const FlashcardsPage: React.FC = () => {
       {/* ReviewStats Banner at the top */}
       <div className="mb-8">
         <ReviewStats />
+      </div>
+      
+      {/* Daily Summary */}
+      <div className="mb-8">
+        <DailySummary />
       </div>
       
       {/* Centered FlashcardForm */}
