@@ -39,12 +39,12 @@ const DeckTile: React.FC<{ deck: DeckOut; onClick: () => void; isActive: boolean
     >
       {/* Deck image - use uploaded image or fallback */}
       <img
-        src={deck.image_url || "https://futureoflife.org/wp-content/uploads/2020/08/elon_musk_royal_society.jpg"}
+        src={deck.image_url || "/cue_default_image.jpeg"}
         alt={`${deck.name} preview`}
         className="rounded mb-2 object-cover w-full h-20"
         onError={(e) => {
           console.error('Image failed to load:', deck.image_url);
-          e.currentTarget.src = "https://futureoflife.org/wp-content/uploads/2020/08/elon_musk_royal_society.jpg";
+          e.currentTarget.src = "/cue_default_image.jpeg";
         }}
       />
       <div className="font-bold text-lg mb-1 text-center">{deck.name}</div>

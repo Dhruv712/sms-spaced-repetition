@@ -210,12 +210,12 @@ const DecksPage: React.FC = () => {
                     {/* Deck Preview Image */}
                     <div className="relative">
                       <img
-                        src={deck.image_url || "https://futureoflife.org/wp-content/uploads/2020/08/elon_musk_royal_society.jpg"}
+                        src={deck.image_url || "/cue_default_image.jpeg"}
                         alt={`${deck.name} preview`}
                         className="w-16 h-16 rounded-lg object-cover border border-secondary-200 dark:border-secondary-600"
                         onError={(e) => {
                           console.error('Image failed to load:', deck.image_url);
-                          e.currentTarget.src = "https://futureoflife.org/wp-content/uploads/2020/08/elon_musk_royal_society.jpg";
+                          e.currentTarget.src = "/cue_default_image.jpeg";
                         }}
                       />
                       <button
