@@ -33,7 +33,9 @@ const DailySummary: React.FC = () => {
           }
         });
         
+        console.log('User data:', userResponse.data);
         const userId = userResponse.data.id;
+        console.log('User ID:', userId);
         
         // Then get the daily summary
         const summaryResponse = await axios.get(buildApiUrl(`/admin/daily-summary/${userId}`), {
@@ -42,9 +44,12 @@ const DailySummary: React.FC = () => {
           }
         });
         
+        console.log('Daily summary response:', summaryResponse.data);
+        
         if (summaryResponse.data.success) {
           setSummary(summaryResponse.data.summary);
         } else {
+          console.error('Summary API returned error:', summaryResponse.data);
           setError('Failed to load daily summary.');
         }
       } catch (err) {
