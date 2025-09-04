@@ -46,7 +46,7 @@ const Navbar: React.FC = () => {
         {/* Logo/Brand */}
         <div className="flex items-center">
           <Link to="/" className="text-xl font-bold text-primary-600 dark:text-primary-300">
-            Memorable
+            Cue
           </Link>
         </div>
 
