@@ -60,13 +60,25 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = 
 async def read_users_me(current_user: User = Depends(get_current_active_user)):
     return current_user
 
+@router.get("/google/debug")
+async def google_debug():
+    """Debug Google OAuth configuration"""
+    return {
+        "redirect_uri": google_auth_service.redirect_uri,
+        "client_id": google_auth_service.client_id[:20] + "..." if google_auth_service.client_id else None,
+        "has_client_secret": bool(google_auth_service.client_secret)
+    }
+
 @router.get("/google")
 async def google_auth():
     """Initiate Google OAuth flow"""
     try:
         authorization_url = google_auth_service.get_authorization_url()
+        print(f"🔗 Google OAuth redirect URI: {google_auth_service.redirect_uri}")
+        print(f"🔗 Generated authorization URL: {authorization_url}")
         return RedirectResponse(url=authorization_url)
     except Exception as e:
+        print(f"❌ Google OAuth error: {e}")
         raise HTTPException(
             status_code=500,
             detail=f"Failed to initiate Google OAuth: {str(e)}"

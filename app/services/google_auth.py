@@ -16,11 +16,9 @@ class GoogleAuthService:
     def __init__(self):
         self.client_id = settings.GOOGLE_CLIENT_ID
         self.client_secret = settings.GOOGLE_CLIENT_SECRET
-        # Use Railway backend URL for production, localhost for development
-        if settings.ENVIRONMENT == "production":
-            self.redirect_uri = "https://sms-spaced-repetition-production.up.railway.app/auth/google/callback"
-        else:
-            self.redirect_uri = "http://localhost:8000/auth/google/callback"
+        # Use Railway backend URL for production
+        # TODO: Make this environment-based later
+        self.redirect_uri = "https://sms-spaced-repetition-production.up.railway.app/auth/google/callback"
         
     def get_authorization_url(self) -> str:
         """Get Google OAuth authorization URL"""
