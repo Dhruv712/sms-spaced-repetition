@@ -340,6 +340,47 @@ async def delete_user_admin(
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Error deleting user: {str(e)}")
 
+@router.post("/fix-foreign-key-cascades")
+async def fix_foreign_key_cascades() -> Dict[str, Any]:
+    """
+    Fix foreign key constraints to use ON DELETE CASCADE
+    (Temporary public endpoint for one-time fix)
+    """
+    try:
+        sql_commands = [
+            # Drop existing foreign key constraints
+            "ALTER TABLE decks DROP CONSTRAINT IF EXISTS decks_user_id_fkey",
+            "ALTER TABLE flashcards DROP CONSTRAINT IF EXISTS flashcards_user_id_fkey", 
+            "ALTER TABLE flashcards DROP CONSTRAINT IF EXISTS flashcards_deck_id_fkey",
+            "ALTER TABLE card_reviews DROP CONSTRAINT IF EXISTS card_reviews_user_id_fkey",
+            "ALTER TABLE card_reviews DROP CONSTRAINT IF EXISTS card_reviews_flashcard_id_fkey",
+            "ALTER TABLE study_sessions DROP CONSTRAINT IF EXISTS study_sessions_user_id_fkey",
+            "ALTER TABLE conversation_states DROP CONSTRAINT IF EXISTS conversation_states_user_id_fkey",
+            
+            # Recreate with ON DELETE CASCADE
+            "ALTER TABLE decks ADD CONSTRAINT decks_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE",
+            "ALTER TABLE flashcards ADD CONSTRAINT flashcards_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE",
+            "ALTER TABLE flashcards ADD CONSTRAINT flashcards_deck_id_fkey FOREIGN KEY (deck_id) REFERENCES decks(id) ON DELETE CASCADE", 
+            "ALTER TABLE card_reviews ADD CONSTRAINT card_reviews_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE",
+            "ALTER TABLE card_reviews ADD CONSTRAINT card_reviews_flashcard_id_fkey FOREIGN KEY (flashcard_id) REFERENCES flashcards(id) ON DELETE CASCADE",
+            "ALTER TABLE study_sessions ADD CONSTRAINT study_sessions_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE",
+            "ALTER TABLE conversation_states ADD CONSTRAINT conversation_states_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE"
+        ]
+        
+        with engine.connect() as connection:
+            for sql in sql_commands:
+                print(f"Executing: {sql}")
+                connection.execute(text(sql))
+            connection.commit()
+        
+        return {
+            "success": True,
+            "message": "Foreign key constraints updated with ON DELETE CASCADE",
+            "commands_executed": len(sql_commands)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error updating foreign key constraints: {str(e)}")
+
 @router.post("/migrate-google-oauth")
 async def migrate_google_oauth() -> Dict[str, Any]:
     """
