@@ -268,7 +268,7 @@ const FlashcardsPage: React.FC = () => {
   return (
     <div className="container mx-auto px-4 py-8 bg-gray-50 dark:bg-darkbg min-h-screen">
       {/* SMS Banner for users without conversation state */}
-      {user && user.phone_number && !user.has_sms_conversation && (
+      {user && user.phone_number && user.phone_number !== null && !user.has_sms_conversation && (
         <div className="mb-8 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
           <div className="flex items-start space-x-3">
             <div className="flex-shrink-0">

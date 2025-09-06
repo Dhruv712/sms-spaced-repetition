@@ -5,7 +5,7 @@ import { buildApiUrl } from '../config';
 
 interface UserProfile {
   name: string;
-  phone_number: string;
+  phone_number: string | null;
   study_mode: string;
   preferred_start_hour: number;
   preferred_end_hour: number;
@@ -33,7 +33,7 @@ const ProfilePage: React.FC = () => {
       .then(res => {
         setProfile(res.data);
         // Parse phone number if it exists
-        if (res.data.phone_number) {
+        if (res.data.phone_number && res.data.phone_number !== null) {
           const phone = res.data.phone_number;
           // Extract country code - handle US numbers properly
           if (phone.startsWith('+1')) {

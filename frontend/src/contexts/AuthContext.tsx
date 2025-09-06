@@ -5,7 +5,7 @@ import { buildApiUrl } from '../config';
 interface User {
   email: string;
   name: string;
-  phone_number: string;
+  phone_number: string | null;
   google_id?: string;
   study_mode?: string;
   preferred_start_hour?: number;
@@ -58,7 +58,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(userData);
         
         // Show phone modal for Google users without phone numbers
-        if (userData.google_id && !userData.phone_number) {
+        if (userData.google_id && (!userData.phone_number || userData.phone_number === null)) {
           console.log('Google user without phone number, showing phone modal');
           setShowPhoneModal(true);
         }
