@@ -355,7 +355,7 @@ async def fix_foreign_key_cascades() -> Dict[str, Any]:
             "ALTER TABLE card_reviews DROP CONSTRAINT IF EXISTS card_reviews_user_id_fkey",
             "ALTER TABLE card_reviews DROP CONSTRAINT IF EXISTS card_reviews_flashcard_id_fkey",
             "ALTER TABLE study_sessions DROP CONSTRAINT IF EXISTS study_sessions_user_id_fkey",
-            "ALTER TABLE conversation_states DROP CONSTRAINT IF EXISTS conversation_states_user_id_fkey",
+            "ALTER TABLE conversation_state DROP CONSTRAINT IF EXISTS conversation_state_user_id_fkey",
             
             # Recreate with ON DELETE CASCADE
             "ALTER TABLE decks ADD CONSTRAINT decks_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE",
@@ -364,7 +364,7 @@ async def fix_foreign_key_cascades() -> Dict[str, Any]:
             "ALTER TABLE card_reviews ADD CONSTRAINT card_reviews_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE",
             "ALTER TABLE card_reviews ADD CONSTRAINT card_reviews_flashcard_id_fkey FOREIGN KEY (flashcard_id) REFERENCES flashcards(id) ON DELETE CASCADE",
             "ALTER TABLE study_sessions ADD CONSTRAINT study_sessions_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE",
-            "ALTER TABLE conversation_states ADD CONSTRAINT conversation_states_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE"
+            "ALTER TABLE conversation_state ADD CONSTRAINT conversation_state_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE"
         ]
         
         with engine.connect() as connection:
