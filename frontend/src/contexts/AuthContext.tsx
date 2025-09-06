@@ -205,6 +205,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         sms_opt_in: smsOptIn
       };
       
+      console.log('Sending profile data:', profileData);
+      
       const response = await fetch(buildApiUrl('/users/profile'), {
         method: 'PUT',
         headers: {
@@ -221,7 +223,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log('Phone number updated successfully');
       } else {
         const errorData = await response.json();
-        console.error('Failed to update phone number:', errorData);
+        console.error('Failed to update phone number:', response.status, errorData);
         throw new Error('Failed to update phone number');
       }
     } catch (error) {

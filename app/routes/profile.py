@@ -46,6 +46,10 @@ def update_user_profile(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
+    print(f"🔍 Received profile update request for user {current_user.id}")
+    print(f"🔍 Profile data: {profile}")
+    print(f"🔍 Current user data: name={current_user.name}, phone={current_user.phone_number}, google_id={current_user.google_id}")
+    
     current_user.name = profile.name
     current_user.phone_number = profile.phone_number
     current_user.study_mode = profile.study_mode
