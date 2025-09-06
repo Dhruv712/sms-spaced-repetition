@@ -28,5 +28,8 @@ class ReviewOut(BaseModel):
 class ReviewWithFlashcard(ReviewOut):
     flashcard: FlashcardOut
 
+    class Config:
+        from_attributes = True
+
 class ReviewCreate(BaseModel):
     pass

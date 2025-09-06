@@ -22,9 +22,15 @@ class FlashcardOut(BaseModel):
 
     @validator('tags', pre=True, always=True)
     def parse_tags(cls, v):
+        if v is None:
+            return []
         if isinstance(v, str):
+            if not v.strip():
+                return []
             return [tag.strip() for tag in v.split(',') if tag.strip()]
-        return v
+        if isinstance(v, list):
+            return v
+        return []
 
     class Config:
         orm_mode = True
@@ -40,6 +46,12 @@ class FlashcardWithNextReviewOut(BaseModel):
 
     @validator('tags', pre=True, always=True)
     def parse_tags_for_review(cls, v):
+        if v is None:
+            return []
         if isinstance(v, str):
+            if not v.strip():
+                return []
             return [tag.strip() for tag in v.split(',') if tag.strip()]
-        return v
+        if isinstance(v, list):
+            return v
+        return []
