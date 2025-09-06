@@ -31,6 +31,89 @@ interface DeckOut {
   image_url?: string;
 }
 
+const FlashcardCard: React.FC<{ 
+  card: Flashcard; 
+  decks: DeckOut[]; 
+  onEdit: (card: Flashcard) => void; 
+  onDelete: (id: number) => void 
+}> = ({ card, decks, onEdit, onDelete }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  
+  const getDeckName = (deckId: number | null) => {
+    if (!deckId) return null;
+    const deck = decks.find(d => d.id === deckId);
+    return deck?.name || null;
+  };
+  
+  const deckName = getDeckName(card.deck_id);
+  const shouldTruncate = card.definition.length > 200;
+  const displayDefinition = shouldTruncate && !isExpanded 
+    ? card.definition.substring(0, 200) + '...' 
+    : card.definition;
+
+  return (
+    <div className="bg-white dark:bg-secondary-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-gray-700 transform hover:scale-102 transition-transform duration-200">
+      <div className="font-semibold text-lg mb-2 text-gray-900 dark:text-gray-100">{card.concept}</div>
+      <hr className="my-2 border-gray-200 dark:border-gray-600" />
+      <div className="prose max-w-none text-gray-700 dark:text-gray-200">
+        <ReactMarkdown
+          remarkPlugins={[remarkMath]}
+          rehypePlugins={[rehypeKatex]}
+        >
+          {displayDefinition}
+        </ReactMarkdown>
+      </div>
+      {shouldTruncate && (
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="text-blue-600 dark:text-blue-400 text-sm hover:underline mt-2"
+        >
+          {isExpanded ? 'Show Less' : 'More'}
+        </button>
+      )}
+      
+      {/* Deck Badge */}
+      {deckName && (
+        <div className="mt-3">
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
+            📚 {deckName}
+          </span>
+        </div>
+      )}
+      
+      {/* Tags */}
+      <div className="text-sm text-blue-600 dark:text-blue-300 mt-2">
+        Tags:{' '}
+        {normalizeTags(card.tags).join(', ') || 'No tags'}
+      </div>
+      
+      {/* Next Review */}
+      <div className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+        <strong>Next Review:</strong>{' '}
+        {card.next_review_date
+          ? new Date(card.next_review_date).toLocaleString()
+          : 'Not reviewed yet'}
+      </div>
+      
+      {/* Action Buttons */}
+      <div className="mt-4 flex space-x-2">
+        <button
+          onClick={() => onEdit(card)}
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors duration-200"
+        >
+          Edit
+        </button>
+        <button
+          onClick={() => onDelete(card.id)}
+          className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 transition-colors duration-200"
+        >
+          Delete
+        </button>
+      </div>
+    </div>
+  );
+};
+
 const DeckTile: React.FC<{ deck: DeckOut; onClick: () => void; isActive: boolean }> = ({ deck, onClick, isActive }) => {
   return (
     <div
@@ -234,42 +317,13 @@ const FlashcardsPage: React.FC = () => {
           <p className="text-gray-700 col-span-full">No flashcards found for this selection. Try adjusting your filters.</p>
         ) : (
           visibleFlashcards.map((card) => (
-            <div key={card.id} className="bg-white dark:bg-secondary-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-gray-700 transform hover:scale-102 transition-transform duration-200">
-              <div className="font-semibold text-lg mb-2 text-gray-900 dark:text-gray-100">{card.concept}</div>
-              <hr className="my-2 border-gray-200 dark:border-gray-600" />
-              <div className="prose max-w-none text-gray-700 dark:text-gray-200">
-                <ReactMarkdown
-                  remarkPlugins={[remarkMath]}
-                  rehypePlugins={[rehypeKatex]}
-                >
-                  {card.definition}
-                </ReactMarkdown>
-              </div>
-              <div className="text-sm text-blue-600 dark:text-blue-300 mt-2">
-                Tags:{' '}
-                {normalizeTags(card.tags).join(', ') || 'No tags'}
-              </div>
-              <div className="text-sm text-gray-600 dark:text-gray-300 mt-1">
-                <strong>Next Review:</strong>{' '}
-                {card.next_review_date
-                  ? new Date(card.next_review_date).toLocaleString()
-                  : 'Not reviewed yet'}
-              </div>
-              <div className="mt-4 flex space-x-2">
-                <button
-                  onClick={() => handleEditFlashcard(card)}
-                  className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors duration-200"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => handleDelete(card.id)}
-                  className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 transition-colors duration-200"
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
+            <FlashcardCard 
+              key={card.id} 
+              card={card} 
+              decks={decks}
+              onEdit={handleEditFlashcard}
+              onDelete={handleDelete}
+            />
           ))
         )}
       </div>

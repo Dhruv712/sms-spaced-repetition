@@ -123,6 +123,10 @@ const FlashcardForm: React.FC<Props> = ({ onSuccess }) => {
   return (
     <div className="bg-white dark:bg-darksurface rounded-lg shadow-md p-6 border border-gray-300 dark:border-gray-600">
       <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-darktext">Add a New Flashcard</h2>
+      
+      {/* Natural Language Section */}
+      <div className="mb-6">
+        <h3 className="text-lg font-medium mb-3 text-gray-700 dark:text-gray-300">Ask GPT to make a card for you.</h3>
 
       {error && (
         <div className="mb-4 p-3 bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200 rounded">
@@ -130,25 +134,30 @@ const FlashcardForm: React.FC<Props> = ({ onSuccess }) => {
         </div>
       )}
 
-      <div className="mb-6 space-y-4">
-        <textarea
-          placeholder="Type something like: 'Make a card about how Pretoria is Elon Musk's birthplace'"
-          value={nlInput}
-          onChange={(e) => setNlInput(e.target.value)}
-          rows={3}
-          className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-800 dark:text-darktext dark:border-gray-600 transition-colors duration-200"
-        />
-        <button
-          type="button"
-          onClick={handleNaturalSubmit}
-          disabled={loading || !token}
-          className="w-full px-4 py-2 bg-primary-500 text-white rounded-md hover:bg-primary-600 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50 transition-colors duration-200"
-        >
-          {loading ? 'Generating...' : 'Generate from Natural Language'}
-        </button>
+        <div className="space-y-4">
+          <textarea
+            placeholder="Type something like: 'make a card for the fundamental theorem of calculus'"
+            value={nlInput}
+            onChange={(e) => setNlInput(e.target.value)}
+            rows={3}
+            className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-800 dark:text-darktext dark:border-gray-600 transition-colors duration-200"
+          />
+          <button
+            type="button"
+            onClick={handleNaturalSubmit}
+            disabled={loading || !token}
+            className="w-full px-4 py-2 bg-primary-500 text-white rounded-md hover:bg-primary-600 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50 transition-colors duration-200"
+          >
+            {loading ? 'Generating...' : 'Generate from Natural Language'}
+          </button>
+        </div>
       </div>
-
-      <form onSubmit={handleManualSubmit} className="space-y-4">
+      
+      {/* Manual Creation Section */}
+      <div className="mb-4">
+        <h3 className="text-lg font-medium mb-3 text-gray-700 dark:text-gray-300">Or create manually:</h3>
+        
+        <form onSubmit={handleManualSubmit} className="space-y-4">
         <div>
           <label htmlFor="deck-select" className="block text-sm font-medium text-secondary-700 dark:text-secondary-300">Select Deck (Optional)</label>
           <select
@@ -220,7 +229,8 @@ const FlashcardForm: React.FC<Props> = ({ onSuccess }) => {
         >
           {submitting ? 'Saving...' : 'Save Flashcard'}
         </button>
-      </form>
+        </form>
+      </div>
       <div ref={formEndRef} />
     </div>
   );

@@ -5,7 +5,9 @@ import json
 client = OpenAI(api_key=settings.OPENAI_API_KEY)
 
 def evaluate_answer(concept: str, correct_definition: str, user_response: str):
-    prompt = f"""You're a helpful tutor. Grade the student's answer.
+    prompt = f"""You're a helpful tutor. Grade the student's answer, focusing on intuition and important details.
+    Remember, don't be a stickler for unimportant details. Use your intuition to determine if the student has the 
+    right answer.
 
 Concept: {concept}
 Definition: {correct_definition}
