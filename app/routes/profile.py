@@ -55,4 +55,17 @@ def update_user_profile(
     db.commit()
     db.refresh(current_user)
 
-    return profile
+    # Check if user has SMS conversation state
+    conversation_state = db.query(ConversationState).filter_by(user_id=current_user.id).first()
+    has_sms_conversation = conversation_state is not None
+    
+    return UserProfile(
+        name=current_user.name,
+        phone_number=current_user.phone_number,
+        study_mode=current_user.study_mode,
+        preferred_start_hour=current_user.preferred_start_hour,
+        preferred_end_hour=current_user.preferred_end_hour,
+        timezone=current_user.timezone,
+        sms_opt_in=current_user.sms_opt_in,
+        has_sms_conversation=has_sms_conversation
+    )
