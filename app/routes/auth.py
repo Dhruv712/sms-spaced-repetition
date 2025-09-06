@@ -84,10 +84,10 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
                 detail="Authorization code not provided"
             )
         
-        # Exchange code for token (simplified - in production you'd use the flow)
-        # For now, we'll use a different approach with the frontend handling the token
+        # For now, redirect to frontend with success message
+        # The frontend will handle the OAuth flow completion
         return RedirectResponse(
-            url=f"https://trycue.xyz/login?google_success=true&code={code}"
+            url="https://trycue.xyz/login?google_success=true"
         )
         
     except Exception as e:
