@@ -202,7 +202,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         preferred_start_hour: user.preferred_start_hour || 9,
         preferred_end_hour: user.preferred_end_hour || 21,
         timezone: user.timezone || 'UTC',
-        sms_opt_in: smsOptIn
+        sms_opt_in: smsOptIn,
+        has_sms_conversation: user.has_sms_conversation || false
       };
       
       console.log('Sending profile data:', profileData);
