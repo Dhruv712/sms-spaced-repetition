@@ -35,12 +35,15 @@ const ProfilePage: React.FC = () => {
         // Parse phone number if it exists
         if (res.data.phone_number) {
           const phone = res.data.phone_number;
+          console.log('🔍 DEBUG: Raw phone from DB:', phone);
           // Extract country code (assume it starts with +)
           const match = phone.match(/^(\+\d{1,4})(.*)$/);
           if (match) {
+            console.log('🔍 DEBUG: Country code:', match[1], 'Phone part:', match[2]);
             setCountryCode(match[1]);
             setPhoneNumber(match[2]);
           } else {
+            console.log('🔍 DEBUG: No match, setting full phone:', phone);
             setPhoneNumber(phone);
           }
         }
@@ -65,6 +68,7 @@ const ProfilePage: React.FC = () => {
     try {
       // Combine country code and phone number - SIMPLE LOGIC
       const fullPhoneNumber = phoneNumber.trim() ? `${countryCode}${phoneNumber.replace(/\D/g, '')}` : '';
+      console.log('🔍 DEBUG: Saving phone - Country:', countryCode, 'Number:', phoneNumber, 'Full:', fullPhoneNumber);
       
       const profileData = {
         ...profile,
@@ -331,7 +335,10 @@ const ProfilePage: React.FC = () => {
               <input
                 type="tel"
                 value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
+                onChange={(e) => {
+                  console.log('🔍 DEBUG: Input value:', e.target.value);
+                  setPhoneNumber(e.target.value);
+                }}
                 placeholder="1234567890"
                 className="flex-1 p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-800 dark:text-darktext dark:border-gray-600 transition-colors duration-200"
               />
