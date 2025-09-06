@@ -19,7 +19,7 @@ interface Deck {
 const FlashcardForm: React.FC<Props> = ({ onSuccess }) => {
   const [concept, setConcept] = useState('');
   const [definition, setDefinition] = useState('');
-  const [tags, setTags] = useState<string[]>([]);
+  const [tags, setTags] = useState<string>('');
   const [nlInput, setNlInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -63,7 +63,7 @@ const FlashcardForm: React.FC<Props> = ({ onSuccess }) => {
         {
           concept,
           definition,
-          tags,
+          tags: tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0),
           deck_id: selectedDeckId,
           source_url: sourceUrl
         },
@@ -71,7 +71,7 @@ const FlashcardForm: React.FC<Props> = ({ onSuccess }) => {
       );
       setConcept('');
       setDefinition('');
-      setTags([]);
+      setTags('');
       setSourceUrl('');
       onSuccess();
     } catch (err) {
@@ -104,7 +104,7 @@ const FlashcardForm: React.FC<Props> = ({ onSuccess }) => {
       setConcept(concept);
       setDefinition(definition);
       setSourceUrl(source_url || '');
-      setTags(typeof receivedTags === 'string' ? receivedTags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0) : receivedTags || []);
+      setTags(typeof receivedTags === 'string' ? receivedTags : (receivedTags || []).join(', '));
       scrollToBottom();
     } catch (err) {
       console.error('Error generating flashcard:', err);
@@ -217,8 +217,8 @@ const FlashcardForm: React.FC<Props> = ({ onSuccess }) => {
           <input
             type="text"
             placeholder="Tags (comma separated)"
-            value={tags.join(', ')}
-            onChange={(e) => setTags(e.target.value.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0))}
+            value={tags}
+            onChange={(e) => setTags(e.target.value)}
             className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-800 dark:text-darktext dark:border-gray-600 transition-colors duration-200"
           />
         </div>
