@@ -39,7 +39,13 @@ const ProfilePage: React.FC = () => {
           const match = phone.match(/^(\+\d{1,4})(.*)$/);
           if (match) {
             setCountryCode(match[1]);
-            setPhoneNumber(match[2]);
+            // Remove any leading digits that might be part of the country code
+            let phonePart = match[2];
+            // For US numbers (+1), remove the leading 1 if present
+            if (match[1] === '+1' && phonePart.startsWith('1') && phonePart.length > 10) {
+              phonePart = phonePart.substring(1);
+            }
+            setPhoneNumber(phonePart);
           } else {
             setPhoneNumber(phone);
           }
@@ -64,7 +70,17 @@ const ProfilePage: React.FC = () => {
 
     try {
       // Combine country code and phone number
-      const fullPhoneNumber = phoneNumber.trim() ? `${countryCode}${phoneNumber.replace(/\D/g, '')}` : '';
+      let fullPhoneNumber = '';
+      if (phoneNumber.trim()) {
+        const cleanNumber = phoneNumber.replace(/\D/g, '');
+        // For US numbers, ensure we don't duplicate the country code
+        if (countryCode === '+1' && cleanNumber.startsWith('1') && cleanNumber.length === 11) {
+          // Remove the leading 1 if it's a full 11-digit US number
+          fullPhoneNumber = `+1${cleanNumber.substring(1)}`;
+        } else {
+          fullPhoneNumber = `${countryCode}${cleanNumber}`;
+        }
+      }
       
       const profileData = {
         ...profile,
