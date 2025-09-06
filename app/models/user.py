@@ -8,8 +8,9 @@ class User(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String(255), unique=True, index=True, nullable=False)
-    password_hash = Column(String(255), nullable=False)
-    phone_number = Column(String(20), unique=True, index=True, nullable=False)
+    password_hash = Column(String(255), nullable=True)  # Make optional for Google users
+    google_id = Column(String(255), unique=True, index=True, nullable=True)  # Google OAuth ID
+    phone_number = Column(String(20), unique=True, index=True, nullable=True)  # Make optional for Google users
     name = Column(String(100))
     study_mode = Column(String(20), default="batch")  # 'batch' or 'distributed'
     preferred_start_hour = Column(Integer, default=9)  # 24-hour format

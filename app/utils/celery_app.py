@@ -25,7 +25,7 @@ if os.getenv('ENVIRONMENT', 'development') == 'development':
 celery_app.conf.beat_schedule = {
     'send-due-flashcards': {
         'task': 'app.services.scheduler_service.scheduled_flashcard_task',
-        'schedule': crontab(minute=0, hour='9,12,15,18,21'),  # Send at 9am, 12pm, 3pm, 6pm, 9pm
+        'schedule': crontab(minute=0, hour='17,20,23,2,5'),  # Send at 9am, 12pm, 3pm, 6pm, 9pm PST (UTC times: 5pm, 8pm, 11pm, 2am, 5am)
     },
     'cleanup-conversation-states': {
         'task': 'app.services.scheduler_service.cleanup_conversation_states_task',

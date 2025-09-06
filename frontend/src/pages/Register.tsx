@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import GoogleSignInButton from '../components/GoogleSignInButton';
+import { buildApiUrl } from '../config';
 
 export const Register: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -19,6 +21,17 @@ export const Register: React.FC = () => {
       navigate('/');
     } catch (err) {
       setError('Failed to create an account. Please try again.');
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      setError('');
+      // Redirect to backend Google OAuth endpoint
+      window.location.href = buildApiUrl('/auth/google');
+    } catch (err) {
+      console.error('Google sign-in error:', err);
+      setError('Failed to initiate Google sign-in. Please try again.');
     }
   };
 
@@ -186,6 +199,19 @@ export const Register: React.FC = () => {
             >
               Sign up
             </button>
+          </div>
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300 dark:border-gray-600" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white dark:bg-darksurface text-gray-500 dark:text-gray-400">Or continue with</span>
+            </div>
+          </div>
+
+          <div>
+            <GoogleSignInButton onClick={handleGoogleSignIn} text="Sign up with Google" />
           </div>
 
           <div className="text-sm text-center">
