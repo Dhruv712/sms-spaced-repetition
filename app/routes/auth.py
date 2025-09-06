@@ -118,8 +118,19 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
         user_response.raise_for_status()
         google_user_data = user_response.json()
         
+        # Map Google user data to our expected format
+        mapped_user_data = {
+            'google_id': google_user_data.get('id'),  # Google uses 'id' not 'google_id'
+            'email': google_user_data.get('email'),
+            'name': google_user_data.get('name', ''),
+            'picture': google_user_data.get('picture', ''),
+            'email_verified': google_user_data.get('verified_email', False)
+        }
+        
+        print(f"🔍 Google user data: {mapped_user_data}")
+        
         # Create or update user
-        user = google_auth_service.create_or_update_user(google_user_data, db)
+        user = google_auth_service.create_or_update_user(mapped_user_data, db)
         
         # Create JWT token
         access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
