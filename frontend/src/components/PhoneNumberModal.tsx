@@ -20,15 +20,7 @@ const PhoneNumberModal: React.FC<PhoneNumberModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (phoneNumber.trim()) {
-      const cleanNumber = phoneNumber.replace(/\D/g, '');
-      let fullPhoneNumber;
-      // For US numbers, ensure we don't duplicate the country code
-      if (countryCode === '+1' && cleanNumber.startsWith('1') && cleanNumber.length === 11) {
-        // Remove the leading 1 if it's a full 11-digit US number
-        fullPhoneNumber = `+1${cleanNumber.substring(1)}`;
-      } else {
-        fullPhoneNumber = `${countryCode}${cleanNumber}`;
-      }
+      const fullPhoneNumber = `${countryCode}${phoneNumber.replace(/\D/g, '')}`;
       onSave(fullPhoneNumber, smsOptIn);
     }
   };
