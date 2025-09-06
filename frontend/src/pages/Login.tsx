@@ -21,6 +21,30 @@ export const Login: React.FC = () => {
     }
   }, [isAuthenticated, navigate, from]);
 
+  // Handle Google OAuth success callback
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const googleSuccess = urlParams.get('google_success');
+    const googleError = urlParams.get('google_error');
+    const token = urlParams.get('token');
+    
+    if (googleSuccess && token) {
+      // Google OAuth was successful and we have a token
+      console.log('Google OAuth successful, logging in with token');
+      
+      // Store the token and log the user in
+      localStorage.setItem('token', token);
+      
+      // Clear the URL parameters
+      window.history.replaceState({}, document.title, window.location.pathname);
+      
+      // Navigate to dashboard
+      navigate('/', { replace: true });
+    } else if (googleError) {
+      setError(`Google sign-in failed: ${googleError}`);
+    }
+  }, [navigate]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');

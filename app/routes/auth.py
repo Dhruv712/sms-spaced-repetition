@@ -96,13 +96,44 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
                 detail="Authorization code not provided"
             )
         
-        # For now, redirect to frontend with success message
-        # The frontend will handle the OAuth flow completion
+        # Exchange code for token using Google's token endpoint
+        import requests
+        
+        token_url = "https://oauth2.googleapis.com/token"
+        token_data = {
+            "client_id": google_auth_service.client_id,
+            "client_secret": google_auth_service.client_secret,
+            "code": code,
+            "grant_type": "authorization_code",
+            "redirect_uri": google_auth_service.redirect_uri
+        }
+        
+        token_response = requests.post(token_url, data=token_data)
+        token_response.raise_for_status()
+        token_info = token_response.json()
+        
+        # Get user info from Google
+        user_info_url = f"https://www.googleapis.com/oauth2/v2/userinfo?access_token={token_info['access_token']}"
+        user_response = requests.get(user_info_url)
+        user_response.raise_for_status()
+        google_user_data = user_response.json()
+        
+        # Create or update user
+        user = google_auth_service.create_or_update_user(google_user_data, db)
+        
+        # Create JWT token
+        access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        access_token = create_access_token(
+            data={"sub": user.email}, expires_delta=access_token_expires
+        )
+        
+        # Redirect to frontend with token
         return RedirectResponse(
-            url="https://trycue.xyz/login?google_success=true"
+            url=f"https://trycue.xyz/login?google_success=true&token={access_token}"
         )
         
     except Exception as e:
+        print(f"❌ Google OAuth callback error: {e}")
         return RedirectResponse(
             url=f"https://trycue.xyz/login?google_error={str(e)}"
         )
