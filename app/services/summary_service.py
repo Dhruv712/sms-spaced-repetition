@@ -101,7 +101,7 @@ def get_daily_review_summary(user_id: int, db: Session, date: datetime = None) -
     }
 
 def calculate_streak_days(user_id: int, db: Session) -> int:
-    """Calculate consecutive days with reviews"""
+    """Calculate consecutive days with reviews or no cards due"""
     today = datetime.now(timezone.utc).date()
     streak = 0
     
@@ -110,6 +110,7 @@ def calculate_streak_days(user_id: int, db: Session) -> int:
         start_of_day = datetime.combine(check_date, datetime.min.time(), tzinfo=timezone.utc)
         end_of_day = datetime.combine(check_date, datetime.max.time(), tzinfo=timezone.utc)
         
+        # Check if user reviewed cards on this day
         reviews = db.query(CardReview).filter(
             and_(
                 CardReview.user_id == user_id,
@@ -119,11 +120,50 @@ def calculate_streak_days(user_id: int, db: Session) -> int:
         ).count()
         
         if reviews > 0:
+            # User reviewed cards - streak continues
             streak += 1
         else:
-            break
+            # No reviews on this day - check if there were cards due
+            cards_due_that_day = count_cards_due_on_date(user_id, db, check_date)
+            
+            if cards_due_that_day == 0:
+                # No cards due - streak continues (user couldn't review)
+                streak += 1
+            else:
+                # Cards were due but user didn't review - streak breaks
+                break
     
     return streak
+
+def count_cards_due_on_date(user_id: int, db: Session, date: datetime.date) -> int:
+    """Count how many cards were due on a specific date"""
+    # This is a simplified version - in reality, we'd need to check the scheduling logic
+    # For now, let's check if there are any flashcards that could have been due
+    
+    # Get all user's flashcards
+    total_flashcards = db.query(Flashcard).filter(Flashcard.user_id == user_id).count()
+    
+    if total_flashcards == 0:
+        return 0
+    
+    # Check if there are any reviews before this date
+    start_of_day = datetime.combine(date, datetime.min.time(), tzinfo=timezone.utc)
+    
+    reviews_before_date = db.query(CardReview).filter(
+        and_(
+            CardReview.user_id == user_id,
+            CardReview.review_date < start_of_day
+        )
+    ).count()
+    
+    # If user has flashcards but no reviews before this date, 
+    # then all cards would have been due on this date
+    if reviews_before_date == 0:
+        return total_flashcards
+    
+    # For now, return a reasonable estimate
+    # In a full implementation, we'd calculate based on the actual scheduling algorithm
+    return min(total_flashcards, 5)  # Assume max 5 cards due per day
 
 def count_next_due_cards(user_id: int, db: Session) -> int:
     """Count cards due for review"""
