@@ -11,6 +11,7 @@ router = APIRouter()
 class UserProfile(BaseModel):
     name: str
     phone_number: str | None
+    google_id: str | None
     study_mode: str  # 'batch' or 'distributed'
     preferred_start_hour: int
     preferred_end_hour: int
@@ -30,6 +31,7 @@ def get_user_profile(
     return UserProfile(
         name=current_user.name,
         phone_number=current_user.phone_number,
+        google_id=current_user.google_id,
         study_mode=current_user.study_mode,
         preferred_start_hour=current_user.preferred_start_hour,
         preferred_end_hour=current_user.preferred_end_hour,
@@ -62,6 +64,7 @@ def update_user_profile(
     return UserProfile(
         name=current_user.name,
         phone_number=current_user.phone_number,
+        google_id=current_user.google_id,
         study_mode=current_user.study_mode,
         preferred_start_hour=current_user.preferred_start_hour,
         preferred_end_hour=current_user.preferred_end_hour,

@@ -6,7 +6,7 @@ interface User {
   email: string;
   name: string;
   phone_number: string | null;
-  google_id?: string;
+  google_id: string | null;
   study_mode?: string;
   preferred_start_hour?: number;
   preferred_end_hour?: number;
@@ -55,12 +55,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (response.ok) {
         const userData = await response.json();
         console.log('User profile fetched successfully:', userData);
+        console.log('Google ID:', userData.google_id);
+        console.log('Phone number:', userData.phone_number);
         setUser(userData);
         
         // Show phone modal for Google users without phone numbers
         if (userData.google_id && (!userData.phone_number || userData.phone_number === null)) {
           console.log('Google user without phone number, showing phone modal');
           setShowPhoneModal(true);
+        } else {
+          console.log('Not showing phone modal. Google ID exists:', !!userData.google_id, 'Phone number exists:', !!userData.phone_number);
         }
       } else {
         console.log('Failed to fetch user profile:', response.status);
