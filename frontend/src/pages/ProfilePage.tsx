@@ -346,6 +346,26 @@ const ProfilePage: React.FC = () => {
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               Add your phone number to receive SMS flashcard reminders and use text-based features.
             </p>
+            
+            {phoneNumber && (
+              <div className="mt-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">
+                  📱 SMS Deep Link
+                </h4>
+                <p className="text-xs text-blue-700 dark:text-blue-300 mb-2">
+                  Text "START" to this link to begin using Cue's SMS features:
+                </p>
+                <a 
+                  href="imessage://sandbox.loopmessage.com@imsg.im"
+                  className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 text-xs font-mono bg-white dark:bg-gray-800 px-2 py-1 rounded border border-blue-300 dark:border-blue-600 break-all block"
+                >
+                  imessage://sandbox.loopmessage.com@imsg.im
+                </a>
+                <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                  💡 On mobile, tap the link above to open Messages
+                </p>
+              </div>
+            )}
           </div>
 
           <div>

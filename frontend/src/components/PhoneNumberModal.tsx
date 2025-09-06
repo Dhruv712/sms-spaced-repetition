@@ -38,9 +38,29 @@ const PhoneNumberModal: React.FC<PhoneNumberModalProps> = ({
           <h2 className="text-xl font-semibold text-gray-900 dark:text-darktext mb-2">
             Add Your Phone Number
           </h2>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
             To receive SMS flashcard reminders and use Cue's text-based features, please add your phone number.
           </p>
+          
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+            <h3 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">
+              📱 Get Started with SMS
+            </h3>
+            <p className="text-xs text-blue-700 dark:text-blue-300 mb-3">
+              After saving your phone number, text "START" to this link to begin:
+            </p>
+            <div className="flex items-center gap-2">
+              <a 
+                href="imessage://sandbox.loopmessage.com@imsg.im"
+                className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 text-sm font-mono bg-white dark:bg-gray-800 px-2 py-1 rounded border border-blue-300 dark:border-blue-600 break-all"
+              >
+                imessage://sandbox.loopmessage.com@imsg.im
+              </a>
+            </div>
+            <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
+              💡 On mobile, tap the link above to open Messages and send "START"
+            </p>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">

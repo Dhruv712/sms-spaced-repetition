@@ -39,6 +39,64 @@ async def initialize_loop_service_with_timeout():
         print(f"❌ Failed to initialize LoopMessageService: {e}")
         return None
 
+async def send_welcome_message(user: User, first_message: str, db: Session) -> str:
+    """
+    Send welcome message to first-time users and create initial conversation state
+    """
+    try:
+        # Create welcome message
+        welcome_text = f"""🎉 Welcome to Cue, {user.name or 'there'}!
+
+I'm your AI-powered spaced repetition assistant. Here's how to get started:
+
+📝 **Create New Flashcards:**
+Text "NEW" followed by your instructions. For example:
+"NEW card for the year of the declaration of independence"
+
+🏷️ **Add Tags:**
+Include tags in brackets: "NEW card about photosynthesis [biology, science]"
+
+📚 **Review Flashcards:**
+I'll send you flashcards to review based on spaced repetition. Just reply with your answer!
+
+💡 **Pro Tips:**
+• Be specific in your NEW requests
+• Use tags to organize your cards
+• I'll remember your progress and schedule reviews optimally
+
+Ready to start learning? Send "NEW" with your first flashcard!"""
+
+        # Initialize LoopMessage service
+        service = await initialize_loop_service_with_timeout()
+        if service:
+            # Send the welcome message
+            await service.send_message(
+                recipient=user.phone_number,
+                text=welcome_text,
+                sender_name="Cue"
+            )
+            print(f"✅ Welcome message sent to {user.email}")
+        else:
+            print(f"⚠️ Could not send welcome message - service unavailable")
+        
+        # Create initial conversation state
+        conversation_state = ConversationState(
+            user_id=user.id,
+            state="idle",
+            last_message_at=datetime.now(timezone.utc)
+        )
+        db.add(conversation_state)
+        db.commit()
+        print(f"✅ Created initial conversation state for user {user.id}")
+        
+        return "Welcome message sent successfully"
+        
+    except Exception as e:
+        print(f"❌ Error sending welcome message: {e}")
+        import traceback
+        traceback.print_exc()
+        return "Welcome message failed"
+
 @router.post("/webhook")
 async def receive_loop_webhook(
     request: Request,
@@ -100,6 +158,14 @@ async def handle_inbound_message(message_data: Dict[str, Any], db: Session) -> J
             return JSONResponse(content={"status": "user_not_found"}, status_code=200)
         
         print(f"✅ Found user: {user.email} (ID: {user.id})")
+        
+        # Check if this is a first-time user (no conversation state)
+        existing_conversation = db.query(ConversationState).filter_by(user_id=user.id).first()
+        if not existing_conversation:
+            print(f"🎉 First-time user detected! Sending welcome message.")
+            # Send welcome message and create initial conversation state
+            welcome_response = await send_welcome_message(user, body, db)
+            return JSONResponse(content={"status": "processed", "response": welcome_response}, status_code=200)
         
         # Handle the message based on conversation state
         response = await process_user_message(user, body, passthrough, db)
