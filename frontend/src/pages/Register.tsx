@@ -24,7 +24,67 @@ export const Register: React.FC = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-darkbg py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 bg-white dark:bg-darksurface p-8 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
+      <div className="max-w-4xl w-full space-y-8">
+        {/* Onboarding Section */}
+        <div className="bg-white dark:bg-darksurface p-8 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 mb-8">
+          <h1 className="text-2xl font-bold text-center text-gray-900 dark:text-darktext mb-6">
+            Welcome to Cue
+          </h1>
+          <div className="prose max-w-none text-gray-700 dark:text-gray-300">
+            <p className="text-lg mb-4">
+              The spaced repetition system that makes adding and reviewing your flashcards way, way easier. Here's what you need to know:
+            </p>
+            
+            <div className="space-y-4">
+              <div className="flex items-start space-x-3">
+                <span className="flex-shrink-0 w-6 h-6 bg-primary-500 text-white rounded-full flex items-center justify-center text-sm font-bold">1</span>
+                <div>
+                  <p>
+                    If you provide your phone number, Cue will send you text messages every few hours with any flashcards due for review. You can simply reply with your answer, and Cue will grade your response using an LLM and automatically schedule the next review for that card.
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-start space-x-3">
+                <span className="flex-shrink-0 w-6 h-6 bg-primary-500 text-white rounded-full flex items-center justify-center text-sm font-bold">2</span>
+                <div>
+                  <p>
+                    To make a new card, you can text Cue "NEW" followed by instructions for that card, or a specific title and definition. For example, if you text Cue "NEW card for the year of the declaration of independence", it will text you something back like:
+                  </p>
+                  <div className="mt-3 p-4 bg-gray-100 dark:bg-gray-700 rounded-lg border-l-4 border-primary-500">
+                    <p className="font-medium text-sm text-gray-800 dark:text-gray-200">Generated flashcard:</p>
+                    <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">
+                      <strong>Concept:</strong> Year of the Declaration of Independence<br/>
+                      <strong>Definition:</strong> 1776
+                    </p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                      Reply 'SAVE' to save or 'NO' to try again.
+                    </p>
+                  </div>
+                  <p className="mt-3">
+                    Text messages are the best way to review your cards while on the go. You can disable them at any time from the web app.
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-start space-x-3">
+                <span className="flex-shrink-0 w-6 h-6 bg-primary-500 text-white rounded-full flex items-center justify-center text-sm font-bold">3</span>
+                <div>
+                  <p>
+                    You can also add, edit, delete, and review cards, create decks, and manage your settings from the web app.
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            <p className="text-lg font-medium text-center mt-6 text-primary-600 dark:text-primary-400">
+              Let's go!
+            </p>
+          </div>
+        </div>
+
+        {/* Registration Form */}
+        <div className="max-w-md mx-auto bg-white dark:bg-darksurface p-8 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-darktext">
             Create your account
@@ -134,6 +194,7 @@ export const Register: React.FC = () => {
             </Link>
           </div>
         </form>
+        </div>
       </div>
     </div>
   );
