@@ -190,16 +190,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const updatePhoneNumber = useCallback(async (phoneNumber: string, smsOptIn: boolean) => {
-    if (!token) return;
+    if (!token || !user) return;
     
     try {
+      // Send the complete user profile with updated phone number
+      const profileData = {
+        name: user.name,
+        phone_number: phoneNumber,
+        google_id: user.google_id,
+        study_mode: user.study_mode || 'batch',
+        preferred_start_hour: user.preferred_start_hour || 9,
+        preferred_end_hour: user.preferred_end_hour || 21,
+        timezone: user.timezone || 'UTC',
+        sms_opt_in: smsOptIn
+      };
+      
       const response = await fetch(buildApiUrl('/users/profile'), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ phone_number: phoneNumber, sms_opt_in: smsOptIn })
+        body: JSON.stringify(profileData)
       });
 
       if (response.ok) {
@@ -208,13 +220,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setShowPhoneModal(false);
         console.log('Phone number updated successfully');
       } else {
+        const errorData = await response.json();
+        console.error('Failed to update phone number:', errorData);
         throw new Error('Failed to update phone number');
       }
     } catch (error) {
       console.error('Error updating phone number:', error);
       throw error;
     }
-  }, [token]);
+  }, [token, user]);
 
   const isAuthenticated = !!token && !!user;
 
