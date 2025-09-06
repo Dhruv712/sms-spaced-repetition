@@ -49,7 +49,13 @@ const DailySummary: React.FC = () => {
         }
       } catch (err) {
         console.error('Failed to fetch daily summary:', err);
-        setError('Failed to load daily summary.');
+        if (axios.isAxiosError(err) && err.response?.status === 422) {
+          // Validation error - user profile might not be properly set up yet
+          console.log('User profile validation error, skipping daily summary');
+          setError(null); // Don't show error for validation issues
+        } else {
+          setError('Failed to load daily summary.');
+        }
       } finally {
         setLoading(false);
       }
