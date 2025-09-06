@@ -45,6 +45,13 @@ const FlashcardCard: React.FC<{
     return deck?.name || null;
   };
   
+  const normalizeTags = (tags: string | string[] | undefined): string[] =>
+    Array.isArray(tags)
+      ? tags
+      : typeof tags === 'string'
+      ? tags.split(',').map((t: string) => t.trim())
+      : [];
+  
   const deckName = getDeckName(card.deck_id);
   const shouldTruncate = card.definition.length > 200;
   const displayDefinition = shouldTruncate && !isExpanded 
