@@ -17,6 +17,10 @@ class ReviewOut(BaseModel):
     llm_feedback: str
     next_review_date: datetime
     created_at: datetime
+    review_date: datetime
+    repetition_count: int
+    ease_factor: float
+    interval_days: int
 
     class Config:
         from_attributes = True
