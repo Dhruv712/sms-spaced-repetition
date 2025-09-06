@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from app.database import get_db
-from app.models import User
+from app.models import User, ConversationState
 from app.services.auth import get_current_active_user
 
 router = APIRouter()
@@ -16,12 +16,17 @@ class UserProfile(BaseModel):
     preferred_end_hour: int
     timezone: str
     sms_opt_in: bool
+    has_sms_conversation: bool
 
 @router.get("/profile", response_model=UserProfile)
 def get_user_profile(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
+    # Check if user has SMS conversation state
+    conversation_state = db.query(ConversationState).filter_by(user_id=current_user.id).first()
+    has_sms_conversation = conversation_state is not None
+    
     return UserProfile(
         name=current_user.name,
         phone_number=current_user.phone_number or "",
@@ -29,7 +34,8 @@ def get_user_profile(
         preferred_start_hour=current_user.preferred_start_hour,
         preferred_end_hour=current_user.preferred_end_hour,
         timezone=current_user.timezone,
-        sms_opt_in=current_user.sms_opt_in
+        sms_opt_in=current_user.sms_opt_in,
+        has_sms_conversation=has_sms_conversation
     )
 
 @router.put("/profile", response_model=UserProfile)

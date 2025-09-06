@@ -12,6 +12,7 @@ interface User {
   preferred_end_hour?: number;
   timezone?: string;
   sms_opt_in?: boolean;
+  has_sms_conversation?: boolean;
 }
 
 interface AuthContextType {
