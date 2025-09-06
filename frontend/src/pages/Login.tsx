@@ -8,7 +8,7 @@ export const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const { login, isAuthenticated } = useAuth();
+  const { login, loginWithGoogleToken, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -32,18 +32,15 @@ export const Login: React.FC = () => {
       // Google OAuth was successful and we have a token
       console.log('Google OAuth successful, logging in with token');
       
-      // Store the token and log the user in
-      localStorage.setItem('token', token);
+      // Use the AuthContext method to properly set the token and fetch user profile
+      loginWithGoogleToken(token);
       
       // Clear the URL parameters
       window.history.replaceState({}, document.title, window.location.pathname);
-      
-      // Navigate to dashboard
-      navigate('/', { replace: true });
     } else if (googleError) {
       setError(`Google sign-in failed: ${googleError}`);
     }
-  }, [navigate]);
+  }, [navigate, loginWithGoogleToken]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

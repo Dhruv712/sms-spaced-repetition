@@ -18,6 +18,7 @@ interface AuthContextType {
   token: string | null;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, phone_number: string, name: string, sms_opt_in?: boolean) => Promise<void>;
+  loginWithGoogleToken: (token: string) => void;
   logout: () => void;
   isAuthenticated: boolean;
 }
@@ -165,6 +166,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const loginWithGoogleToken = useCallback((googleToken: string) => {
+    console.log('Logging in with Google token');
+    setToken(googleToken);
+    localStorage.setItem('token', googleToken);
+    // The useEffect will automatically fetch the user profile when token changes
+  }, []);
+
   const isAuthenticated = !!token && !!user;
 
   return (
@@ -173,6 +181,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       token,
       login,
       register,
+      loginWithGoogleToken,
       logout,
       isAuthenticated,
     }}>
