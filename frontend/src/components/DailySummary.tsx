@@ -18,7 +18,7 @@ interface DailySummaryData {
 const DailySummary: React.FC = () => {
   const [summary, setSummary] = useState<DailySummaryData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState<string | null>(null);
   const { token } = useAuth();
 
   useEffect(() => {
