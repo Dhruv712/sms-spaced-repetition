@@ -340,6 +340,39 @@ async def delete_user_admin(
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Error deleting user: {str(e)}")
 
+@router.post("/migrate-google-oauth")
+async def migrate_google_oauth() -> Dict[str, Any]:
+    """
+    Add Google OAuth columns to users table
+    (Temporary public endpoint for one-time fix)
+    """
+    try:
+        # SQL to add the Google OAuth columns
+        sql_commands = [
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id VARCHAR(255)",
+            "ALTER TABLE users ALTER COLUMN password_hash DROP NOT NULL",
+            "ALTER TABLE users ALTER COLUMN phone_number DROP NOT NULL",
+            "CREATE INDEX IF NOT EXISTS ix_users_google_id ON users (google_id)"
+        ]
+        
+        results = []
+        with engine.connect() as conn:
+            for i, sql in enumerate(sql_commands, 1):
+                try:
+                    conn.execute(text(sql))
+                    conn.commit()
+                    results.append(f"✅ SQL command {i} executed successfully")
+                except Exception as e:
+                    results.append(f"⚠️ SQL command {i} result: {e}")
+        
+        return {
+            "success": True,
+            "message": "Google OAuth columns migration completed",
+            "results": results
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error migrating database: {str(e)}")
+
 @router.delete("/delete-user-2-public")
 async def delete_user_2_public(db: Session = Depends(get_db)) -> Dict[str, Any]:
     """
