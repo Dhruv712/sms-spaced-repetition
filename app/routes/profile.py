@@ -10,6 +10,7 @@ router = APIRouter()
 # Pydantic schema for profile input/output
 class UserProfile(BaseModel):
     name: str
+    phone_number: str
     study_mode: str  # 'batch' or 'distributed'
     preferred_start_hour: int
     preferred_end_hour: int
@@ -23,6 +24,7 @@ def get_user_profile(
 ):
     return UserProfile(
         name=current_user.name,
+        phone_number=current_user.phone_number or "",
         study_mode=current_user.study_mode,
         preferred_start_hour=current_user.preferred_start_hour,
         preferred_end_hour=current_user.preferred_end_hour,
@@ -37,6 +39,7 @@ def update_user_profile(
     current_user: User = Depends(get_current_active_user)
 ):
     current_user.name = profile.name
+    current_user.phone_number = profile.phone_number
     current_user.study_mode = profile.study_mode
     current_user.preferred_start_hour = profile.preferred_start_hour
     current_user.preferred_end_hour = profile.preferred_end_hour

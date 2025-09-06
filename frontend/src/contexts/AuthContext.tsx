@@ -6,6 +6,7 @@ interface User {
   email: string;
   name: string;
   phone_number: string;
+  google_id?: string;
   study_mode?: string;
   preferred_start_hour?: number;
   preferred_end_hour?: number;
@@ -19,8 +20,11 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, phone_number: string, name: string, sms_opt_in?: boolean) => Promise<void>;
   loginWithGoogleToken: (token: string) => void;
+  updatePhoneNumber: (phoneNumber: string, smsOptIn: boolean) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
+  showPhoneModal: boolean;
+  setShowPhoneModal: (show: boolean) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -28,6 +32,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
+  const [showPhoneModal, setShowPhoneModal] = useState(false);
   const navigate = useNavigate();
 
   const logout = useCallback(() => {
@@ -50,6 +55,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const userData = await response.json();
         console.log('User profile fetched successfully:', userData);
         setUser(userData);
+        
+        // Show phone modal for Google users without phone numbers
+        if (userData.google_id && !userData.phone_number) {
+          console.log('Google user without phone number, showing phone modal');
+          setShowPhoneModal(true);
+        }
       } else {
         console.log('Failed to fetch user profile:', response.status);
         // If the token is invalid, clear it
@@ -173,6 +184,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // The useEffect will automatically fetch the user profile when token changes
   }, []);
 
+  const updatePhoneNumber = useCallback(async (phoneNumber: string, smsOptIn: boolean) => {
+    if (!token) return;
+    
+    try {
+      const response = await fetch(buildApiUrl('/users/profile'), {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ phone_number: phoneNumber, sms_opt_in: smsOptIn })
+      });
+
+      if (response.ok) {
+        const updatedUser = await response.json();
+        setUser(updatedUser);
+        setShowPhoneModal(false);
+        console.log('Phone number updated successfully');
+      } else {
+        throw new Error('Failed to update phone number');
+      }
+    } catch (error) {
+      console.error('Error updating phone number:', error);
+      throw error;
+    }
+  }, [token]);
+
   const isAuthenticated = !!token && !!user;
 
   return (
@@ -182,8 +220,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       login,
       register,
       loginWithGoogleToken,
+      updatePhoneNumber,
       logout,
       isAuthenticated,
+      showPhoneModal,
+      setShowPhoneModal,
     }}>
       {children}
     </AuthContext.Provider>

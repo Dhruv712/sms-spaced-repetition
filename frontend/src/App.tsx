@@ -8,16 +8,30 @@ import ManualReviewPage from "./pages/ManualReviewPage";
 import { Login } from "./pages/Login";
 import { Register } from "./pages/Register";
 import { ProtectedRoute } from "./components/ProtectedRoute";
-import { AuthProvider } from "./contexts/AuthContext";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import DecksPage from "./pages/DecksPage";
 import DeckReviewPage from './pages/DeckReviewPage';
+import PhoneNumberModal from './components/PhoneNumberModal';
 
-const App: React.FC = () => {
+const AppContent: React.FC = () => {
+  const { showPhoneModal, setShowPhoneModal, updatePhoneNumber } = useAuth();
+  const [isSavingPhone, setIsSavingPhone] = React.useState(false);
+
+  const handlePhoneSave = async (phoneNumber: string, smsOptIn: boolean) => {
+    setIsSavingPhone(true);
+    try {
+      await updatePhoneNumber(phoneNumber, smsOptIn);
+    } catch (error) {
+      console.error('Failed to save phone number:', error);
+    } finally {
+      setIsSavingPhone(false);
+    }
+  };
+
   return (
-    <Router>
-      <AuthProvider>
-        <Navbar />
-        <Routes>
+    <>
+      <Navbar />
+      <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route
@@ -70,6 +84,21 @@ const App: React.FC = () => {
           />
           <Route path="/decks/:deck_id/review" element={<DeckReviewPage />} />
         </Routes>
+        <PhoneNumberModal
+          isOpen={showPhoneModal}
+          onClose={() => setShowPhoneModal(false)}
+          onSave={handlePhoneSave}
+          isSaving={isSavingPhone}
+        />
+      </>
+    );
+  };
+
+const App: React.FC = () => {
+  return (
+    <Router>
+      <AuthProvider>
+        <AppContent />
       </AuthProvider>
     </Router>
   );
