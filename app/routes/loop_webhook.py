@@ -70,7 +70,7 @@ Ready to start learning? Send "NEW" with your first flashcard!"""
         service = await initialize_loop_service_with_timeout()
         if service:
             # Send the welcome message
-            await service.send_message(
+            await service._send_message(
                 recipient=user.phone_number,
                 text=welcome_text,
                 sender_name="Cue"
