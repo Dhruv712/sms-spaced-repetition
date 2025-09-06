@@ -493,7 +493,7 @@ You are an assistant that extracts flashcards from natural language.
 Each flashcard has three fields:
 - concept: what the user is trying to remember
 - definition: the answer, explanation, or formula (use LaTeX if the definition is a formula)
-- tags: tags requested by the user, comma-separated. If no tags requested, this is an empty string.
+- tags: tags requested by the user, comma-separated. The user may include tags in brackets, like [tag1, tag2, ...]. Convert all tags to lowercase (e.g., "ML" becomes "ml"). If no tags requested, this is an empty string.
 - source_url: the URL of the source you used to verify the information. If no source was used, this should be an empty string.
 
 Return ONLY a JSON object with these fields. No text before or after it.
@@ -516,11 +516,11 @@ Output: {{
   "source_url": "https://example.com/japan-capital"
 }}
 
-Input: "create a card for Ohm's law"
+Input: "create a card for Ohm's law [circuits, EE]"
 Output: {{
   "concept": "Ohm's law",
   "definition": "$$ V = IR $$",
-  "tags": "",
+  "tags": "circuits, ee",
   "source_url": ""
 }}
 
@@ -563,6 +563,12 @@ Now convert this into a flashcard:
             except json.JSONDecodeError as e2:
                 return "Sorry, I couldn't generate a flashcard from that. Please try again with different wording."
 
+        # Normalize tags to lowercase
+        if "tags" in card_data and card_data["tags"]:
+            # Split by comma, strip whitespace, convert to lowercase, then rejoin
+            tags_list = [tag.strip().lower() for tag in card_data["tags"].split(",") if tag.strip()]
+            card_data["tags"] = ", ".join(tags_list)
+        
         # Validate required fields
         if "concept" not in card_data or "definition" not in card_data:
             return "Sorry, I couldn't generate a proper flashcard. Please try again."

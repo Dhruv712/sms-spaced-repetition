@@ -21,7 +21,7 @@ def create_flashcard(flashcard: FlashcardCreate, db: Session = Depends(get_db), 
         user_id=current_user.id,
         concept=flashcard.concept,
         definition=flashcard.definition,
-        tags=', '.join(flashcard.tags) if flashcard.tags else None,
+        tags=', '.join([tag.strip().lower() for tag in flashcard.tags if tag.strip()]) if flashcard.tags else None,
         deck_id=flashcard.deck_id,
         source_url=flashcard.source_url
     )
@@ -116,8 +116,12 @@ def update_flashcard(
     
     card.concept = flashcard_update.concept
     card.definition = flashcard_update.definition
-    # Convert tags array to comma-separated string for database storage
-    card.tags = ', '.join(flashcard_update.tags) if flashcard_update.tags else None
+    # Convert tags array to comma-separated string for database storage (normalize to lowercase)
+    if flashcard_update.tags:
+        normalized_tags = [tag.strip().lower() for tag in flashcard_update.tags if tag.strip()]
+        card.tags = ', '.join(normalized_tags)
+    else:
+        card.tags = None
     card.deck_id = flashcard_update.deck_id
     card.source_url = flashcard_update.source_url
     

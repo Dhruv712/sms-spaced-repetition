@@ -121,7 +121,7 @@ Now convert this into a flashcard:
                 user_id=current_user.id,
                 concept=card_data["concept"],
                 definition=card_data["definition"],
-                tags=card_data["tags"],
+                tags=', '.join([tag.strip().lower() for tag in card_data["tags"].split(',') if tag.strip()]) if card_data["tags"] else None,
                 source_url=source_url
             )
             db.add(new_card)
