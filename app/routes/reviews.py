@@ -7,7 +7,7 @@ from app.schemas.review import ManualReviewSchema, ReviewOut, ReviewWithFlashcar
 from app.services.evaluator import evaluate_answer
 from app.services.scheduler import compute_next_review
 from app.services.auth import get_current_active_user
-import datetime
+from datetime import datetime, timezone
 
 router = APIRouter()
 
@@ -33,7 +33,7 @@ def manual_review(
     )
 
     next_review = compute_next_review(
-        last_review_date=datetime.datetime.now(datetime.UTC),
+        last_review_date=datetime.now(timezone.utc),
         was_correct=result["was_correct"],
         confidence_score=result["confidence_score"],
         start_hour=current_user.preferred_start_hour,
