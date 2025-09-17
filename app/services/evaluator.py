@@ -12,7 +12,7 @@ def evaluate_answer(concept: str, correct_definition: str, user_response: str):
     Rules
     - Prioritize MATERIAL POINTS ONLY. Ignore trivial phrasing, synonyms, extra context, or small omissions.
     - If the core idea is present → mark correct even if wording differs.
-    - If partially correct but the key idea is there → mark correct and add ONE short reminder.
+    - If partially correct but the key idea is there, or if only slightly misspelled → mark correct and add ONE short reminder.
     - If wrong or the key idea is missing → mark incorrect and provide the right answer.
     - Be concise. No compliments, no exclamation marks, no hedging, no multi-sentence lectures.
     - Max feedback length: 140 characters.
