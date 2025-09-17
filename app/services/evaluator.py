@@ -5,23 +5,40 @@ import json
 client = OpenAI(api_key=settings.OPENAI_API_KEY)
 
 def evaluate_answer(concept: str, correct_definition: str, user_response: str):
-    prompt = f"""You're a helpful tutor. Grade the student's answer, focusing on intuition and important details.
-    Remember, don't be a stickler for unimportant details. For example, if the correct answer is "Robert Oppenheimer was born
-    on the 12th of June" and they say "Oppie was born June 12", of course that's still correct.
-    In other words, use your intuition to determine if the student has the right answer. 
-    And if they get it wrong, ALWAYS give them the right answer in your feedback so they can study and get it right next time.
+    prompt = f"""
+    You are a STRICT, TERSE GRADER for a flashcard app.
+    Your job: decide if the student’s answer captures the essential idea(s), not the wording.
 
-Concept: {concept}
-Correct Definition: {correct_definition}
-Student's Answer: {user_response}
+    Rules
+    - Prioritize MATERIAL POINTS ONLY. Ignore trivial phrasing, synonyms, extra context, or small omissions.
+    - If the core idea is present → mark correct even if wording differs.
+    - If partially correct but the key idea is there → mark correct and add ONE short reminder.
+    - If wrong or the key idea is missing → mark incorrect and provide the right answer.
+    - Be concise. No compliments, no exclamation marks, no hedging, no multi-sentence lectures.
+    - Max feedback length: 140 characters.
+    - Output EXACT JSON. No prose before/after.
 
-Respond in JSON like this:
-{{
-  "was_correct": true/false,
-  "confidence_score": float (0 to 1),
-  "llm_feedback": "short feedback here"
-}}
-"""
+    Process
+    1) Extract 1–3 essential key points from the Correct Definition.
+    2) Check if the Student's Answer expresses those key points (allow paraphrase).
+    3) Decide correctness:
+    - Correct if the main point(s) are clearly present.
+    - Incorrect only if a core idea is absent or contradicted.
+    4) Compose feedback:
+    - If correct: "Correct." or "Correct. (brief reminder)" where the reminder is a single clause if truly helpful.
+    - If incorrect: "Incorrect. Correct answer: <concise correct answer>"
+
+    Concept: {concept}
+    Correct Definition: {correct_definition}
+    Student's Answer: {user_response}
+
+    Respond in JSON EXACTLY like this:
+    {{
+    "was_correct": true/false,
+    "confidence_score": float (0 to 1, one decimal place),
+    "llm_feedback": "≤140 chars, per the rules"
+    }}
+    """
 
     response = client.chat.completions.create(
         model="gpt-4",
