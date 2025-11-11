@@ -13,4 +13,5 @@ class Deck(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     user = relationship("User", back_populates="decks")
-    flashcards = relationship("Flashcard", back_populates="deck", cascade="all, delete-orphan") 
+    flashcards = relationship("Flashcard", back_populates="deck", cascade="all, delete-orphan")
+    user_sms_settings = relationship("UserDeckSmsSettings", back_populates="deck", cascade="all, delete-orphan") 

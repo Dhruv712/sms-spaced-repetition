@@ -2,10 +2,11 @@ from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from app.database import get_db
-from app.models import Deck, User, Flashcard
+from app.models import Deck, User, Flashcard, UserDeckSmsSettings
 from app.schemas.deck import DeckCreate, DeckOut, DeckWithFlashcards
 from app.services.auth import get_current_active_user
 from typing import List
+from pydantic import BaseModel
 import os
 import uuid
 from PIL import Image
@@ -106,8 +107,18 @@ def get_all_decks(
     current_user: User = Depends(get_current_active_user)
 ):
     decks = db.query(Deck).filter(Deck.user_id == current_user.id).all()
-    return [
-        DeckOut(
+    
+    # Get SMS settings for all decks
+    sms_settings = {
+        setting.deck_id: setting.sms_enabled
+        for setting in db.query(UserDeckSmsSettings).filter(
+            UserDeckSmsSettings.user_id == current_user.id
+        ).all()
+    }
+    
+    result = []
+    for deck in decks:
+        deck_out = DeckOut(
             id=deck.id,
             name=deck.name,
             user_id=deck.user_id,
@@ -115,8 +126,11 @@ def get_all_decks(
             created_at=deck.created_at,
             flashcards_count=db.query(func.count(Flashcard.id)).filter(Flashcard.deck_id == deck.id).scalar()
         )
-        for deck in decks
-    ]
+        # Set SMS enabled status (defaults to False if not set)
+        deck_out.sms_enabled = sms_settings.get(deck.id, False)  # Default to False (muted)
+        result.append(deck_out)
+    
+    return result
 
 @router.get("/{deck_id}", response_model=DeckWithFlashcards)
 def get_deck_by_id(
@@ -207,4 +221,50 @@ def delete_deck(
 
     db.delete(deck)
     db.commit()
-    return {"message": "Deck deleted successfully and flashcards disassociated"} 
+    return {"message": "Deck deleted successfully and flashcards disassociated"}
+
+class DeckSmsToggle(BaseModel):
+    sms_enabled: bool
+
+@router.put("/{deck_id}/sms", response_model=dict)
+def toggle_deck_sms(
+    deck_id: int,
+    sms_toggle: DeckSmsToggle,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Toggle SMS enabled/disabled for a deck"""
+    # Verify deck exists and belongs to user
+    deck = db.query(Deck).filter(
+        Deck.id == deck_id,
+        Deck.user_id == current_user.id
+    ).first()
+    if not deck:
+        raise HTTPException(status_code=404, detail="Deck not found or not authorized")
+    
+    # Get or create SMS setting for this user-deck combination
+    sms_setting = db.query(UserDeckSmsSettings).filter(
+        UserDeckSmsSettings.user_id == current_user.id,
+        UserDeckSmsSettings.deck_id == deck_id
+    ).first()
+    
+    if sms_setting:
+        # Update existing setting
+        sms_setting.sms_enabled = sms_toggle.sms_enabled
+    else:
+        # Create new setting
+        sms_setting = UserDeckSmsSettings(
+            user_id=current_user.id,
+            deck_id=deck_id,
+            sms_enabled=sms_toggle.sms_enabled
+        )
+        db.add(sms_setting)
+    
+    db.commit()
+    db.refresh(sms_setting)
+    
+    return {
+        "deck_id": deck_id,
+        "sms_enabled": sms_setting.sms_enabled,
+        "message": f"SMS {'enabled' if sms_setting.sms_enabled else 'disabled'} for deck '{deck.name}'"
+    } 

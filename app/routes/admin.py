@@ -10,6 +10,52 @@ from typing import Dict, Any
 
 router = APIRouter(tags=["Admin"])
 
+@router.post("/create-user-deck-sms-settings-table")
+async def create_user_deck_sms_settings_table() -> Dict[str, Any]:
+    """
+    Create user_deck_sms_settings table for deck muting feature
+    (Temporary public endpoint for one-time migration)
+    """
+    try:
+        sql_commands = [
+            """
+            CREATE TABLE IF NOT EXISTS user_deck_sms_settings (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                deck_id INTEGER NOT NULL REFERENCES decks(id) ON DELETE CASCADE,
+                sms_enabled BOOLEAN NOT NULL DEFAULT TRUE,
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                CONSTRAINT uq_user_deck_sms UNIQUE (user_id, deck_id)
+            );
+            """,
+            """
+            CREATE INDEX IF NOT EXISTS idx_user_deck_sms_user_id ON user_deck_sms_settings(user_id);
+            """,
+            """
+            CREATE INDEX IF NOT EXISTS idx_user_deck_sms_deck_id ON user_deck_sms_settings(deck_id);
+            """
+        ]
+        
+        results = []
+        with engine.connect() as conn:
+            for i, sql in enumerate(sql_commands, 1):
+                try:
+                    conn.execute(text(sql))
+                    conn.commit()
+                    results.append(f"✅ SQL command {i} executed successfully")
+                except Exception as e:
+                    results.append(f"❌ SQL command {i} failed: {str(e)}")
+                    # Continue with other commands even if one fails
+        
+        return {
+            "success": True,
+            "message": "user_deck_sms_settings table creation completed",
+            "results": results
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error creating table: {str(e)}")
+
 @router.post("/migrate-sm2-columns")
 async def migrate_sm2_columns(
     db: Session = Depends(get_db),

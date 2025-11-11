@@ -13,6 +13,7 @@ class DeckOut(BaseModel):
     image_url: Optional[str] = None
     created_at: datetime
     flashcards_count: Optional[int] = None
+    sms_enabled: Optional[bool] = False  # False = muted by default
 
     class Config:
         from_attributes = True

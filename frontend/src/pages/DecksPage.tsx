@@ -11,6 +11,7 @@ interface Deck {
   flashcards_count: number;
   created_at: string;
   image_url?: string;
+  sms_enabled?: boolean;
 }
 
 const DecksPage: React.FC = () => {
@@ -20,6 +21,7 @@ const DecksPage: React.FC = () => {
   const [error, setError] = useState('');
   const [creatingDeck, setCreatingDeck] = useState(false);
   const [uploadingImage, setUploadingImage] = useState<number | null>(null);
+  const [togglingSms, setTogglingSms] = useState<number | null>(null);
   const { token } = useAuth();
   const navigate = useNavigate();
   const fileInputRefs = useRef<{ [key: number]: HTMLInputElement | null }>({});
@@ -149,6 +151,39 @@ const DecksPage: React.FC = () => {
     }
   };
 
+  const handleToggleSms = async (deckId: number, currentStatus: boolean) => {
+    if (!token || togglingSms === deckId) return;
+
+    setTogglingSms(deckId);
+    setError('');
+    try {
+      const response = await axios.put(
+        buildApiUrl(`/decks/${deckId}/sms`),
+        { sms_enabled: !currentStatus },
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        }
+      );
+
+      // Update the deck in the local state
+      setDecks(prevDecks =>
+        prevDecks.map(deck =>
+          deck.id === deckId
+            ? { ...deck, sms_enabled: response.data.sms_enabled }
+            : deck
+        )
+      );
+      console.log('SMS toggle successful:', response.data);
+    } catch (err) {
+      console.error('Error toggling SMS:', err);
+      setError('Failed to toggle SMS setting. Please try again.');
+    } finally {
+      setTogglingSms(null);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-secondary-50 dark:bg-secondary-900 flex items-center justify-center">
@@ -243,7 +278,30 @@ const DecksPage: React.FC = () => {
                       <p className="text-sm text-secondary-500 dark:text-secondary-400">Created: {new Date(deck.created_at).toLocaleDateString()}</p>
                     </div>
                   </div>
-                  <div className="flex space-x-2">
+                  <div className="flex items-center space-x-4">
+                    {/* SMS Toggle */}
+                    <div className="flex items-center space-x-2">
+                      <span className={`text-xs font-medium ${deck.sms_enabled ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}`}>
+                        {deck.sms_enabled ? '📱 SMS On' : '🔇 SMS Muted'}
+                      </span>
+                      <button
+                        onClick={() => handleToggleSms(deck.id, deck.sms_enabled || false)}
+                        disabled={togglingSms === deck.id}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
+                          deck.sms_enabled 
+                            ? 'bg-primary-600' 
+                            : 'bg-gray-300 dark:bg-gray-600'
+                        } ${togglingSms === deck.id ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        title={deck.sms_enabled ? 'Disable SMS for this deck' : 'Enable SMS for this deck'}
+                      >
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ${
+                            deck.sms_enabled ? 'translate-x-6' : 'translate-x-1'
+                          }`}
+                        />
+                      </button>
+                    </div>
+                    <div className="flex space-x-2">
                     <Link
                       to={`/flashcards?deckId=${deck.id}`}
                       className="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 text-sm font-medium"
