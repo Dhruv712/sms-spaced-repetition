@@ -321,6 +321,7 @@ const DecksPage: React.FC = () => {
                       Review Deck
                     </button>
                   </div>
+                  </div>
                 </div>
               ))}
             </div>
