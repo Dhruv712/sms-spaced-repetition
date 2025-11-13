@@ -12,6 +12,7 @@ import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import DecksPage from "./pages/DecksPage";
 import DeckReviewPage from './pages/DeckReviewPage';
 import MasteryGraph from './components/MasteryGraph';
+import HelpPage from './pages/HelpPage';
 import PhoneNumberModal from './components/PhoneNumberModal';
 
 const AppContent: React.FC = () => {
@@ -89,6 +90,14 @@ const AppContent: React.FC = () => {
             element={
               <ProtectedRoute>
                 <MasteryGraph />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/help"
+            element={
+              <ProtectedRoute>
+                <HelpPage />
               </ProtectedRoute>
             }
           />

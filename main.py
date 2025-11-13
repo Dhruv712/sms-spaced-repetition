@@ -15,6 +15,7 @@ from app.routes.natural_flashcards import router as natural_flashcard_router
 from app.routes.decks import router as decks_router
 from app.routes.loop_test import router as loop_test_router
 from app.routes.loop_webhook import router as loop_webhook_router
+from app.routes.help import router as help_router
 
 # Safe database setup - only create tables if they don't exist
 try:
@@ -71,3 +72,4 @@ app.include_router(natural_flashcard_router, prefix="/natural_flashcards", tags=
 app.include_router(decks_router, prefix="/decks", tags=["Decks"])
 app.include_router(loop_test_router, prefix="/loop-test", tags=["Loop_Test"])
 app.include_router(loop_webhook_router, prefix="/loop-webhook", tags=["Loop_Webhook"])
+app.include_router(help_router, prefix="/help", tags=["Help"])
