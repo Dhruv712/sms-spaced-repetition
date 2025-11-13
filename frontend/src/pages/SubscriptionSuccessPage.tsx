@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import axios from 'axios';
 import { buildApiUrl } from '../config';
 
 const SubscriptionSuccessPage: React.FC = () => {
@@ -32,7 +31,6 @@ const SubscriptionSuccessPage: React.FC = () => {
           });
           
           if (response.ok) {
-            const userData = await response.json();
             // The AuthContext should pick this up automatically
             // But we can force a refresh by reloading
             window.location.reload();

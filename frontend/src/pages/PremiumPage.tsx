@@ -9,7 +9,6 @@ const PremiumPage: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [subscriptionStatus, setSubscriptionStatus] = useState<any>(null);
 
   useEffect(() => {
     if (user?.is_premium) {
@@ -17,25 +16,6 @@ const PremiumPage: React.FC = () => {
       navigate('/');
     }
   }, [user, navigate]);
-
-  useEffect(() => {
-    const fetchSubscriptionStatus = async () => {
-      if (!token) return;
-      
-      try {
-        const response = await axios.get(buildApiUrl('/subscription/status'), {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-        setSubscriptionStatus(response.data);
-      } catch (err) {
-        console.error('Error fetching subscription status:', err);
-      }
-    };
-
-    fetchSubscriptionStatus();
-  }, [token]);
 
   const handleUpgrade = async () => {
     if (!token) {
