@@ -43,12 +43,14 @@ const HelpPage: React.FC = () => {
     e.preventDefault();
     
     if (!subject.trim() || !message.trim()) {
+      alert('Please fill in both subject and message fields.');
       return;
     }
 
     // Determine the email to use
     const fromEmail = userEmail || email.trim();
     if (!fromEmail) {
+      alert('Please provide your email address.');
       return;
     }
 
@@ -61,8 +63,13 @@ const HelpPage: React.FC = () => {
     
     const mailtoLink = `mailto:${recipientEmail}?subject=${mailtoSubject}&body=${mailtoBody}`;
     
-    // Open default email client
-    window.location.href = mailtoLink;
+    // Open default email client using a more reliable method
+    const link = document.createElement('a');
+    link.href = mailtoLink;
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
