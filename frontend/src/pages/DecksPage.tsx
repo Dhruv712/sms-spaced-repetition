@@ -402,10 +402,18 @@ const DecksPage: React.FC = () => {
                       style={{ fontSize: '12px' }}
                     />
                     <YAxis
-                      stroke="#6b7280"
+                      yAxisId="left"
+                      stroke="#3b82f6"
                       style={{ fontSize: '12px' }}
                       domain={[0, 100]}
                       label={{ value: 'Accuracy (%)', angle: -90, position: 'insideLeft' }}
+                    />
+                    <YAxis
+                      yAxisId="right"
+                      orientation="right"
+                      stroke="#10b981"
+                      style={{ fontSize: '12px' }}
+                      label={{ value: 'Cards Reviewed', angle: 90, position: 'insideRight' }}
                     />
                     <Tooltip
                       contentStyle={{
@@ -413,64 +421,34 @@ const DecksPage: React.FC = () => {
                         border: '1px solid #e5e7eb',
                         borderRadius: '8px',
                       }}
-                      formatter={(value: any) => {
-                        if (value === null || value === undefined) return 'No data';
-                        return [`${value}%`, 'Accuracy'];
+                      formatter={(value: any, name: string) => {
+                        if (name === 'accuracy') return [`${value}%`, 'Accuracy'];
+                        if (name === 'cards_reviewed') return [value, 'Cards Reviewed'];
+                        return [value, name];
                       }}
                       labelFormatter={(label) => `Date: ${label}`}
                     />
                     <Legend />
-                    {masteryData.decks.map((deck: any, index: number) => {
-                      // Generate distinct colors for each deck
-                      const colors = [
-                        '#3b82f6', // blue
-                        '#10b981', // green
-                        '#f59e0b', // amber
-                        '#ef4444', // red
-                        '#8b5cf6', // purple
-                        '#ec4899', // pink
-                        '#06b6d4', // cyan
-                        '#84cc16', // lime
-                        '#f97316', // orange
-                        '#6366f1', // indigo
-                      ];
-                      const color = colors[index % colors.length];
-                      return (
-                        <Line
-                          key={deck.id}
-                          type="monotone"
-                          dataKey={`deck_${deck.id}`}
-                          stroke={color}
-                          strokeWidth={2}
-                          name={deck.name}
-                          dot={{ r: 3 }}
-                          connectNulls={false}
-                        />
-                      );
-                    })}
+                    <Line
+                      yAxisId="left"
+                      type="monotone"
+                      dataKey="accuracy"
+                      stroke="#3b82f6"
+                      strokeWidth={2}
+                      name="Overall Accuracy (%)"
+                      dot={{ r: 4 }}
+                    />
+                    <Line
+                      yAxisId="right"
+                      type="monotone"
+                      dataKey="cards_reviewed"
+                      stroke="#10b981"
+                      strokeWidth={2}
+                      name="Cards Reviewed"
+                      dot={{ r: 4 }}
+                    />
                   </LineChart>
                 </ResponsiveContainer>
-                
-                <div className="mt-4 flex flex-wrap gap-4 justify-center">
-                  {masteryData.decks.map((deck: any, index: number) => {
-                    const colors = [
-                      '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
-                      '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#6366f1',
-                    ];
-                    const color = colors[index % colors.length];
-                    return (
-                      <div key={deck.id} className="flex items-center space-x-2">
-                        <div
-                          className="w-4 h-4 rounded"
-                          style={{ backgroundColor: color }}
-                        />
-                        <span className="text-sm text-secondary-700 dark:text-secondary-300">
-                          {deck.name}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
               </div>
             ) : (
               <div className="text-center py-8 text-secondary-600 dark:text-secondary-400">
