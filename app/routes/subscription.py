@@ -185,12 +185,16 @@ async def stripe_webhook(
             payload, sig_header, settings.STRIPE_WEBHOOK_SECRET
         )
     except ValueError as e:
+        print(f"❌ Webhook payload error: {str(e)}")
         raise HTTPException(status_code=400, detail=f"Invalid payload: {str(e)}")
     except stripe.error.SignatureVerificationError as e:
+        print(f"❌ Webhook signature verification failed: {str(e)}")
         raise HTTPException(status_code=400, detail=f"Invalid signature: {str(e)}")
     
     # Handle the event
+    print(f"✅ Webhook event received: {event.get('type')}")
     result = handle_webhook_event(event, db)
+    print(f"✅ Webhook processed: {result}")
     
     return result
 
