@@ -94,6 +94,26 @@ async def get_limits(
     }
 
 
+@router.get("/debug")
+async def debug_subscription_status(
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Debug endpoint to check subscription status and webhook processing
+    """
+    return {
+        "user_id": current_user.id,
+        "email": current_user.email,
+        "is_premium": current_user.is_premium,
+        "stripe_customer_id": current_user.stripe_customer_id,
+        "stripe_subscription_id": current_user.stripe_subscription_id,
+        "stripe_subscription_status": current_user.stripe_subscription_status,
+        "stripe_price_id": current_user.stripe_price_id,
+        "subscription_start_date": current_user.subscription_start_date.isoformat() if current_user.subscription_start_date else None,
+        "subscription_end_date": current_user.subscription_end_date.isoformat() if current_user.subscription_end_date else None,
+    }
+
+
 @router.post("/portal")
 async def create_portal_session(
     current_user: User = Depends(get_current_active_user)
