@@ -146,6 +146,7 @@ const DeckTile: React.FC<{ deck: DeckOut; onClick: () => void; isActive: boolean
 
 const FlashcardsPage: React.FC = () => {
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
+  const [limits, setLimits] = useState<any>(null);
   const [selectedTag, setSelectedTag] = useState<string | null>(null); // New state for tag filter
   const [uniqueTags, setUniqueTags] = useState<string[]>([]); // New state for unique tags
   const [decks, setDecks] = useState<DeckOut[]>([]); // New state for decks
@@ -158,6 +159,28 @@ const FlashcardsPage: React.FC = () => {
   const deckId = queryParams.get('deckId');
 
   console.log('FlashcardsPage render:', { token, isAuthenticated });
+
+  const fetchLimits = useCallback(async () => {
+    if (!token) return;
+    
+    try {
+      const response = await axios.get(buildApiUrl('/subscription/limits'), {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      setLimits(response.data);
+    } catch (err) {
+      console.error('Error fetching limits:', err);
+    }
+  }, [token]);
+
+  useEffect(() => {
+    fetchLimits();
+    // Refresh limits every 30 seconds
+    const interval = setInterval(fetchLimits, 30000);
+    return () => clearInterval(interval);
+  }, [fetchLimits]);
 
   const loadFlashcards = useCallback(async () => {
     if (!token) {
@@ -267,6 +290,53 @@ const FlashcardsPage: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 bg-gray-50 dark:bg-darkbg min-h-screen">
+      {/* SMS Review Limit Warning */}
+      {limits && !user?.is_premium && limits.sms_reviews && limits.sms_reviews.remaining <= 20 && limits.sms_reviews.remaining > 0 && (
+        <div className={`mb-8 rounded-lg p-6 border ${
+          limits.sms_reviews.remaining <= 10 
+            ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800' 
+            : 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800'
+        }`}>
+          <div className="flex items-start space-x-3">
+            <div className="flex-shrink-0">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                limits.sms_reviews.remaining <= 10 ? 'bg-red-500' : 'bg-yellow-500'
+              }`}>
+                <span className="text-white text-sm font-bold">⚠️</span>
+              </div>
+            </div>
+            <div className="flex-1">
+              <h3 className={`text-lg font-medium mb-2 ${
+                limits.sms_reviews.remaining <= 10 
+                  ? 'text-red-900 dark:text-red-100' 
+                  : 'text-yellow-900 dark:text-yellow-100'
+              }`}>
+                {limits.sms_reviews.remaining <= 10 
+                  ? `Only ${limits.sms_reviews.remaining} SMS reviews left this month!`
+                  : `${limits.sms_reviews.remaining} SMS reviews remaining this month`
+                }
+              </h3>
+              <p className={`mb-4 ${
+                limits.sms_reviews.remaining <= 10 
+                  ? 'text-red-700 dark:text-red-300' 
+                  : 'text-yellow-700 dark:text-yellow-300'
+              }`}>
+                You've used {limits.sms_reviews.count} of {limits.sms_reviews.limit} free SMS reviews this month.
+                {limits.sms_reviews.remaining <= 10 && ' Upgrade to Premium for unlimited reviews!'}
+              </p>
+              {limits.sms_reviews.remaining <= 10 && (
+                <a
+                  href="/premium"
+                  className="inline-block px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors duration-200 font-medium"
+                >
+                  Upgrade to Premium
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* SMS Banner for users without conversation state */}
       {user && user.phone_number && user.phone_number !== null && !user.has_sms_conversation && (
         <div className="mb-8 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">

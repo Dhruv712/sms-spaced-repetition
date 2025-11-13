@@ -13,6 +13,9 @@ import DecksPage from "./pages/DecksPage";
 import DeckReviewPage from './pages/DeckReviewPage';
 import MasteryGraph from './components/MasteryGraph';
 import HelpPage from './pages/HelpPage';
+import PremiumPage from './pages/PremiumPage';
+import SubscriptionSuccessPage from './pages/SubscriptionSuccessPage';
+import SubscriptionCancelPage from './pages/SubscriptionCancelPage';
 import PhoneNumberModal from './components/PhoneNumberModal';
 
 const AppContent: React.FC = () => {
@@ -96,6 +99,30 @@ const AppContent: React.FC = () => {
           <Route
             path="/help"
             element={<HelpPage />}
+          />
+          <Route
+            path="/premium"
+            element={
+              <ProtectedRoute>
+                <PremiumPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/subscription/success"
+            element={
+              <ProtectedRoute>
+                <SubscriptionSuccessPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/subscription/cancel"
+            element={
+              <ProtectedRoute>
+                <SubscriptionCancelPage />
+              </ProtectedRoute>
+            }
           />
         </Routes>
         <PhoneNumberModal

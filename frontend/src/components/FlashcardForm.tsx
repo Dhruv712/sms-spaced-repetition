@@ -14,6 +14,7 @@ interface Props {
 interface Deck {
   id: number;
   name: string;
+  flashcards_count?: number;
 }
 
 const FlashcardForm: React.FC<Props> = ({ onSuccess }) => {
@@ -27,8 +28,10 @@ const FlashcardForm: React.FC<Props> = ({ onSuccess }) => {
   const [decks, setDecks] = useState<Deck[]>([]);
   const [selectedDeckId, setSelectedDeckId] = useState<number | null>(null);
   const formEndRef = useRef<HTMLDivElement | null>(null);
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const [sourceUrl, setSourceUrl] = useState<string>('');
+  const [limits, setLimits] = useState<any>(null);
+  const [deckFlashcardCount, setDeckFlashcardCount] = useState<number>(0);
 
   useEffect(() => {
     if (!token) return;
@@ -50,6 +53,33 @@ const FlashcardForm: React.FC<Props> = ({ onSuccess }) => {
     };
     fetchDecks();
   }, [token]);
+
+  useEffect(() => {
+    if (!token) return;
+    const fetchLimits = async () => {
+      try {
+        const response = await axios.get(buildApiUrl('/subscription/limits'), {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+        setLimits(response.data);
+      } catch (err) {
+        console.error('Error fetching limits:', err);
+      }
+    };
+    fetchLimits();
+  }, [token]);
+
+  useEffect(() => {
+    if (!selectedDeckId || !decks.length) return;
+    const deck = decks.find(d => d.id === selectedDeckId);
+    if (deck) {
+      // Get flashcard count from the deck object
+      // We'll need to fetch this or get it from the decks list
+      setDeckFlashcardCount(deck.flashcards_count || 0);
+    }
+  }, [selectedDeckId, decks]);
 
   const handleManualSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -74,9 +104,19 @@ const FlashcardForm: React.FC<Props> = ({ onSuccess }) => {
       setTags('');
       setSourceUrl('');
       onSuccess();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error creating flashcard:', err);
-      setError('Failed to create flashcard. Please try again.');
+      const errorMessage = err.response?.data?.detail || 'Failed to create flashcard. Please try again.';
+      setError(errorMessage);
+      
+      // If it's a premium limit error, suggest upgrading
+      if (errorMessage.includes('free tier limit') || errorMessage.includes('Upgrade to Premium')) {
+        setTimeout(() => {
+          if (window.confirm('You\'ve reached the free tier limit for flashcards in this deck. Would you like to upgrade to Premium?')) {
+            window.location.href = '/premium';
+          }
+        }, 100);
+      }
     } finally {
       setSubmitting(false);
     }
@@ -159,7 +199,14 @@ const FlashcardForm: React.FC<Props> = ({ onSuccess }) => {
         
         <form onSubmit={handleManualSubmit} className="space-y-4">
         <div>
-          <label htmlFor="deck-select" className="block text-sm font-medium text-secondary-700 dark:text-secondary-300">Select Deck (Optional)</label>
+          <div className="flex items-center justify-between mb-1">
+            <label htmlFor="deck-select" className="block text-sm font-medium text-secondary-700 dark:text-secondary-300">Select Deck (Optional)</label>
+            {selectedDeckId && limits && !user?.is_premium && (
+              <span className="text-xs text-secondary-600 dark:text-secondary-400">
+                {deckFlashcardCount} / 20 flashcards
+              </span>
+            )}
+          </div>
           <select
             id="deck-select"
             value={selectedDeckId || ''}
@@ -169,7 +216,7 @@ const FlashcardForm: React.FC<Props> = ({ onSuccess }) => {
             <option value="">No Deck</option>
             {decks.map(deck => (
               <option key={deck.id} value={deck.id}>
-                {deck.name}
+                {deck.name} {deck.flashcards_count !== undefined ? `(${deck.flashcards_count} cards)` : ''}
               </option>
             ))}
           </select>

@@ -1,0 +1,109 @@
+import React, { useEffect, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import axios from 'axios';
+import { buildApiUrl } from '../config';
+
+const SubscriptionSuccessPage: React.FC = () => {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const { token } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const verifySubscription = async () => {
+      const sessionId = searchParams.get('session_id');
+      
+      if (!sessionId) {
+        setError('No session ID found');
+        setLoading(false);
+        return;
+      }
+
+      // Wait a moment for webhook to process
+      setTimeout(async () => {
+        try {
+          // Refresh user profile to get updated premium status
+          const response = await fetch(buildApiUrl('/users/profile'), {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+            },
+          });
+          
+          if (response.ok) {
+            const userData = await response.json();
+            // The AuthContext should pick this up automatically
+            // But we can force a refresh by reloading
+            window.location.reload();
+          }
+        } catch (err) {
+          console.error('Error verifying subscription:', err);
+          setError('Subscription may have been activated. Please refresh the page.');
+        } finally {
+          setLoading(false);
+        }
+      }, 2000);
+    };
+
+    if (token) {
+      verifySubscription();
+    } else {
+      setLoading(false);
+    }
+  }, [searchParams, token]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-secondary-50 dark:bg-secondary-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+          <p className="text-secondary-600 dark:text-secondary-400">Processing your subscription...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-secondary-50 dark:bg-secondary-900 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-2xl mx-auto">
+        <div className="bg-white dark:bg-secondary-800 rounded-lg shadow-soft p-8 text-center">
+          {error ? (
+            <>
+              <div className="text-6xl mb-4">⚠️</div>
+              <h1 className="text-3xl font-bold text-secondary-900 dark:text-white mb-4">
+                Verification Issue
+              </h1>
+              <p className="text-secondary-600 dark:text-secondary-400 mb-6">{error}</p>
+              <button
+                onClick={() => navigate('/premium')}
+                className="px-6 py-3 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors duration-200"
+              >
+                Go to Premium Page
+              </button>
+            </>
+          ) : (
+            <>
+              <div className="text-6xl mb-4">🎉</div>
+              <h1 className="text-3xl font-bold text-secondary-900 dark:text-white mb-4">
+                Welcome to Premium!
+              </h1>
+              <p className="text-lg text-secondary-600 dark:text-secondary-400 mb-6">
+                Your subscription has been activated. You now have unlimited access to all premium features!
+              </p>
+              <button
+                onClick={() => navigate('/')}
+                className="px-6 py-3 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors duration-200"
+              >
+                Get Started
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default SubscriptionSuccessPage;
+

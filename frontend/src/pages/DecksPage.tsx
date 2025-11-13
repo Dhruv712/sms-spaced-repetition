@@ -34,7 +34,8 @@ const DecksPage: React.FC = () => {
   const [togglingSms, setTogglingSms] = useState<number | null>(null);
   const [masteryData, setMasteryData] = useState<any>(null);
   const [loadingMastery, setLoadingMastery] = useState(false);
-  const { token } = useAuth();
+  const [limits, setLimits] = useState<any>(null);
+  const { token, user } = useAuth();
   const navigate = useNavigate();
   const fileInputRefs = useRef<{ [key: number]: HTMLInputElement | null }>({});
 
@@ -65,6 +66,25 @@ const DecksPage: React.FC = () => {
   useEffect(() => {
     fetchDecks();
   }, [fetchDecks]);
+
+  const fetchLimits = useCallback(async () => {
+    if (!token) return;
+    
+    try {
+      const response = await axios.get(buildApiUrl('/subscription/limits'), {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      setLimits(response.data);
+    } catch (err) {
+      console.error('Error fetching limits:', err);
+    }
+  }, [token]);
+
+  useEffect(() => {
+    fetchLimits();
+  }, [fetchLimits]);
 
   const fetchMasteryData = useCallback(async () => {
     if (!token || decks.length === 0) return;
@@ -110,9 +130,19 @@ const DecksPage: React.FC = () => {
       setNewDeckName('');
       // Refresh mastery data after creating a deck
       setTimeout(() => fetchMasteryData(), 500);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error creating deck:', err);
-      setError('Failed to create deck. Please try again.');
+      const errorMessage = err.response?.data?.detail || 'Failed to create deck. Please try again.';
+      setError(errorMessage);
+      
+      // If it's a premium limit error, suggest upgrading
+      if (errorMessage.includes('free tier limit') || errorMessage.includes('Upgrade to Premium')) {
+        setTimeout(() => {
+          if (window.confirm('You\'ve reached the free tier limit. Would you like to upgrade to Premium?')) {
+            navigate('/premium');
+          }
+        }, 100);
+      }
     } finally {
       setCreatingDeck(false);
     }
@@ -253,7 +283,14 @@ const DecksPage: React.FC = () => {
         </div>
 
         <div className="bg-white dark:bg-secondary-800 rounded-lg shadow-soft p-6 mb-8">
-          <h2 className="text-xl font-semibold text-secondary-900 dark:text-white mb-4">Create New Deck</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-secondary-900 dark:text-white">Create New Deck</h2>
+            {limits && !user?.is_premium && (
+              <span className="text-sm text-secondary-600 dark:text-secondary-400">
+                {limits.decks.count} / {limits.decks.limit} decks
+              </span>
+            )}
+          </div>
           <form onSubmit={handleCreateDeck} className="flex space-x-4">
             <input
               type="text"

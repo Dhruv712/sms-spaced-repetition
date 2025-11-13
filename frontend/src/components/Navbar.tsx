@@ -73,6 +73,20 @@ const Navbar: React.FC = () => {
                 <li>
                   <Link to="/help" className="text-primary-600 dark:text-primary-300 hover:underline hover:text-primary-800 dark:hover:text-primary-100 transition-colors duration-200">Help</Link>
                 </li>
+                {!user.is_premium && (
+                  <li>
+                    <Link to="/premium" className="bg-primary-600 text-white px-3 py-1 rounded hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600 transition-colors duration-200 font-medium">
+                      Get Premium
+                    </Link>
+                  </li>
+                )}
+                {user.is_premium && (
+                  <li>
+                    <span className="bg-green-600 text-white px-3 py-1 rounded font-medium">
+                      ⭐ Premium
+                    </span>
+                  </li>
+                )}
               </>
             ) : (
               <>
@@ -193,6 +207,20 @@ const Navbar: React.FC = () => {
                 >
                   Help
                 </Link>
+                {!user.is_premium && (
+                  <Link 
+                    to="/premium" 
+                    onClick={closeMenu}
+                    className="block px-4 py-2 bg-primary-600 text-white rounded hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600 transition-colors duration-200 font-medium text-center"
+                  >
+                    Get Premium
+                  </Link>
+                )}
+                {user.is_premium && (
+                  <div className="px-4 py-2 bg-green-600 text-white rounded font-medium text-center">
+                    ⭐ Premium
+                  </div>
+                )}
                 <div className="px-4 py-2 text-gray-600 dark:text-gray-300 text-sm">
                   {user.email}
                 </div>

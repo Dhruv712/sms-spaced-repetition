@@ -13,6 +13,7 @@ interface User {
   timezone?: string;
   sms_opt_in?: boolean;
   has_sms_conversation?: boolean;
+  is_premium?: boolean;
 }
 
 interface AuthContextType {
