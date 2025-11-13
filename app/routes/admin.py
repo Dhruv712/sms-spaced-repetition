@@ -460,6 +460,68 @@ async def migrate_google_oauth() -> Dict[str, Any]:
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error migrating database: {str(e)}")
 
+@router.post("/migrate-conversation-state-fields-public")
+async def migrate_conversation_state_fields_public() -> Dict[str, Any]:
+    """
+    Add message_count and last_sent_flashcard_id to conversation_state table
+    (Temporary public endpoint for one-time migration)
+    """
+    try:
+        sql_commands = [
+            "ALTER TABLE conversation_state ADD COLUMN IF NOT EXISTS message_count INTEGER DEFAULT 0",
+            "ALTER TABLE conversation_state ADD COLUMN IF NOT EXISTS last_sent_flashcard_id INTEGER",
+            "ALTER TABLE conversation_state ADD CONSTRAINT IF NOT EXISTS fk_conversation_state_last_sent_flashcard FOREIGN KEY (last_sent_flashcard_id) REFERENCES flashcards(id) ON DELETE SET NULL"
+        ]
+        
+        results = []
+        with engine.connect() as conn:
+            for i, sql in enumerate(sql_commands, 1):
+                try:
+                    conn.execute(text(sql))
+                    conn.commit()
+                    results.append(f"✅ SQL command {i} executed successfully")
+                except Exception as e:
+                    results.append(f"⚠️ SQL command {i} result: {e}")
+        
+        return {
+            "success": True,
+            "message": "Conversation state fields migration completed",
+            "results": results
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error migrating database: {str(e)}")
+
+@router.post("/migrate-user-streak-fields-public")
+async def migrate_user_streak_fields_public() -> Dict[str, Any]:
+    """
+    Add streak tracking fields to users table
+    (Temporary public endpoint for one-time migration)
+    """
+    try:
+        sql_commands = [
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS current_streak_days INTEGER DEFAULT 0",
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS longest_streak_days INTEGER DEFAULT 0",
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS last_study_date TIMESTAMP WITH TIME ZONE"
+        ]
+        
+        results = []
+        with engine.connect() as conn:
+            for i, sql in enumerate(sql_commands, 1):
+                try:
+                    conn.execute(text(sql))
+                    conn.commit()
+                    results.append(f"✅ SQL command {i} executed successfully")
+                except Exception as e:
+                    results.append(f"⚠️ SQL command {i} result: {e}")
+        
+        return {
+            "success": True,
+            "message": "User streak fields migration completed",
+            "results": results
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error migrating database: {str(e)}")
+
 @router.delete("/delete-user-2-public")
 async def delete_user_2_public(db: Session = Depends(get_db)) -> Dict[str, Any]:
     """

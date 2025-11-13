@@ -1,12 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, and_
 from app.database import get_db
-from app.models import Deck, User, Flashcard, UserDeckSmsSettings
+from app.models import Deck, User, Flashcard, UserDeckSmsSettings, CardReview
 from app.schemas.deck import DeckCreate, DeckOut, DeckWithFlashcards
 from app.services.auth import get_current_active_user
-from typing import List
+from typing import List, Dict, Any
 from pydantic import BaseModel
+from datetime import datetime, timedelta, timezone
 import os
 import uuid
 from PIL import Image
@@ -267,4 +268,78 @@ def toggle_deck_sms(
         "deck_id": deck_id,
         "sms_enabled": sms_setting.sms_enabled,
         "message": f"SMS {'enabled' if sms_setting.sms_enabled else 'disabled'} for deck '{deck.name}'"
+    }
+
+@router.get("/{deck_id}/mastery")
+def get_deck_mastery(
+    deck_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Get mastery data for a deck - performance over time"""
+    # Verify deck exists and belongs to user
+    deck = db.query(Deck).filter(
+        Deck.id == deck_id,
+        Deck.user_id == current_user.id
+    ).first()
+    if not deck:
+        raise HTTPException(status_code=404, detail="Deck not found or not authorized")
+    
+    # Get all flashcards in this deck
+    deck_flashcards = db.query(Flashcard).filter(Flashcard.deck_id == deck_id).all()
+    flashcard_ids = [card.id for card in deck_flashcards]
+    
+    if not flashcard_ids:
+        return {
+            "deck_id": deck_id,
+            "deck_name": deck.name,
+            "data_points": [],
+            "current_streak": current_user.current_streak_days or 0,
+            "longest_streak": current_user.longest_streak_days or 0
+        }
+    
+    # Get all reviews for cards in this deck, ordered by date
+    reviews = db.query(CardReview).filter(
+        and_(
+            CardReview.user_id == current_user.id,
+            CardReview.flashcard_id.in_(flashcard_ids)
+        )
+    ).order_by(CardReview.review_date.asc()).all()
+    
+    # Group reviews by date and calculate daily performance
+    daily_performance = {}
+    for review in reviews:
+        review_date = review.review_date.date()
+        if review_date not in daily_performance:
+            daily_performance[review_date] = {
+                "total": 0,
+                "correct": 0,
+                "confidence_sum": 0.0
+            }
+        
+        daily_performance[review_date]["total"] += 1
+        if review.was_correct:
+            daily_performance[review_date]["correct"] += 1
+        daily_performance[review_date]["confidence_sum"] += review.confidence_score or 0.0
+    
+    # Convert to list of data points for the graph
+    data_points = []
+    for date, stats in sorted(daily_performance.items()):
+        accuracy = (stats["correct"] / stats["total"] * 100) if stats["total"] > 0 else 0
+        avg_confidence = (stats["confidence_sum"] / stats["total"]) if stats["total"] > 0 else 0
+        
+        data_points.append({
+            "date": date.isoformat(),
+            "accuracy": round(accuracy, 1),
+            "average_confidence": round(avg_confidence * 100, 1),  # Convert to percentage
+            "total_reviews": stats["total"],
+            "correct_reviews": stats["correct"]
+        })
+    
+    return {
+        "deck_id": deck_id,
+        "deck_name": deck.name,
+        "data_points": data_points,
+        "current_streak": current_user.current_streak_days or 0,
+        "longest_streak": current_user.longest_streak_days or 0
     } 

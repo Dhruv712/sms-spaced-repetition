@@ -23,18 +23,23 @@ class LoopMessageService:
         if not all([self.auth_key, self.secret_key, self.sender_name]):
             raise ValueError("Missing required LoopMessage environment variables")
     
-    def send_flashcard(self, phone_number: str, flashcard: Flashcard) -> Dict[str, Any]:
+    def send_flashcard(self, phone_number: str, flashcard: Flashcard, message_count: int = 0) -> Dict[str, Any]:
         """
         Send a flashcard question via LoopMessage
         
         Args:
             phone_number: Recipient's phone number
             flashcard: Flashcard object to send
+            message_count: Number of messages sent so far (for skip reminders)
             
         Returns:
             Dict containing API response
         """
         message_text = f"{flashcard.concept}?\n\n(Reply with your answer)"
+        
+        # Add skip reminder every 5 messages
+        if message_count > 0 and message_count % 5 == 0:
+            message_text += "\n\n💡 Type \"skip\" to skip this card"
         
         return self._send_message(
             recipient=phone_number,
@@ -173,8 +178,13 @@ def send_due_flashcards_to_user(user_id: int, db: Session) -> Dict[str, Any]:
             set_conversation_state(user_id, due_card.id, db)
             print(f"✅ Conversation state set to waiting_for_answer")
             
+            # Get message count for skip reminder
+            from app.models import ConversationState
+            state_after = db.query(ConversationState).filter_by(user_id=user_id).first()
+            message_count = state_after.message_count if state_after else 0
+            
             # Send the due flashcard
-            result = service.send_flashcard(user.phone_number, due_card)
+            result = service.send_flashcard(user.phone_number, due_card, message_count)
             return {
                 "success": result.get("success", False),
                 "message": "flashcard_sent",

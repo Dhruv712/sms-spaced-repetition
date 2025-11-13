@@ -18,6 +18,9 @@ class User(Base):
     timezone = Column(String(50), default="UTC")
     is_active = Column(Boolean, default=True)
     sms_opt_in = Column(Boolean, default=False)  # SMS opt-in preference
+    current_streak_days = Column(Integer, default=0)  # Current consecutive days with reviews
+    longest_streak_days = Column(Integer, default=0)  # Longest streak achieved
+    last_study_date = Column(DateTime(timezone=True), nullable=True)  # Last date user studied
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     

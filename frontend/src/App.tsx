@@ -11,6 +11,7 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import DecksPage from "./pages/DecksPage";
 import DeckReviewPage from './pages/DeckReviewPage';
+import MasteryGraph from './components/MasteryGraph';
 import PhoneNumberModal from './components/PhoneNumberModal';
 
 const AppContent: React.FC = () => {
@@ -83,6 +84,14 @@ const AppContent: React.FC = () => {
             }
           />
           <Route path="/decks/:deck_id/review" element={<DeckReviewPage />} />
+          <Route
+            path="/decks/:deckId/mastery"
+            element={
+              <ProtectedRoute>
+                <MasteryGraph />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
         <PhoneNumberModal
           isOpen={showPhoneModal}

@@ -65,24 +65,25 @@ def main():
     print(f"🕐 {current_time}: Current UTC hour: {current_hour}")
     
     # Schedule:
-    # 17:00 UTC (8:00 PM Greece) - Send flashcards
-    # 20:00 UTC (11:00 PM Greece) - Send flashcards  
-    # 23:00 UTC (2:00 AM Greece) - Send flashcards + Daily summary
-    # 02:00 UTC (5:00 AM Greece) - Send flashcards
-    # 05:00 UTC (8:00 AM Greece) - Send flashcards
+    # 12:00 UTC (12:00 PM UTC) - Send flashcards + Daily summary
+    # 21:00 UTC (9:00 PM UTC) - Send flashcards
     
-    if current_hour == 23:
-        # 23:00 UTC - Send both flashcards and daily summary
-        print(f"🌙 {current_time}: Night time - sending flashcards and daily summary")
+    if current_hour == 12:
+        # 12:00 UTC - Send both flashcards and daily summary
+        print(f"🌙 {current_time}: Noon time - sending flashcards and daily summary")
         flashcard_success = send_flashcards()
         summary_success = send_daily_summary()
         
         if flashcard_success and summary_success:
-            print(f"✅ {current_time}: Night time tasks completed successfully")
+            print(f"✅ {current_time}: Noon time tasks completed successfully")
         else:
-            print(f"⚠️ {current_time}: Some night time tasks failed")
+            print(f"⚠️ {current_time}: Some noon time tasks failed")
+    elif current_hour == 21:
+        # 21:00 UTC - Just send flashcards
+        print(f"📚 {current_time}: Evening time - sending flashcards only")
+        send_flashcards()
     else:
-        # All other times - just send flashcards
+        # Other times - just send flashcards (for backwards compatibility)
         print(f"📚 {current_time}: Regular time - sending flashcards only")
         send_flashcards()
 

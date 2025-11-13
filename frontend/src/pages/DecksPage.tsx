@@ -320,6 +320,12 @@ const DecksPage: React.FC = () => {
                     >
                       Review Deck
                     </button>
+                    <button
+                      onClick={() => navigate(`/decks/${deck.id}/mastery`)}
+                      className="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 text-sm font-medium"
+                    >
+                      Mastery Graph
+                    </button>
                   </div>
                   </div>
                 </div>

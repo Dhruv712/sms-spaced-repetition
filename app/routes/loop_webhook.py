@@ -268,6 +268,35 @@ async def process_user_message(user: User, body: str, passthrough: str, db: Sess
         else:
             print(f"❌ No flashcard confirmation state found. State: {state.state if state else 'None'}")
         
+        # Handle skip command
+        if body.strip().lower() == "skip":
+            print(f"⏭️ User wants to skip current flashcard")
+            if state and state.state == "waiting_for_answer" and state.current_flashcard_id:
+                # Mark the card as skipped (don't create a review, just move to next)
+                state.state = "idle"
+                state.current_flashcard_id = None
+                db.commit()
+                
+                # Get next due flashcard
+                next_card = get_next_due_flashcard(user.id, db)
+                if next_card:
+                    set_conversation_state(user.id, next_card.id, db)
+                    if service:
+                        state_after = db.query(ConversationState).filter_by(user_id=user.id).first()
+                        message_count = state_after.message_count if state_after else 0
+                        result = service.send_flashcard(user.phone_number, next_card, message_count)
+                        if result.get("success"):
+                            return "Card skipped. Next flashcard sent."
+                    return "Card skipped. Next flashcard sent."
+                else:
+                    if service:
+                        service.send_feedback(user.phone_number, "Card skipped. You're all caught up!")
+                    return "Card skipped. No more due flashcards."
+            else:
+                if service:
+                    service.send_feedback(user.phone_number, "No card to skip. Send 'Yes' to start a session.")
+                return "No card to skip."
+        
         # Handle general commands
         if "yes" in body.lower():
             print(f"✅ User said 'yes', starting session")
@@ -379,6 +408,19 @@ async def handle_flashcard_response(
         db.add(review)
         print(f"💾 Review saved to database")
         
+        # Update user streak tracking
+        from app.services.summary_service import calculate_streak_days
+        today = datetime.now(timezone.utc).date()
+        user_today = user.last_study_date.date() if user.last_study_date else None
+        
+        if user_today != today:
+            # New day - update streak
+            streak_days = calculate_streak_days(user.id, db)
+            user.current_streak_days = streak_days
+            if streak_days > (user.longest_streak_days or 0):
+                user.longest_streak_days = streak_days
+            user.last_study_date = datetime.now(timezone.utc)
+        
         # Clear conversation state
         state = db.query(ConversationState).filter_by(user_id=user.id).first()
         if state:
@@ -406,9 +448,13 @@ async def handle_flashcard_response(
             # Set conversation state for the next card
             set_conversation_state(user.id, next_card.id, db)
             
+            # Get message count for skip reminder
+            state_after = db.query(ConversationState).filter_by(user_id=user.id).first()
+            message_count = state_after.message_count if state_after else 0
+            
             # Send the next flashcard
             if service:
-                next_result = service.send_flashcard(user.phone_number, next_card)
+                next_result = service.send_flashcard(user.phone_number, next_card, message_count)
                 if next_result.get("success"):
                     print(f"📤 Next flashcard sent successfully: {next_card.concept}")
                     return f"Response processed. Feedback sent. Next flashcard sent: {next_card.concept}"
@@ -445,9 +491,13 @@ async def handle_start_session(user: User, service: LoopMessageService, db: Sess
         # Set conversation state
         set_conversation_state(user.id, card.id, db)
         
+        # Get message count for skip reminder
+        state_after = db.query(ConversationState).filter_by(user_id=user.id).first()
+        message_count = state_after.message_count if state_after else 0
+        
         # Send the flashcard
         if service:
-            result = service.send_flashcard(user.phone_number, card)
+            result = service.send_flashcard(user.phone_number, card, message_count)
             if result.get("success"):
                 return f"Flashcard sent to {user.phone_number}"
             else:

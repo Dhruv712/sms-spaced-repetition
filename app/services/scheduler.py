@@ -93,19 +93,35 @@ def compute_next_review(
         repetition_count, ease_factor, interval_days, was_correct, confidence_score
     )
     
-    # Step 2: Compute naive next review time
+    # Step 2: Adjust interval based on confidence score gradient
+    # Higher confidence = longer interval, lower confidence = shorter interval
+    # This provides more granular control than just was_correct boolean
+    if was_correct and confidence_score >= 0.9:
+        # Perfect answer - extend interval by 20%
+        new_interval_days = int(new_interval_days * 1.2)
+    elif was_correct and confidence_score >= 0.8:
+        # Very good answer - extend interval by 10%
+        new_interval_days = int(new_interval_days * 1.1)
+    elif was_correct and confidence_score < 0.7:
+        # Correct but low confidence - reduce interval by 10%
+        new_interval_days = max(1, int(new_interval_days * 0.9))
+    elif not was_correct:
+        # Incorrect - already handled in SM-2, but ensure minimum interval
+        new_interval_days = max(1, new_interval_days)
+    
+    # Step 3: Compute naive next review time
     interval = timedelta(days=new_interval_days)
     naive_next_review = last_review_date + interval
 
-    # Step 3: Convert to user's timezone
+    # Step 4: Convert to user's timezone
     user_tz = ZoneInfo(timezone_str)
     local_next_review = naive_next_review.astimezone(user_tz)
 
-    # Step 4: Adjust time to be within preferred review window
+    # Step 5: Adjust time to be within preferred review window
     if not (start_hour <= local_next_review.hour < end_hour):
         # Set to *next day's* preferred start time
         next_day = local_next_review.date() + timedelta(days=1)
         local_next_review = datetime.combine(next_day, time(hour=start_hour), tzinfo=user_tz)
 
-    # Step 5: Convert back to UTC
+    # Step 6: Convert back to UTC
     return local_next_review.astimezone(ZoneInfo("UTC"))

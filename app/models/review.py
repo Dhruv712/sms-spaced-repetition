@@ -56,6 +56,8 @@ class ConversationState(Base):
     state = Column(String(50))  # 'idle', 'waiting_for_batch_confirm', 'waiting_for_answer', 'session_complete'
     last_message_at = Column(DateTime(timezone=True), server_default=func.now())
     context = Column(Text)  # JSON string for additional state data
+    message_count = Column(Integer, default=0)  # Track number of messages sent for skip reminders
+    last_sent_flashcard_id = Column(Integer, ForeignKey("flashcards.id", ondelete="SET NULL"), nullable=True)  # Track last sent card to prevent duplicates
     
     # Relationships
     user = relationship("User", back_populates="conversation_state")
