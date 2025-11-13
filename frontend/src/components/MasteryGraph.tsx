@@ -146,10 +146,18 @@ const MasteryGraph: React.FC = () => {
                   style={{ fontSize: '12px' }}
                 />
                 <YAxis
-                  stroke="#6b7280"
+                  yAxisId="left"
+                  stroke="#3b82f6"
                   style={{ fontSize: '12px' }}
                   domain={[0, 100]}
-                  label={{ value: 'Percentage (%)', angle: -90, position: 'insideLeft' }}
+                  label={{ value: 'Accuracy (%)', angle: -90, position: 'insideLeft' }}
+                />
+                <YAxis
+                  yAxisId="right"
+                  orientation="right"
+                  stroke="#10b981"
+                  style={{ fontSize: '12px' }}
+                  label={{ value: 'Cards Reviewed', angle: 90, position: 'insideRight' }}
                 />
                 <Tooltip
                   contentStyle={{
@@ -159,26 +167,28 @@ const MasteryGraph: React.FC = () => {
                   }}
                   formatter={(value: any, name: string) => {
                     if (name === 'accuracy') return [`${value}%`, 'Accuracy'];
-                    if (name === 'average_confidence') return [`${value}%`, 'Avg Confidence'];
+                    if (name === 'cards_reviewed') return [value, 'Cards Reviewed'];
                     return [value, name];
                   }}
                   labelFormatter={(label) => `Date: ${label}`}
                 />
                 <Legend />
                 <Line
+                  yAxisId="left"
                   type="monotone"
                   dataKey="accuracy"
                   stroke="#3b82f6"
                   strokeWidth={2}
-                  name="Accuracy"
+                  name="Accuracy (%)"
                   dot={{ r: 4 }}
                 />
                 <Line
+                  yAxisId="right"
                   type="monotone"
-                  dataKey="average_confidence"
+                  dataKey="cards_reviewed"
                   stroke="#10b981"
                   strokeWidth={2}
-                  name="Average Confidence"
+                  name="Cards Reviewed"
                   dot={{ r: 4 }}
                 />
               </LineChart>

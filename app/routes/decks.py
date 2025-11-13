@@ -314,24 +314,24 @@ def get_deck_mastery(
             daily_performance[review_date] = {
                 "total": 0,
                 "correct": 0,
-                "confidence_sum": 0.0
+                "unique_cards": set()
             }
         
         daily_performance[review_date]["total"] += 1
+        daily_performance[review_date]["unique_cards"].add(review.flashcard_id)
         if review.was_correct:
             daily_performance[review_date]["correct"] += 1
-        daily_performance[review_date]["confidence_sum"] += review.confidence_score or 0.0
     
     # Convert to list of data points for the graph
     data_points = []
     for date, stats in sorted(daily_performance.items()):
         accuracy = (stats["correct"] / stats["total"] * 100) if stats["total"] > 0 else 0
-        avg_confidence = (stats["confidence_sum"] / stats["total"]) if stats["total"] > 0 else 0
+        cards_reviewed = len(stats["unique_cards"])  # Unique cards reviewed on this day
         
         data_points.append({
             "date": date.isoformat(),
             "accuracy": round(accuracy, 1),
-            "average_confidence": round(avg_confidence * 100, 1),  # Convert to percentage
+            "cards_reviewed": cards_reviewed,
             "total_reviews": stats["total"],
             "correct_reviews": stats["correct"]
         })
