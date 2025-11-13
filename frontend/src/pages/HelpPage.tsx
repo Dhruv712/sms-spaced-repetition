@@ -48,8 +48,10 @@ const HelpPage: React.FC = () => {
     }
 
     // Determine the email to use
+    // If logged in, we can proceed even without email (email client will use logged-in email)
+    // If not logged in, require email input
     const fromEmail = userEmail || email.trim();
-    if (!fromEmail) {
+    if (!token && !fromEmail) {
       alert('Please provide your email address.');
       return;
     }
@@ -57,9 +59,13 @@ const HelpPage: React.FC = () => {
     // Create mailto link
     const recipientEmail = 'dhruv.sumathi@gmail.com';
     const mailtoSubject = encodeURIComponent(subject.trim());
-    const mailtoBody = encodeURIComponent(
-      `From: ${fromEmail}\n\n${message.trim()}`
-    );
+    
+    // Include "From:" in body only if we have an email
+    let bodyText = message.trim();
+    if (fromEmail) {
+      bodyText = `From: ${fromEmail}\n\n${bodyText}`;
+    }
+    const mailtoBody = encodeURIComponent(bodyText);
     
     const mailtoLink = `mailto:${recipientEmail}?subject=${mailtoSubject}&body=${mailtoBody}`;
     
