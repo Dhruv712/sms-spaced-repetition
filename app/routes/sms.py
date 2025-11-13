@@ -60,7 +60,8 @@ async def receive_sms(
             was_correct=result["was_correct"],
             confidence_score=result["confidence_score"],
             llm_feedback=result["llm_feedback"],
-            next_review_date=next_review
+            next_review_date=next_review,
+            is_sms_review=True  # This review came via SMS
         )
 
         db.add(review)

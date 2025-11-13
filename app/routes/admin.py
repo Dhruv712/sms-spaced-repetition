@@ -587,3 +587,114 @@ async def delete_user_2_public(db: Session = Depends(get_db)) -> Dict[str, Any]:
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Error deleting user: {str(e)}")
+
+@router.post("/migrate-subscription-fields-public")
+async def migrate_subscription_fields_public() -> Dict[str, Any]:
+    """
+    Add Stripe subscription fields to users table
+    (Temporary public endpoint for Railway migration)
+    """
+    try:
+        sql_commands = [
+            """
+            ALTER TABLE users 
+            ADD COLUMN IF NOT EXISTS is_premium BOOLEAN DEFAULT FALSE;
+            """,
+            """
+            ALTER TABLE users 
+            ADD COLUMN IF NOT EXISTS stripe_customer_id VARCHAR(255);
+            """,
+            """
+            ALTER TABLE users 
+            ADD COLUMN IF NOT EXISTS stripe_subscription_id VARCHAR(255);
+            """,
+            """
+            ALTER TABLE users 
+            ADD COLUMN IF NOT EXISTS stripe_subscription_status VARCHAR(50);
+            """,
+            """
+            ALTER TABLE users 
+            ADD COLUMN IF NOT EXISTS stripe_price_id VARCHAR(255);
+            """,
+            """
+            ALTER TABLE users 
+            ADD COLUMN IF NOT EXISTS subscription_start_date TIMESTAMP WITH TIME ZONE;
+            """,
+            """
+            ALTER TABLE users 
+            ADD COLUMN IF NOT EXISTS subscription_end_date TIMESTAMP WITH TIME ZONE;
+            """,
+            """
+            CREATE INDEX IF NOT EXISTS idx_users_stripe_customer_id ON users(stripe_customer_id);
+            """,
+            """
+            CREATE INDEX IF NOT EXISTS idx_users_stripe_subscription_id ON users(stripe_subscription_id);
+            """
+        ]
+        
+        results = []
+        with engine.connect() as conn:
+            for i, sql in enumerate(sql_commands, 1):
+                try:
+                    conn.execute(text(sql))
+                    conn.commit()
+                    results.append(f"✅ SQL command {i} executed successfully")
+                except Exception as e:
+                    results.append(f"⚠️ SQL command {i} result: {str(e)}")
+        
+        return {
+            "success": True,
+            "message": "Subscription fields migration completed",
+            "results": results
+        }
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@router.post("/migrate-sms-review-field-public")
+async def migrate_sms_review_field_public() -> Dict[str, Any]:
+    """
+    Add is_sms_review field to card_reviews table
+    (Temporary public endpoint for Railway migration)
+    """
+    try:
+        sql_command = """
+            ALTER TABLE card_reviews 
+            ADD COLUMN IF NOT EXISTS is_sms_review BOOLEAN DEFAULT FALSE;
+        """
+        
+        with engine.connect() as conn:
+            conn.execute(text(sql_command))
+            conn.commit()
+        
+        return {
+            "success": True,
+            "message": "SMS review field migration completed"
+        }
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@router.post("/grandfather-users-premium-public")
+async def grandfather_users_premium_public() -> Dict[str, Any]:
+    """
+    Grandfather existing users to premium (except dhruv.sumathi@gmail.com for testing)
+    (Temporary public endpoint for Railway migration)
+    """
+    try:
+        sql_command = """
+            UPDATE users 
+            SET is_premium = TRUE 
+            WHERE email != 'dhruv.sumathi@gmail.com' AND is_premium = FALSE;
+        """
+        
+        with engine.connect() as conn:
+            result = conn.execute(text(sql_command))
+            conn.commit()
+            rows_updated = result.rowcount
+        
+        return {
+            "success": True,
+            "message": f"Grandfathered {rows_updated} users to premium",
+            "users_updated": rows_updated
+        }
+    except Exception as e:
+        return {"success": False, "error": str(e)}

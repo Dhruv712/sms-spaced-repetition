@@ -391,6 +391,12 @@ async def handle_flashcard_response(
         print(f"📅 Next review scheduled for: {next_review}")
         print(f"🔄 SM-2: rep={new_repetition_count}, ease={new_ease_factor:.2f}, interval={new_interval_days} days")
         
+        # Check SMS review limit for free users
+        from app.services.premium_service import check_sms_limit
+        sms_limit_check = check_sms_limit(user, db)
+        if not sms_limit_check["within_limit"]:
+            return f"❌ You've reached your monthly limit of {sms_limit_check['limit']} SMS reviews. Upgrade to Premium for unlimited reviews! Visit trycue.xyz to upgrade."
+        
         # Save the review with SM-2 data
         review = CardReview(
             user_id=user.id,
@@ -402,7 +408,8 @@ async def handle_flashcard_response(
             next_review_date=next_review,
             repetition_count=new_repetition_count,
             ease_factor=new_ease_factor,
-            interval_days=new_interval_days
+            interval_days=new_interval_days,
+            is_sms_review=True  # This review came via SMS
         )
         
         db.add(review)

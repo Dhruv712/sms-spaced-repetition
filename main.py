@@ -16,6 +16,7 @@ from app.routes.decks import router as decks_router
 from app.routes.loop_test import router as loop_test_router
 from app.routes.loop_webhook import router as loop_webhook_router
 from app.routes.help import router as help_router
+from app.routes.subscription import router as subscription_router
 
 # Safe database setup - only create tables if they don't exist
 try:
@@ -73,3 +74,4 @@ app.include_router(decks_router, prefix="/decks", tags=["Decks"])
 app.include_router(loop_test_router, prefix="/loop-test", tags=["Loop_Test"])
 app.include_router(loop_webhook_router, prefix="/loop-webhook", tags=["Loop_Webhook"])
 app.include_router(help_router, prefix="/help", tags=["Help"])
+app.include_router(subscription_router, prefix="/subscription", tags=["Subscription"])

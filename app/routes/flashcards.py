@@ -17,6 +17,17 @@ class DeckAssignment(BaseModel):
 
 @router.post("/", response_model=FlashcardOut)
 def create_flashcard(flashcard: FlashcardCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_active_user)):
+    # Check flashcard limit in deck for free users
+    if flashcard.deck_id:
+        from app.services.premium_service import check_flashcard_limit_in_deck
+        limit_check = check_flashcard_limit_in_deck(flashcard.deck_id, current_user, db)
+        if not limit_check["can_add"]:
+            from fastapi import HTTPException, status
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"You've reached the free tier limit of {limit_check['limit']} flashcards per deck. Upgrade to Premium to add unlimited flashcards."
+            )
+    
     new_card = Flashcard(
         user_id=current_user.id,
         concept=flashcard.concept,

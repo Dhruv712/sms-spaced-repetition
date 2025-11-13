@@ -21,6 +21,16 @@ class User(Base):
     current_streak_days = Column(Integer, default=0)  # Current consecutive days with reviews
     longest_streak_days = Column(Integer, default=0)  # Longest streak achieved
     last_study_date = Column(DateTime(timezone=True), nullable=True)  # Last date user studied
+    
+    # Stripe subscription fields
+    is_premium = Column(Boolean, default=False)  # Quick check for premium status
+    stripe_customer_id = Column(String(255), unique=True, index=True, nullable=True)  # Stripe customer ID
+    stripe_subscription_id = Column(String(255), unique=True, index=True, nullable=True)  # Active subscription ID
+    stripe_subscription_status = Column(String(50), nullable=True)  # e.g., "active", "canceled", "past_due"
+    stripe_price_id = Column(String(255), nullable=True)  # Which price tier they're on
+    subscription_start_date = Column(DateTime(timezone=True), nullable=True)
+    subscription_end_date = Column(DateTime(timezone=True), nullable=True)
+    
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     

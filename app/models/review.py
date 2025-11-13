@@ -22,6 +22,9 @@ class CardReview(Base):
     repetition_count = Column(Integer, default=0)  # Number of successful repetitions
     ease_factor = Column(Float, default=2.5)  # Ease factor (starts at 2.5)
     interval_days = Column(Integer, default=0)  # Current interval in days
+    
+    # Review source tracking
+    is_sms_review = Column(Boolean, default=False)  # True if review was done via SMS
         
     # Relationships
     user = relationship("User", back_populates="reviews")

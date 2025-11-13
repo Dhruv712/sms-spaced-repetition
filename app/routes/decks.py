@@ -5,6 +5,7 @@ from app.database import get_db
 from app.models import Deck, User, Flashcard, UserDeckSmsSettings, CardReview
 from app.schemas.deck import DeckCreate, DeckOut, DeckWithFlashcards
 from app.services.auth import get_current_active_user
+from app.services.premium_service import check_deck_limit
 from typing import List, Dict, Any
 from pydantic import BaseModel
 from datetime import datetime, timedelta, timezone
@@ -96,6 +97,14 @@ def create_deck(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
+    # Check deck limit for free users
+    limit_check = check_deck_limit(current_user, db)
+    if not limit_check["can_create"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"You've reached the free tier limit of {limit_check['limit']} decks. Upgrade to Premium to create unlimited decks."
+        )
+    
     db_deck = Deck(name=deck.name, user_id=current_user.id)
     db.add(db_deck)
     db.commit()
