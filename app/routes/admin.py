@@ -497,6 +497,14 @@ async def migrate_conversation_state_fields_public() -> Dict[str, Any]:
                     results.append(f"✅ SQL command {i} executed successfully")
                 except Exception as e:
                     results.append(f"⚠️ SQL command {i} result: {e}")
+            
+            # Add foreign key constraint separately (PostgreSQL doesn't support IF NOT EXISTS for constraints)
+            try:
+                conn.execute(text(constraint_sql))
+                conn.commit()
+                results.append("✅ Foreign key constraint added successfully")
+            except Exception as e:
+                results.append(f"⚠️ Foreign key constraint result: {e}")
         
         return {
             "success": True,
