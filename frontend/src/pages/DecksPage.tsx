@@ -4,6 +4,16 @@ import { useAuth } from '../contexts/AuthContext';
 import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import { buildApiUrl } from '../config';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer
+} from 'recharts';
 
 interface Deck {
   id: number;
@@ -22,6 +32,8 @@ const DecksPage: React.FC = () => {
   const [creatingDeck, setCreatingDeck] = useState(false);
   const [uploadingImage, setUploadingImage] = useState<number | null>(null);
   const [togglingSms, setTogglingSms] = useState<number | null>(null);
+  const [masteryData, setMasteryData] = useState<any>(null);
+  const [loadingMastery, setLoadingMastery] = useState(false);
   const { token } = useAuth();
   const navigate = useNavigate();
   const fileInputRefs = useRef<{ [key: number]: HTMLInputElement | null }>({});
@@ -54,6 +66,30 @@ const DecksPage: React.FC = () => {
     fetchDecks();
   }, [fetchDecks]);
 
+  const fetchMasteryData = useCallback(async () => {
+    if (!token || decks.length === 0) return;
+    
+    setLoadingMastery(true);
+    try {
+      const response = await axios.get(buildApiUrl('/decks/mastery/all'), {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      setMasteryData(response.data);
+    } catch (err) {
+      console.error('Error fetching mastery data:', err);
+    } finally {
+      setLoadingMastery(false);
+    }
+  }, [token, decks.length]);
+
+  useEffect(() => {
+    if (decks.length > 0) {
+      fetchMasteryData();
+    }
+  }, [decks.length, fetchMasteryData]);
+
   const handleCreateDeck = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newDeckName.trim() || !token || creatingDeck) return;
@@ -72,6 +108,8 @@ const DecksPage: React.FC = () => {
       );
       setDecks(prevDecks => [...prevDecks, response.data]);
       setNewDeckName('');
+      // Refresh mastery data after creating a deck
+      setTimeout(() => fetchMasteryData(), 500);
     } catch (err) {
       console.error('Error creating deck:', err);
       setError('Failed to create deck. Please try again.');
@@ -92,6 +130,8 @@ const DecksPage: React.FC = () => {
         },
       });
       setDecks(prevDecks => prevDecks.filter(deck => deck.id !== deckId));
+      // Refresh mastery data after deleting a deck
+      setTimeout(() => fetchMasteryData(), 500);
     } catch (err) {
       console.error('Error deleting deck:', err);
       setError('Failed to delete deck. Please try again.');
@@ -333,6 +373,112 @@ const DecksPage: React.FC = () => {
             </div>
           )}
         </div>
+
+        {/* Unified Mastery Graph */}
+        {decks.length > 0 && (
+          <div className="bg-white dark:bg-secondary-800 rounded-lg shadow-soft p-6 mt-8">
+            <h2 className="text-xl font-semibold text-secondary-900 dark:text-white mb-4">
+              Unified Mastery Graph
+            </h2>
+            <p className="text-sm text-secondary-600 dark:text-secondary-400 mb-4">
+              Track your accuracy across all decks over time
+            </p>
+            
+            {loadingMastery ? (
+              <div className="flex items-center justify-center h-64">
+                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary-500"></div>
+              </div>
+            ) : masteryData && masteryData.data_points && masteryData.data_points.length > 0 ? (
+              <div>
+                <ResponsiveContainer width="100%" height={400}>
+                  <LineChart data={masteryData.data_points.map((point: any) => ({
+                    ...point,
+                    date: new Date(point.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                  }))}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis
+                      dataKey="date"
+                      stroke="#6b7280"
+                      style={{ fontSize: '12px' }}
+                    />
+                    <YAxis
+                      stroke="#6b7280"
+                      style={{ fontSize: '12px' }}
+                      domain={[0, 100]}
+                      label={{ value: 'Accuracy (%)', angle: -90, position: 'insideLeft' }}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: '#ffffff',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                      }}
+                      formatter={(value: any) => {
+                        if (value === null || value === undefined) return 'No data';
+                        return [`${value}%`, 'Accuracy'];
+                      }}
+                      labelFormatter={(label) => `Date: ${label}`}
+                    />
+                    <Legend />
+                    {masteryData.decks.map((deck: any, index: number) => {
+                      // Generate distinct colors for each deck
+                      const colors = [
+                        '#3b82f6', // blue
+                        '#10b981', // green
+                        '#f59e0b', // amber
+                        '#ef4444', // red
+                        '#8b5cf6', // purple
+                        '#ec4899', // pink
+                        '#06b6d4', // cyan
+                        '#84cc16', // lime
+                        '#f97316', // orange
+                        '#6366f1', // indigo
+                      ];
+                      const color = colors[index % colors.length];
+                      return (
+                        <Line
+                          key={deck.id}
+                          type="monotone"
+                          dataKey={`deck_${deck.id}`}
+                          stroke={color}
+                          strokeWidth={2}
+                          name={deck.name}
+                          dot={{ r: 3 }}
+                          connectNulls={false}
+                        />
+                      );
+                    })}
+                  </LineChart>
+                </ResponsiveContainer>
+                
+                <div className="mt-4 flex flex-wrap gap-4 justify-center">
+                  {masteryData.decks.map((deck: any, index: number) => {
+                    const colors = [
+                      '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
+                      '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#6366f1',
+                    ];
+                    const color = colors[index % colors.length];
+                    return (
+                      <div key={deck.id} className="flex items-center space-x-2">
+                        <div
+                          className="w-4 h-4 rounded"
+                          style={{ backgroundColor: color }}
+                        />
+                        <span className="text-sm text-secondary-700 dark:text-secondary-300">
+                          {deck.name}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-8 text-secondary-600 dark:text-secondary-400">
+                No review data yet. Start reviewing cards to see your progress across all decks!
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
