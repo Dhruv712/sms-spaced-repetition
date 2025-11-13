@@ -349,31 +349,13 @@ def get_all_decks_mastery(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
-    """Get mastery data for all decks - unified view with all decks as separate lines"""
-    # Get all decks for the user
-    decks = db.query(Deck).filter(Deck.user_id == current_user.id).all()
-    
-    if not decks:
-        return {
-            "decks": [],
-            "data_points": [],
-            "current_streak": current_user.current_streak_days or 0,
-            "longest_streak": current_user.longest_streak_days or 0
-        }
-    
-    # Get all flashcards for all decks
-    all_deck_ids = [deck.id for deck in decks]
-    all_flashcards = db.query(Flashcard).filter(
-        Flashcard.deck_id.in_(all_deck_ids)
-    ).all()
-    
-    # Create a mapping of flashcard_id to deck_id
-    flashcard_to_deck = {card.id: card.deck_id for card in all_flashcards}
-    flashcard_ids = list(flashcard_to_deck.keys())
+    """Get mastery data for all decks - overall average accuracy and cards reviewed per day"""
+    # Get all flashcards for the user (from all decks and no deck)
+    all_flashcards = db.query(Flashcard).filter(Flashcard.user_id == current_user.id).all()
+    flashcard_ids = [card.id for card in all_flashcards]
     
     if not flashcard_ids:
         return {
-            "decks": [{"id": deck.id, "name": deck.name} for deck in decks],
             "data_points": [],
             "current_streak": current_user.current_streak_days or 0,
             "longest_streak": current_user.longest_streak_days or 0
@@ -387,53 +369,37 @@ def get_all_decks_mastery(
         )
     ).order_by(CardReview.review_date.asc()).all()
     
-    # Group reviews by date and deck
-    daily_performance_by_deck = {}
-    all_dates = set()
-    
+    # Group reviews by date and calculate overall daily performance
+    daily_performance = {}
     for review in reviews:
         review_date = review.review_date.date()
-        all_dates.add(review_date)
-        deck_id = flashcard_to_deck.get(review.flashcard_id)
-        
-        if deck_id is None:
-            continue
-        
-        if review_date not in daily_performance_by_deck:
-            daily_performance_by_deck[review_date] = {}
-        
-        if deck_id not in daily_performance_by_deck[review_date]:
-            daily_performance_by_deck[review_date][deck_id] = {
+        if review_date not in daily_performance:
+            daily_performance[review_date] = {
                 "total": 0,
-                "correct": 0
+                "correct": 0,
+                "unique_cards": set()
             }
         
-        daily_performance_by_deck[review_date][deck_id]["total"] += 1
+        daily_performance[review_date]["total"] += 1
+        daily_performance[review_date]["unique_cards"].add(review.flashcard_id)
         if review.was_correct:
-            daily_performance_by_deck[review_date][deck_id]["correct"] += 1
-    
-    # Create deck name mapping
-    deck_names = {deck.id: deck.name for deck in decks}
+            daily_performance[review_date]["correct"] += 1
     
     # Convert to list of data points for the graph
-    # Each data point has accuracy for each deck on that date
     data_points = []
-    for date in sorted(all_dates):
-        point = {"date": date.isoformat()}
+    for date, stats in sorted(daily_performance.items()):
+        accuracy = (stats["correct"] / stats["total"] * 100) if stats["total"] > 0 else 0
+        cards_reviewed = len(stats["unique_cards"])  # Unique cards reviewed on this day
         
-        # Add accuracy for each deck on this date
-        for deck_id, deck_name in deck_names.items():
-            if date in daily_performance_by_deck and deck_id in daily_performance_by_deck[date]:
-                stats = daily_performance_by_deck[date][deck_id]
-                accuracy = (stats["correct"] / stats["total"] * 100) if stats["total"] > 0 else 0
-                point[f"deck_{deck_id}"] = round(accuracy, 1)
-            else:
-                point[f"deck_{deck_id}"] = None  # No data for this deck on this date
-        
-        data_points.append(point)
+        data_points.append({
+            "date": date.isoformat(),
+            "accuracy": round(accuracy, 1),
+            "cards_reviewed": cards_reviewed,
+            "total_reviews": stats["total"],
+            "correct_reviews": stats["correct"]
+        })
     
     return {
-        "decks": [{"id": deck.id, "name": deck.name} for deck in decks],
         "data_points": data_points,
         "current_streak": current_user.current_streak_days or 0,
         "longest_streak": current_user.longest_streak_days or 0
