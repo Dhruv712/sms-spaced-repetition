@@ -69,7 +69,7 @@ const AppContent: React.FC = () => {
             }
           />
           <Route
-            path="/manual-review"
+            path="/review-due-cards"
             element={
               <ProtectedRoute>
                 <ManualReviewPage />
@@ -95,11 +95,7 @@ const AppContent: React.FC = () => {
           />
           <Route
             path="/help"
-            element={
-              <ProtectedRoute>
-                <HelpPage />
-              </ProtectedRoute>
-            }
+            element={<HelpPage />}
           />
         </Routes>
         <PhoneNumberModal

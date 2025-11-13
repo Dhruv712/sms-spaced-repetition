@@ -121,7 +121,7 @@ const ManualReviewPage: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 bg-gray-50 dark:bg-darkbg min-h-screen">
-      <h1 className="text-3xl font-bold mb-6 text-gray-900 dark:text-darktext">Manual Review</h1>
+      <h1 className="text-3xl font-bold mb-6 text-gray-900 dark:text-darktext">Review Due Cards</h1>
 
       <div className="bg-white dark:bg-darksurface rounded-lg shadow-xl p-8 max-w-2xl mx-auto border border-gray-200 dark:border-gray-700">
         <div className="mb-6">

@@ -4,9 +4,10 @@ import { useAuth } from '../contexts/AuthContext';
 import { buildApiUrl } from '../config';
 
 const HelpPage: React.FC = () => {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
+  const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<{ type: 'success' | 'error' | null; message: string }>({ type: null, message: '' });
 
@@ -18,8 +19,9 @@ const HelpPage: React.FC = () => {
       return;
     }
 
-    if (!token) {
-      setSubmitStatus({ type: 'error', message: 'You must be logged in to send a message.' });
+    // If not logged in, require email
+    if (!token && !email.trim()) {
+      setSubmitStatus({ type: 'error', message: 'Please provide your email address.' });
       return;
     }
 
@@ -27,24 +29,36 @@ const HelpPage: React.FC = () => {
     setSubmitStatus({ type: null, message: '' });
 
     try {
+      const payload: any = {
+        subject: subject.trim(),
+        message: message.trim()
+      };
+      
+      // Add email if user is not logged in
+      if (!token && email.trim()) {
+        payload.email = email.trim();
+      }
+      
+      const headers: any = {
+        'Content-Type': 'application/json',
+      };
+      
+      // Add auth header if user is logged in
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
       const response = await axios.post(
         buildApiUrl('/help/contact'),
-        {
-          subject: subject.trim(),
-          message: message.trim()
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        }
+        payload,
+        { headers }
       );
 
       if (response.data.success) {
         setSubmitStatus({ type: 'success', message: response.data.message || 'Your message has been sent successfully!' });
         setSubject('');
         setMessage('');
+        setEmail('');
       } else {
         setSubmitStatus({ type: 'error', message: response.data.error || 'Failed to send message. Please try again.' });
       }
@@ -73,6 +87,33 @@ const HelpPage: React.FC = () => {
 
         <div className="bg-white dark:bg-secondary-800 rounded-lg shadow-soft p-6">
           <form onSubmit={handleSubmit} className="space-y-6">
+            {!token && (
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-2">
+                  Your Email
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="block w-full rounded-md border-secondary-300 dark:border-secondary-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-secondary-700 dark:text-white sm:text-sm px-3 py-2"
+                  placeholder="your.email@example.com"
+                  required={!token}
+                  disabled={isSubmitting}
+                />
+                <p className="mt-1 text-xs text-secondary-500 dark:text-secondary-400">
+                  We'll use this to respond to your message
+                </p>
+              </div>
+            )}
+            
+            {token && user && (
+              <div className="bg-secondary-50 dark:bg-secondary-900 rounded-md p-3 text-sm text-secondary-600 dark:text-secondary-400">
+                Sending as: <span className="font-medium text-secondary-900 dark:text-white">{user.email}</span>
+              </div>
+            )}
+            
             <div>
               <label htmlFor="subject" className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-2">
                 Subject

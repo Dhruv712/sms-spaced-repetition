@@ -68,7 +68,7 @@ const Navbar: React.FC = () => {
                   <Link to="/history" className="text-primary-600 dark:text-primary-300 hover:underline hover:text-primary-800 dark:hover:text-primary-100 transition-colors duration-200">Review History</Link>
                 </li>
                 <li>
-                  <Link to="/manual-review" className="text-primary-600 dark:text-primary-300 hover:underline hover:text-primary-800 dark:hover:text-primary-100 transition-colors duration-200">Manual review</Link>
+                  <Link to="/review-due-cards" className="text-primary-600 dark:text-primary-300 hover:underline hover:text-primary-800 dark:hover:text-primary-100 transition-colors duration-200">Review Due Cards</Link>
                 </li>
                 <li>
                   <Link to="/help" className="text-primary-600 dark:text-primary-300 hover:underline hover:text-primary-800 dark:hover:text-primary-100 transition-colors duration-200">Help</Link>
@@ -81,6 +81,9 @@ const Navbar: React.FC = () => {
                 </li>
                 <li>
                   <Link to="/register" className="text-primary-600 dark:text-primary-300 hover:underline hover:text-primary-800 dark:hover:text-primary-100 transition-colors duration-200">Register</Link>
+                </li>
+                <li>
+                  <Link to="/help" className="text-primary-600 dark:text-primary-300 hover:underline hover:text-primary-800 dark:hover:text-primary-100 transition-colors duration-200">Help</Link>
                 </li>
               </>
             )}
@@ -177,11 +180,11 @@ const Navbar: React.FC = () => {
                   Review History
                 </Link>
                 <Link 
-                  to="/manual-review" 
+                  to="/review-due-cards" 
                   onClick={closeMenu}
                   className="block px-4 py-2 text-primary-600 dark:text-primary-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors duration-200"
                 >
-                  Manual review
+                  Review Due Cards
                 </Link>
                 <Link 
                   to="/help" 
@@ -215,6 +218,13 @@ const Navbar: React.FC = () => {
                   className="block px-4 py-2 text-primary-600 dark:text-primary-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors duration-200"
                 >
                   Register
+                </Link>
+                <Link 
+                  to="/help" 
+                  onClick={closeMenu}
+                  className="block px-4 py-2 text-primary-600 dark:text-primary-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors duration-200"
+                >
+                  Help
                 </Link>
               </>
             )}
