@@ -188,3 +188,40 @@ async def test_webhook_endpoint():
         "method": "POST"
     }
 
+
+@router.post("/test-checkout")
+async def create_test_checkout(
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Create a test checkout session for testing webhooks
+    This will return a checkout URL that you can use to test the payment flow
+    """
+    try:
+        base_url = "https://trycue.xyz"
+        if settings.ENVIRONMENT == "development":
+            base_url = "http://localhost:3000"
+        
+        success_url = f"{base_url}/subscription/success?session_id={{CHECKOUT_SESSION_ID}}"
+        cancel_url = f"{base_url}/subscription/cancel"
+        
+        result = create_checkout_session(current_user, db, success_url, cancel_url)
+        
+        return {
+            "success": True,
+            "checkout_url": result["url"],
+            "session_id": result["session_id"],
+            "instructions": {
+                "step1": "Click the checkout_url above or copy it to your browser",
+                "step2": "Use test card: 4242 4242 4242 4242",
+                "step3": "Use any future expiry date (e.g., 12/34)",
+                "step4": "Use any 3-digit CVC",
+                "step5": "Complete the payment",
+                "step6": "Check Railway logs to see if webhook was received",
+                "step7": "Check your user's is_premium status in the database"
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error creating test checkout: {str(e)}")
+
