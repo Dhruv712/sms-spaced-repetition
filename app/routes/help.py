@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import User
@@ -17,6 +17,7 @@ class ContactForm(BaseModel):
 @router.post("/contact")
 async def submit_contact_form(
     contact: ContactForm,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: Optional[User] = Depends(get_current_user_optional)
 ) -> Dict[str, Any]:

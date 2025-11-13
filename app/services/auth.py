@@ -2,8 +2,8 @@ from datetime import datetime, timedelta
 from typing import Optional
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi import Depends, HTTPException, status, Request
+from fastapi.security import OAuth2PasswordBearer, HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import User
@@ -56,13 +56,25 @@ async def get_current_active_user(current_user: User = Depends(get_current_user)
     return current_user
 
 async def get_current_user_optional(
-    token: Optional[str] = Depends(oauth2_scheme),
+    request: Request,
     db: Session = Depends(get_db)
 ) -> Optional[User]:
     """
     Get current user if authenticated, otherwise return None
     Used for endpoints that work for both logged-in and non-logged-in users
     """
+    # Extract token from Authorization header manually
+    authorization = request.headers.get("Authorization")
+    if not authorization:
+        return None
+    
+    try:
+        scheme, token = authorization.split()
+        if scheme.lower() != "bearer":
+            return None
+    except ValueError:
+        return None
+    
     if not token:
         return None
     
