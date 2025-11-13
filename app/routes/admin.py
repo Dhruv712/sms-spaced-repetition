@@ -469,9 +469,24 @@ async def migrate_conversation_state_fields_public() -> Dict[str, Any]:
     try:
         sql_commands = [
             "ALTER TABLE conversation_state ADD COLUMN IF NOT EXISTS message_count INTEGER DEFAULT 0",
-            "ALTER TABLE conversation_state ADD COLUMN IF NOT EXISTS last_sent_flashcard_id INTEGER",
-            "ALTER TABLE conversation_state ADD CONSTRAINT IF NOT EXISTS fk_conversation_state_last_sent_flashcard FOREIGN KEY (last_sent_flashcard_id) REFERENCES flashcards(id) ON DELETE SET NULL"
+            "ALTER TABLE conversation_state ADD COLUMN IF NOT EXISTS last_sent_flashcard_id INTEGER"
         ]
+        
+        # Add foreign key constraint separately (PostgreSQL doesn't support IF NOT EXISTS for constraints)
+        constraint_sql = """
+            DO $$ 
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 FROM pg_constraint 
+                    WHERE conname = 'fk_conversation_state_last_sent_flashcard'
+                ) THEN
+                    ALTER TABLE conversation_state 
+                    ADD CONSTRAINT fk_conversation_state_last_sent_flashcard 
+                    FOREIGN KEY (last_sent_flashcard_id) 
+                    REFERENCES flashcards(id) ON DELETE SET NULL;
+                END IF;
+            END $$;
+        """
         
         results = []
         with engine.connect() as conn:
