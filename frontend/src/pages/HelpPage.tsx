@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import axios from 'axios';
 import { buildApiUrl } from '../config';
 
 const HelpPage: React.FC = () => {
@@ -8,69 +8,61 @@ const HelpPage: React.FC = () => {
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
   const [email, setEmail] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitStatus, setSubmitStatus] = useState<{ type: 'success' | 'error' | null; message: string }>({ type: null, message: '' });
+  const [userEmail, setUserEmail] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Fetch user email if logged in
+  useEffect(() => {
+    const fetchUserEmail = async () => {
+      // First try to use email from user object
+      if (user?.email) {
+        setUserEmail(user.email);
+        return;
+      }
+      
+      // If not available, fetch from profile endpoint
+      if (token) {
+        try {
+          const response = await axios.get(buildApiUrl('/users/profile'), {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+            },
+          });
+          if (response.data?.email) {
+            setUserEmail(response.data.email);
+          }
+        } catch (err) {
+          console.error('Error fetching user email:', err);
+        }
+      }
+    };
+
+    fetchUserEmail();
+  }, [token, user]);
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!subject.trim() || !message.trim()) {
-      setSubmitStatus({ type: 'error', message: 'Please fill in both subject and message fields.' });
       return;
     }
 
-    // If not logged in, require email
-    if (!token && !email.trim()) {
-      setSubmitStatus({ type: 'error', message: 'Please provide your email address.' });
+    // Determine the email to use
+    const fromEmail = userEmail || email.trim();
+    if (!fromEmail) {
       return;
     }
 
-    setIsSubmitting(true);
-    setSubmitStatus({ type: null, message: '' });
-
-    try {
-      const payload: any = {
-        subject: subject.trim(),
-        message: message.trim()
-      };
-      
-      // Add email if user is not logged in
-      if (!token && email.trim()) {
-        payload.email = email.trim();
-      }
-      
-      const headers: any = {
-        'Content-Type': 'application/json',
-      };
-      
-      // Add auth header if user is logged in
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-      
-      const response = await axios.post(
-        buildApiUrl('/help/contact'),
-        payload,
-        { headers }
-      );
-
-      if (response.data.success) {
-        setSubmitStatus({ type: 'success', message: response.data.message || 'Your message has been sent successfully!' });
-        setSubject('');
-        setMessage('');
-        setEmail('');
-      } else {
-        setSubmitStatus({ type: 'error', message: response.data.error || 'Failed to send message. Please try again.' });
-      }
-    } catch (err: any) {
-      console.error('Error submitting contact form:', err);
-      setSubmitStatus({
-        type: 'error',
-        message: err.response?.data?.detail || 'An error occurred. Please try again later.'
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+    // Create mailto link
+    const recipientEmail = 'dhruv.sumathi@gmail.com';
+    const mailtoSubject = encodeURIComponent(subject.trim());
+    const mailtoBody = encodeURIComponent(
+      `From: ${fromEmail}\n\n${message.trim()}`
+    );
+    
+    const mailtoLink = `mailto:${recipientEmail}?subject=${mailtoSubject}&body=${mailtoBody}`;
+    
+    // Open default email client
+    window.location.href = mailtoLink;
   };
 
   return (
@@ -87,7 +79,7 @@ const HelpPage: React.FC = () => {
 
         <div className="bg-white dark:bg-secondary-800 rounded-lg shadow-soft p-6">
           <form onSubmit={handleSubmit} className="space-y-6">
-            {!token && (
+            {!token && !userEmail && (
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-2">
                   Your Email
@@ -99,8 +91,7 @@ const HelpPage: React.FC = () => {
                   onChange={(e) => setEmail(e.target.value)}
                   className="block w-full rounded-md border-secondary-300 dark:border-secondary-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-secondary-700 dark:text-white sm:text-sm px-3 py-2"
                   placeholder="your.email@example.com"
-                  required={!token}
-                  disabled={isSubmitting}
+                  required={!token && !userEmail}
                 />
                 <p className="mt-1 text-xs text-secondary-500 dark:text-secondary-400">
                   We'll use this to respond to your message
@@ -108,9 +99,9 @@ const HelpPage: React.FC = () => {
               </div>
             )}
             
-            {token && user && (
+            {token && userEmail && (
               <div className="bg-secondary-50 dark:bg-secondary-900 rounded-md p-3 text-sm text-secondary-600 dark:text-secondary-400">
-                Sending as: <span className="font-medium text-secondary-900 dark:text-white">{user.email}</span>
+                Sending as: <span className="font-medium text-secondary-900 dark:text-white">{userEmail}</span>
               </div>
             )}
             
@@ -126,7 +117,6 @@ const HelpPage: React.FC = () => {
                 className="block w-full rounded-md border-secondary-300 dark:border-secondary-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-secondary-700 dark:text-white sm:text-sm px-3 py-2"
                 placeholder="What can we help you with?"
                 required
-                disabled={isSubmitting}
               />
             </div>
 
@@ -142,30 +132,19 @@ const HelpPage: React.FC = () => {
                 className="block w-full rounded-md border-secondary-300 dark:border-secondary-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-secondary-700 dark:text-white sm:text-sm px-3 py-2"
                 placeholder="Please describe your question or issue in detail..."
                 required
-                disabled={isSubmitting}
               />
             </div>
-
-            {submitStatus.type && (
-              <div
-                className={`p-4 rounded-md ${
-                  submitStatus.type === 'success'
-                    ? 'bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-300'
-                    : 'bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-300'
-                }`}
-              >
-                {submitStatus.message}
-              </div>
-            )}
 
             <div>
               <button
                 type="submit"
-                disabled={isSubmitting}
-                className="w-full px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                className="w-full px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200"
               >
-                {isSubmitting ? 'Sending...' : 'Send Message'}
+                Open Email Client
               </button>
+              <p className="mt-2 text-xs text-secondary-500 dark:text-secondary-400 text-center">
+                This will open your default email client with the message pre-filled
+              </p>
             </div>
           </form>
 
