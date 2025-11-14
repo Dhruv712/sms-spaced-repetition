@@ -138,8 +138,20 @@ async def import_anki_plain_text(
     db: Session
 ):
     """
-    Import Anki plain text export format (tab-separated front/back)
+    Import Anki plain text export format using GPT to structure the data
     """
+    from openai import OpenAI
+    from app.utils.config import settings
+    import json
+    
+    if not settings.OPENAI_API_KEY:
+        raise HTTPException(
+            status_code=500,
+            detail="OpenAI API key not configured. Cannot process Anki import."
+        )
+    
+    client = OpenAI(api_key=settings.OPENAI_API_KEY)
+    
     # Read file content
     content = await file.read()
     text_content = content.decode('utf-8')
@@ -162,110 +174,135 @@ async def import_anki_plain_text(
         db.add(deck)
         db.flush()
     
-    # Parse lines - each line is tab-separated: front\tback
-    lines = text_content.strip().split('\n')
-    created_count = 0
-    skipped_count = 0
+    # Use GPT to parse and structure the Anki export
+    prompt = f"""You are parsing an Anki deck export file. Extract all flashcards from the text below and return them as a JSON array.
+
+Each flashcard should have:
+- "concept": The front/question/prompt of the card (clean text, no HTML, no cloze markers)
+- "definition": The back/answer/explanation of the card (clean text, no HTML)
+- "tags": Optional comma-separated tags if present, otherwise empty string
+
+Rules:
+1. For cloze deletion cards (with {{c1::...}} or <span class="cloze">), extract the full question with "..." where the cloze deletion is, and put the answer in the definition field
+2. Remove all HTML tags and entities (convert &nbsp; to spaces, etc.)
+3. Skip empty cards or cards with no meaningful content
+4. Clean up extra whitespace
+5. If a card has multiple cloze deletions, combine all answers in the definition separated by commas
+6. Return ONLY valid JSON, no markdown code blocks, no explanation
+
+Example input:
+"A human hair is ~<span class=""cloze"" data-cloze=""50&#x20;um"" data-ordinal=""1"">[...]</span> in diameter."	"A human hair is ~<span class=""cloze"" data-ordinal=""1"">50 um</span> in diameter."
+
+Example output:
+[
+  {{
+    "concept": "A human hair is ~ ... in diameter.",
+    "definition": "A human hair is ~ 50 um in diameter.",
+    "tags": ""
+  }}
+]
+
+Now parse this Anki export:
+{text_content[:50000]}
+"""
     
-    for line_num, line in enumerate(lines, 1):
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.1,  # Low temperature for consistent parsing
+        )
+        
+        response_text = response.choices[0].message.content.strip()
+        
+        # Strip markdown code block if present
+        if response_text.startswith("```json"):
+            response_text = response_text[7:]
+        if response_text.startswith("```"):
+            response_text = response_text[3:]
+        if response_text.endswith("```"):
+            response_text = response_text[:-3]
+        response_text = response_text.strip()
+        
+        # Parse JSON
         try:
-            # Skip empty lines
-            if not line.strip():
-                skipped_count += 1
-                continue
-            
-            # Split by tab
-            parts = line.split('\t')
-            
-            if len(parts) < 1:
-                skipped_count += 1
-                continue
-            
-            # Get front and back (back is optional)
-            front_raw = parts[0].strip()
-            back_raw = parts[1].strip() if len(parts) > 1 else ""
-            
-            # Skip if front is empty or just whitespace
-            if not front_raw or front_raw == '""' or front_raw == "''":
-                skipped_count += 1
-                continue
-            
-            # Check if this is a cloze deletion card
-            cloze_result = parse_cloze_deletion(front_raw)
-            
-            if cloze_result:
-                # It's a cloze deletion card
-                concept, definition_from_cloze = cloze_result
-                # If we have a back side, use it as the definition (it has the answer filled in)
-                if back_raw and back_raw not in ['""', "''"]:
-                    # The back side has the answer filled in, so use it
-                    definition = strip_html(back_raw)
-                    # Clean up - remove extra spaces
-                    definition = ' '.join(definition.split())
-                else:
-                    # Use the parsed cloze answer
-                    definition = definition_from_cloze
-            else:
-                # Regular card
-                concept = strip_html(front_raw)
-                # Clean up concept - remove quotes if it's just quoted empty string
-                if concept in ['""', "''", '']:
+            flashcards_data = json.loads(response_text)
+        except json.JSONDecodeError as e:
+            print(f"JSON decode error: {str(e)}")
+            print(f"Response text: {response_text[:500]}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to parse GPT response as JSON. Please try again or contact support."
+            )
+        
+        if not isinstance(flashcards_data, list):
+            raise HTTPException(
+                status_code=500,
+                detail="GPT returned invalid format. Expected a JSON array."
+            )
+        
+        # Create flashcards from structured data
+        created_count = 0
+        skipped_count = 0
+        
+        for card_data in flashcards_data:
+            try:
+                if not isinstance(card_data, dict):
                     skipped_count += 1
                     continue
                 
-                # Clean up - remove extra spaces
-                concept = ' '.join(concept.split())
+                concept = card_data.get("concept", "").strip()
+                definition = card_data.get("definition", "").strip()
+                tags = card_data.get("tags", "").strip()
                 
-                if back_raw and back_raw not in ['""', "''"]:
-                    definition = strip_html(back_raw)
-                    # Clean up - remove extra spaces
-                    definition = ' '.join(definition.split())
-                else:
-                    # Single field card - use front as both
-                    definition = concept
-            
-            # Final validation - skip if concept or definition is empty after processing
-            if not concept or not concept.strip() or concept in ['""', "''"]:
+                # Skip if concept or definition is empty
+                if not concept or not definition:
+                    skipped_count += 1
+                    continue
+                
+                # Create flashcard
+                flashcard = Flashcard(
+                    concept=concept,
+                    definition=definition,
+                    tags=tags if tags else None,
+                    deck_id=deck.id,
+                    user_id=current_user.id
+                )
+                db.add(flashcard)
+                created_count += 1
+                
+            except Exception as e:
+                print(f"Error creating flashcard from GPT data: {str(e)}")
                 skipped_count += 1
                 continue
-            
-            if not definition or not definition.strip() or definition in ['""', "''"]:
-                # If definition is empty, use concept as definition
-                definition = concept
-            
-            # Create flashcard
-            flashcard = Flashcard(
-                concept=concept,
-                definition=definition,
-                tags=None,
-                deck_id=deck.id,
-                user_id=current_user.id
+        
+        if created_count == 0:
+            db.rollback()
+            raise HTTPException(
+                status_code=400,
+                detail=f"Could not import any flashcards. GPT parsed {len(flashcards_data)} cards but none were valid. Please check your Anki export file."
             )
-            db.add(flashcard)
-            created_count += 1
-            
-        except Exception as e:
-            print(f"Error processing line {line_num}: {str(e)}")
-            skipped_count += 1
-            continue
-    
-    if created_count == 0:
+        
+        db.commit()
+        
+        return {
+            "success": True,
+            "message": f"Imported {created_count} flashcards from Anki export (GPT-parsed)",
+            "deck_id": deck.id,
+            "deck_name": deck.name,
+            "created_count": created_count,
+            "skipped_count": skipped_count
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
         db.rollback()
+        print(f"Error in GPT parsing: {str(e)}")
         raise HTTPException(
-            status_code=400,
-            detail=f"Could not import any flashcards from the plain text file. {skipped_count} lines were skipped. Please ensure the file is in Anki's plain text export format (tab-separated front and back)."
+            status_code=500,
+            detail=f"Error processing Anki import with GPT: {str(e)}"
         )
-    
-    db.commit()
-    
-    return {
-        "success": True,
-        "message": f"Imported {created_count} flashcards from Anki plain text export",
-        "deck_id": deck.id,
-        "deck_name": deck.name,
-        "created_count": created_count,
-        "skipped_count": skipped_count
-    }
 
 
 @router.post("/import")
