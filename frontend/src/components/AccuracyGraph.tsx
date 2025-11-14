@@ -223,7 +223,7 @@ const AccuracyGraph: React.FC<AccuracyGraphProps> = ({ stats }) => {
                 type="linear"
                 dataKey="trend"
                 data={series.data}
-                stroke={series.color || deckColors[index % deckColors.length]}
+                stroke={series.color || DECK_COLORS[index % DECK_COLORS.length]}
                 strokeWidth={2}
                 strokeDasharray="5 5"
                 dot={false}
@@ -237,7 +237,7 @@ const AccuracyGraph: React.FC<AccuracyGraphProps> = ({ stats }) => {
                 key={series.name}
                 name={series.name}
                 data={series.data}
-                fill={series.color || deckColors[index % deckColors.length]}
+                fill={series.color || DECK_COLORS[index % DECK_COLORS.length]}
                 fillOpacity={0.6}
               />
             ))}
