@@ -69,7 +69,7 @@ const DailySummary: React.FC = () => {
 
   return (
     <div className="bg-white dark:bg-darksurface rounded-lg shadow-md p-4 border border-gray-200 dark:border-gray-700 mb-6">
-      <h2 className="text-lg font-semibold mb-3 text-gray-800 dark:text-darktext">📅 Today's Summary</h2>
+      <h2 className="text-lg font-light mb-3 text-gray-800 dark:text-darktext">Today's Summary</h2>
       
       {/* Main Stats Row */}
       <div className="flex flex-wrap gap-3 mb-4">
