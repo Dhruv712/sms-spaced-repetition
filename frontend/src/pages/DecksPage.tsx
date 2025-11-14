@@ -112,17 +112,28 @@ const DecksPage: React.FC = () => {
   };
 
   const handleDeleteDeck = async (deckId: number) => {
-    if (!token || !window.confirm('Are you sure you want to delete this deck? All flashcards in this deck will be unassigned.')) return;
+    if (!token) return;
+
+    // Ask user what they want to do with the cards
+    const deleteCards = window.confirm(
+      'Do you want to delete all flashcards in this deck?\n\n' +
+      'Click OK to delete the deck AND all its flashcards.\n' +
+      'Click Cancel to delete the deck but keep the flashcards (they will be unassigned).'
+    );
 
     setIsLoading(true); // Set loading to true while deleting
     setError('');
     try {
-      await axios.delete(buildApiUrl(`/decks/${deckId}`), {
+      const response = await axios.delete(buildApiUrl(`/decks/${deckId}?delete_cards=${deleteCards}`), {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
       });
       setDecks(prevDecks => prevDecks.filter(deck => deck.id !== deckId));
+      // Show success message
+      if (response.data?.message) {
+        alert(response.data.message);
+      }
     } catch (err) {
       console.error('Error deleting deck:', err);
       setError('Failed to delete deck. Please try again.');

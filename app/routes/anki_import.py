@@ -55,6 +55,9 @@ def parse_cloze_deletion(text: str) -> Optional[Tuple[str, str]]:
     Also supports HTML cloze format: <span class="cloze" data-cloze="answer">[...]</span>
     Returns (front, back) tuple if cloze found, None otherwise
     """
+    if not text or not text.strip():
+        return None
+    
     # First try HTML cloze format (from plain text export)
     # Pattern matches: <span class="cloze" data-cloze="answer">[...]</span>
     html_cloze_pattern = r'<span\s+class=["\']cloze["\'][^>]*data-cloze=["\']([^"\']+)["\'][^>]*>\[\.\.\.\]</span>'
@@ -67,9 +70,15 @@ def parse_cloze_deletion(text: str) -> Optional[Tuple[str, str]]:
         
         for match in reversed(html_matches):  # Reverse to maintain positions when replacing
             cloze_text = html.unescape(match.group(1))  # Decode HTML entities like &#x20; (space), &#x2E; (.)
-            cloze_texts.append(cloze_text)
+            # Clean up the cloze text - remove extra spaces and normalize
+            cloze_text = ' '.join(cloze_text.split())
+            if cloze_text:  # Only add non-empty clozes
+                cloze_texts.append(cloze_text)
             # Replace with ellipsis
             front_text = front_text[:match.start()] + "..." + front_text[match.end():]
+        
+        if not cloze_texts:  # No valid clozes found
+            return None
         
         # For multiple clozes, combine them; otherwise use single answer
         back_text = ", ".join(cloze_texts) if len(cloze_texts) > 1 else cloze_texts[0]
@@ -77,6 +86,13 @@ def parse_cloze_deletion(text: str) -> Optional[Tuple[str, str]]:
         # Strip remaining HTML from front
         front_text = strip_html(front_text)
         back_text = strip_html(back_text)
+        
+        # Clean up - remove extra spaces and normalize
+        front_text = ' '.join(front_text.split())
+        back_text = ' '.join(back_text.split())
+        
+        if not front_text or not back_text:
+            return None
         
         return (front_text.strip(), back_text.strip())
     
@@ -93,12 +109,24 @@ def parse_cloze_deletion(text: str) -> Optional[Tuple[str, str]]:
     
     for match in reversed(matches):  # Reverse to maintain positions when replacing
         cloze_text = match.group(1)  # The answer text
-        cloze_texts.append(cloze_text)
+        cloze_text = ' '.join(cloze_text.split())  # Normalize spaces
+        if cloze_text:  # Only add non-empty clozes
+            cloze_texts.append(cloze_text)
         # Replace with ellipsis or placeholder
         front_text = front_text[:match.start()] + "..." + front_text[match.end():]
     
+    if not cloze_texts:  # No valid clozes found
+        return None
+    
     # For multiple clozes, combine them; otherwise use single answer
     back_text = ", ".join(cloze_texts) if len(cloze_texts) > 1 else cloze_texts[0]
+    
+    # Clean up
+    front_text = ' '.join(front_text.split())
+    back_text = ' '.join(back_text.split())
+    
+    if not front_text or not back_text:
+        return None
     
     return (front_text.strip(), back_text.strip())
 
@@ -141,6 +169,11 @@ async def import_anki_plain_text(
     
     for line_num, line in enumerate(lines, 1):
         try:
+            # Skip empty lines
+            if not line.strip():
+                skipped_count += 1
+                continue
+            
             # Split by tab
             parts = line.split('\t')
             
@@ -152,7 +185,8 @@ async def import_anki_plain_text(
             front_raw = parts[0].strip()
             back_raw = parts[1].strip() if len(parts) > 1 else ""
             
-            if not front_raw:
+            # Skip if front is empty or just whitespace
+            if not front_raw or front_raw == '""' or front_raw == "''":
                 skipped_count += 1
                 continue
             
@@ -161,19 +195,43 @@ async def import_anki_plain_text(
             
             if cloze_result:
                 # It's a cloze deletion card
-                concept, definition = cloze_result
+                concept, definition_from_cloze = cloze_result
+                # If we have a back side, use it as the definition (it has the answer filled in)
+                if back_raw and back_raw not in ['""', "''"]:
+                    # The back side has the answer filled in, so use it
+                    definition = strip_html(back_raw)
+                    # Clean up - remove extra spaces
+                    definition = ' '.join(definition.split())
+                else:
+                    # Use the parsed cloze answer
+                    definition = definition_from_cloze
             else:
                 # Regular card
                 concept = strip_html(front_raw)
-                if back_raw:
+                # Clean up concept - remove quotes if it's just quoted empty string
+                if concept in ['""', "''", '']:
+                    skipped_count += 1
+                    continue
+                
+                # Clean up - remove extra spaces
+                concept = ' '.join(concept.split())
+                
+                if back_raw and back_raw not in ['""', "''"]:
                     definition = strip_html(back_raw)
+                    # Clean up - remove extra spaces
+                    definition = ' '.join(definition.split())
                 else:
                     # Single field card - use front as both
                     definition = concept
             
-            if not concept:
+            # Final validation - skip if concept or definition is empty after processing
+            if not concept or not concept.strip() or concept in ['""', "''"]:
                 skipped_count += 1
                 continue
+            
+            if not definition or not definition.strip() or definition in ['""', "''"]:
+                # If definition is empty, use concept as definition
+                definition = concept
             
             # Create flashcard
             flashcard = Flashcard(

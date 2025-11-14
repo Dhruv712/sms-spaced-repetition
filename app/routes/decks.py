@@ -211,9 +211,10 @@ def update_deck(
         flashcards_count=db.query(func.count(Flashcard.id)).filter(Flashcard.deck_id == deck.id).scalar()
     )
 
-@router.delete("/{deck_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{deck_id}")
 def delete_deck(
     deck_id: int,
+    delete_cards: bool = False,  # Query parameter to delete cards
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
@@ -225,13 +226,21 @@ def delete_deck(
     if not deck:
         raise HTTPException(status_code=404, detail="Deck not found or not authorized")
     
-    # Option 1: Disassociate flashcards from this deck (set deck_id to null)
-    # This is generally safer than deleting cards along with the deck
-    db.query(Flashcard).filter(Flashcard.deck_id == deck_id).update({"deck_id": None})
+    # Count flashcards in this deck
+    flashcard_count = db.query(Flashcard).filter(Flashcard.deck_id == deck_id).count()
+    
+    if delete_cards:
+        # Delete all flashcards in this deck
+        db.query(Flashcard).filter(Flashcard.deck_id == deck_id).delete()
+        message = f"Deck deleted successfully. {flashcard_count} flashcard(s) were also deleted."
+    else:
+        # Disassociate flashcards from this deck (set deck_id to null)
+        db.query(Flashcard).filter(Flashcard.deck_id == deck_id).update({"deck_id": None})
+        message = f"Deck deleted successfully. {flashcard_count} flashcard(s) were unassigned from this deck."
 
     db.delete(deck)
     db.commit()
-    return {"message": "Deck deleted successfully and flashcards disassociated"}
+    return {"message": message, "deleted_cards": delete_cards, "flashcard_count": flashcard_count}
 
 class DeckSmsToggle(BaseModel):
     sms_enabled: bool
