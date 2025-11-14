@@ -27,15 +27,14 @@ const SubscriptionSuccessPage: React.FC = () => {
           
           if (response.ok) {
             const userData = await response.json();
-            setIsPremium(userData.is_premium || false);
+            const userIsPremium = userData.is_premium || false;
+            setIsPremium(userIsPremium);
             
             // If user is premium, show success (even without session_id)
-            if (userData.is_premium) {
-              // The AuthContext should pick this up automatically
-              // But we can force a refresh by reloading
-              setTimeout(() => {
-                window.location.reload();
-              }, 1000);
+            if (userIsPremium) {
+              // Don't reload - just show success message
+              // The AuthContext will update on next navigation
+              setError(null);
             } else if (!sessionId) {
               // No session ID and not premium - show error
               setError('No session ID found. If your subscription was activated, please refresh the page.');
@@ -104,7 +103,10 @@ const SubscriptionSuccessPage: React.FC = () => {
                 Your subscription has been activated. You now have unlimited access to all premium features!
               </p>
               <button
-                onClick={() => navigate('/')}
+                onClick={() => {
+                  // Force refresh user data in AuthContext by navigating
+                  window.location.href = '/';
+                }}
                 className="px-6 py-3 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors duration-200"
               >
                 Get Started
