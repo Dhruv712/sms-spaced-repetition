@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { buildApiUrl } from '../config';
 import axios from 'axios';
@@ -7,13 +7,36 @@ interface AnkiImportProps {
   onSuccess?: () => void;
 }
 
+interface Deck {
+  id: number;
+  name: string;
+}
+
 const AnkiImport: React.FC<AnkiImportProps> = ({ onSuccess }) => {
   const { token, user } = useAuth();
   const [file, setFile] = useState<File | null>(null);
   const [deckId, setDeckId] = useState<number | null>(null);
+  const [decks, setDecks] = useState<Deck[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchDecks = async () => {
+      if (!token) return;
+      try {
+        const response = await axios.get(buildApiUrl('/decks/'), {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+        setDecks(response.data);
+      } catch (err) {
+        console.error('Error fetching decks:', err);
+      }
+    };
+    fetchDecks();
+  }, [token]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -124,13 +147,18 @@ const AnkiImport: React.FC<AnkiImportProps> = ({ onSuccess }) => {
           <label className="block text-sm text-gray-700 dark:text-gray-300 mb-2">
             Import to existing deck (optional)
           </label>
-          <input
-            type="number"
-            placeholder="Deck ID (leave empty to create new deck)"
+          <select
             value={deckId || ''}
             onChange={(e) => setDeckId(e.target.value ? parseInt(e.target.value) : null)}
             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-darktext text-sm"
-          />
+          >
+            <option value="">Create new deck</option>
+            {decks.map((deck) => (
+              <option key={deck.id} value={deck.id}>
+                {deck.name}
+              </option>
+            ))}
+          </select>
         </div>
 
         <button

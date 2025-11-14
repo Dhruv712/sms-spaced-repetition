@@ -30,13 +30,13 @@ def get_dashboard_stats(
     
     # Activity heatmap data - reviews per day for past year
     activity_data = db.query(
-        func.date(CardReview.reviewed_at).label('date'),
+        func.date(CardReview.review_date).label('date'),
         func.count(CardReview.id).label('count')
     ).filter(
         CardReview.user_id == current_user.id,
-        func.date(CardReview.reviewed_at) >= one_year_ago
+        func.date(CardReview.review_date) >= one_year_ago
     ).group_by(
-        func.date(CardReview.reviewed_at)
+        func.date(CardReview.review_date)
     ).all()
     
     # Convert to dict for easier frontend consumption
@@ -52,7 +52,7 @@ def get_dashboard_stats(
     
     # Accuracy over time - overall
     accuracy_data = db.query(
-        func.date(CardReview.reviewed_at).label('date'),
+        func.date(CardReview.review_date).label('date'),
         func.avg(
             case(
                 (CardReview.was_correct == True, 100),
@@ -62,11 +62,11 @@ def get_dashboard_stats(
         func.count(CardReview.id).label('cards_reviewed')
     ).filter(
         CardReview.user_id == current_user.id,
-        func.date(CardReview.reviewed_at) >= one_year_ago
+        func.date(CardReview.review_date) >= one_year_ago
     ).group_by(
-        func.date(CardReview.reviewed_at)
+        func.date(CardReview.review_date)
     ).order_by(
-        func.date(CardReview.reviewed_at)
+        func.date(CardReview.review_date)
     ).all()
     
     accuracy_points = [
@@ -82,7 +82,7 @@ def get_dashboard_stats(
     deck_accuracy = db.query(
         Deck.id,
         Deck.name,
-        func.date(CardReview.reviewed_at).label('date'),
+        func.date(CardReview.review_date).label('date'),
         func.avg(
             case(
                 (CardReview.was_correct == True, 100),
@@ -96,13 +96,13 @@ def get_dashboard_stats(
         CardReview, CardReview.flashcard_id == Flashcard.id
     ).filter(
         CardReview.user_id == current_user.id,
-        func.date(CardReview.reviewed_at) >= one_year_ago
+        func.date(CardReview.review_date) >= one_year_ago
     ).group_by(
         Deck.id,
         Deck.name,
-        func.date(CardReview.reviewed_at)
+        func.date(CardReview.review_date)
     ).order_by(
-        func.date(CardReview.reviewed_at)
+        func.date(CardReview.review_date)
     ).all()
     
     # Group by deck

@@ -42,17 +42,17 @@ const Navbar: React.FC = () => {
 
   return (
     <nav className="bg-gray-100 dark:bg-darksurface p-4 shadow-md dark:shadow-lg mb-4">
-      <div className="container mx-auto flex justify-between items-center">
+      <div className="container mx-auto flex justify-between items-center gap-4">
         {/* Logo/Brand */}
-        <div className="flex items-center">
+        <div className="flex items-center flex-shrink-0">
           <Link to="/" className="text-xl font-bold text-primary-600 dark:text-primary-300">
             Cue
           </Link>
         </div>
 
         {/* Desktop Menu */}
-        <div className="hidden md:flex items-center space-x-4">
-          <ul className="flex space-x-4">
+        <div className="hidden md:flex items-center gap-4 flex-1 min-w-0">
+          <ul className="flex space-x-3 items-center flex-wrap">
             {user ? (
               <>
                 <li>
@@ -76,20 +76,6 @@ const Navbar: React.FC = () => {
                 <li>
                   <Link to="/help" className="text-primary-600 dark:text-primary-300 hover:underline hover:text-primary-800 dark:hover:text-primary-100 transition-colors duration-200">Help</Link>
                 </li>
-                {!user.is_premium && (
-                  <li className="whitespace-nowrap">
-                    <Link to="/premium" className="bg-primary-600 text-white px-3 py-1.5 rounded hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600 transition-colors duration-200 text-sm font-medium">
-                      Premium
-                    </Link>
-                  </li>
-                )}
-                {user.is_premium && (
-                  <li className="whitespace-nowrap">
-                    <span className="bg-green-600 text-white px-3 py-1.5 rounded text-sm font-medium">
-                      ⭐ Premium
-                    </span>
-                  </li>
-                )}
               </>
             ) : (
               <>
@@ -105,11 +91,24 @@ const Navbar: React.FC = () => {
               </>
             )}
           </ul>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-3 flex-shrink-0 ml-auto">
+            {user && (
+              <>
+                {!user.is_premium ? (
+                  <Link to="/premium" className="bg-primary-600 text-white px-3 py-1.5 rounded hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600 transition-colors duration-200 text-sm font-medium whitespace-nowrap">
+                    Premium
+                  </Link>
+                ) : (
+                  <span className="bg-green-600 text-white px-3 py-1.5 rounded text-sm font-medium whitespace-nowrap">
+                    ⭐ Premium
+                  </span>
+                )}
+              </>
+            )}
             {/* Dark mode toggle button */}
             <button
               onClick={toggleDarkMode}
-              className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors duration-200"
+              className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors duration-200 flex-shrink-0"
               title="Toggle dark mode"
             >
               {darkMode ? (
@@ -120,10 +119,10 @@ const Navbar: React.FC = () => {
             </button>
             {user && (
               <>
-                <span className="text-gray-600 dark:text-gray-300">{user.email}</span>
+                <span className="text-gray-600 dark:text-gray-300 text-sm whitespace-nowrap hidden lg:inline">{user.email}</span>
                 <button
                   onClick={handleLogout}
-                  className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 transition-colors duration-200"
+                  className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 transition-colors duration-200 whitespace-nowrap text-sm"
                 >
                   Logout
                 </button>
