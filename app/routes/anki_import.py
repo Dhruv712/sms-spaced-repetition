@@ -95,9 +95,9 @@ async def import_anki_deck(
             detail="Anki import is a premium feature. Please upgrade to Premium to use this feature."
         )
     
-    # Validate file type
-    if not file.filename.endswith('.apkg'):
-        raise HTTPException(status_code=400, detail="File must be an .apkg file")
+    # Validate file type - support both .apkg and .colpkg
+    if not (file.filename.endswith('.apkg') or file.filename.endswith('.colpkg')):
+        raise HTTPException(status_code=400, detail="File must be an .apkg or .colpkg file")
     
     # Create temporary directory for extraction
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -115,6 +115,7 @@ async def import_anki_deck(
             raise HTTPException(status_code=400, detail="Invalid .apkg file format")
         
         # Find SQLite database file (usually collection.anki2 or collection.anki21)
+        # For .colpkg files, it might be just "collection.anki2" or "collection.anki21"
         db_file = None
         for filename in os.listdir(temp_dir):
             if filename.startswith('collection.anki') and filename.endswith(('.anki2', '.anki21')):
@@ -122,7 +123,10 @@ async def import_anki_deck(
                 break
         
         if not db_file:
-            raise HTTPException(status_code=400, detail="Could not find Anki database in .apkg file")
+            raise HTTPException(
+                status_code=400, 
+                detail="Could not find Anki database in the file. This might be a newer Anki format. Please try exporting from Anki as 'Anki Deck Package (*.apkg)' instead of 'Anki Collection Package (*.colpkg)'."
+            )
         
         # Connect to SQLite database
         try:
@@ -150,6 +154,19 @@ async def import_anki_deck(
             sample = cursor.fetchone()
             if sample:
                 print(f"Sample note - id: {sample[0]}, flds: {sample[1][:100] if sample[1] else None}, tags: {sample[2]}, sfld: {sample[3]}")
+            
+            # Check if all notes contain the error message (indicates .colpkg format issue)
+            cursor.execute("SELECT COUNT(*) FROM notes WHERE flds LIKE '%Please update to the latest Anki version%'")
+            error_note_count = cursor.fetchone()[0]
+            
+            cursor.execute("SELECT COUNT(*) FROM notes")
+            total_notes = cursor.fetchone()[0]
+            
+            if error_note_count == total_notes and total_notes > 0:
+                raise HTTPException(
+                    status_code=400,
+                    detail="This appears to be an Anki Collection Package (.colpkg) file, which is not supported. Please export your deck from Anki as 'Anki Deck Package (*.apkg)' instead. In Anki: File → Export → Select 'Anki Deck Package (*.apkg)' → Choose your deck → Export."
+                )
             
             # Get all notes from database
             cursor.execute("SELECT id, flds, tags, sfld FROM notes")

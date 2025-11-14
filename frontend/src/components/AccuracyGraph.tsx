@@ -210,10 +210,20 @@ const AccuracyGraph: React.FC<AccuracyGraphProps> = ({ stats }) => {
                 border: '1px solid #e5e7eb',
                 borderRadius: '4px',
               }}
-              formatter={(value: any, name: string, props: any) => [
-                `${value.toFixed(1)}%`,
-                props.payload?.dateLabel || 'Accuracy'
-              ]}
+              formatter={(value: any, name: string, props: any) => {
+                // For scatter plots, value is the y coordinate (accuracy)
+                // props.payload contains the actual data point
+                const accuracy = props.payload?.y ?? value;
+                const dateLabel = props.payload?.dateLabel || props.payload?.date || 'Accuracy';
+                return [`${accuracy.toFixed(1)}%`, name || dateLabel];
+              }}
+              labelFormatter={(label: any, payload: any[]) => {
+                // Show the date label from the first payload item
+                if (payload && payload.length > 0 && payload[0].payload?.dateLabel) {
+                  return payload[0].payload.dateLabel;
+                }
+                return label;
+              }}
             />
             <Legend />
             {/* Trend lines first (so they're behind scatter points) */}
