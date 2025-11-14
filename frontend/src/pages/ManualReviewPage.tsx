@@ -18,6 +18,7 @@ const ManualReviewPage: React.FC = () => {
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [answer, setAnswer] = useState('');
   const [feedback, setFeedback] = useState<string | null>(null);
@@ -51,9 +52,10 @@ const ManualReviewPage: React.FC = () => {
   }, [token]);
 
   const handleSubmit = async () => {
-    if (!token || currentIndex >= flashcards.length || !answer.trim()) return;
+    if (!token || currentIndex >= flashcards.length || !answer.trim() || isSubmitting) return;
     setError('');
     setFeedback(null);
+    setIsSubmitting(true);
     try {
       const response = await axios.post(
         buildApiUrl('/reviews/manual_review'),
@@ -72,6 +74,8 @@ const ManualReviewPage: React.FC = () => {
     } catch (err) {
       console.error('Failed to submit review:', err);
       setError('Failed to submit review. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -144,9 +148,9 @@ const ManualReviewPage: React.FC = () => {
               <button
                 onClick={handleSubmit}
                 className="w-full px-4 py-3 bg-secondary-500 text-white rounded-md hover:bg-secondary-600 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-secondary-500 focus:ring-opacity-50 transition-colors duration-200 flex items-center justify-center"
-                disabled={!answer.trim() || isLoading}
+                disabled={!answer.trim() || isSubmitting}
               >
-                {isLoading ? (
+                {isSubmitting ? (
                   <>
                     <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>

@@ -57,10 +57,11 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({ stats }) => {
   const getColor = (count: number) => {
     if (count === 0) return 'bg-gray-100 dark:bg-gray-800';
     const intensity = Math.min(count / maxCount, 1);
-    if (intensity < 0.25) return 'bg-primary-200 dark:bg-primary-900';
-    if (intensity < 0.5) return 'bg-primary-300 dark:bg-primary-800';
-    if (intensity < 0.75) return 'bg-primary-400 dark:bg-primary-700';
-    return 'bg-primary-500 dark:bg-primary-600';
+    // More contrast for dark mode - use lighter colors
+    if (intensity < 0.25) return 'bg-primary-200 dark:bg-primary-600';
+    if (intensity < 0.5) return 'bg-primary-300 dark:bg-primary-500';
+    if (intensity < 0.75) return 'bg-primary-400 dark:bg-primary-400';
+    return 'bg-primary-500 dark:bg-primary-300';
   };
   
   const weekDays = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
@@ -140,10 +141,10 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({ stats }) => {
         <span>Less</span>
         <div className="flex gap-1">
           <div className="w-3 h-3 rounded bg-gray-100 dark:bg-gray-800" />
-          <div className="w-3 h-3 rounded bg-primary-200 dark:bg-primary-900" />
-          <div className="w-3 h-3 rounded bg-primary-300 dark:bg-primary-800" />
-          <div className="w-3 h-3 rounded bg-primary-400 dark:bg-primary-700" />
-          <div className="w-3 h-3 rounded bg-primary-500 dark:bg-primary-600" />
+          <div className="w-3 h-3 rounded bg-primary-200 dark:bg-primary-600" />
+          <div className="w-3 h-3 rounded bg-primary-300 dark:bg-primary-500" />
+          <div className="w-3 h-3 rounded bg-primary-400 dark:bg-primary-400" />
+          <div className="w-3 h-3 rounded bg-primary-500 dark:bg-primary-300" />
         </div>
         <span>More</span>
       </div>
