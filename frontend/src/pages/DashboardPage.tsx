@@ -5,6 +5,8 @@ import axios from 'axios';
 import ActivityHeatmap from '../components/ActivityHeatmap';
 import AccuracyGraph from '../components/AccuracyGraph';
 import StreakDisplay from '../components/StreakDisplay';
+import StreakVisualization from '../components/StreakVisualization';
+import ComparisonCards from '../components/ComparisonCards';
 import WeakestAreas from '../components/WeakestAreas';
 
 const DashboardPage: React.FC = () => {
@@ -46,10 +48,13 @@ const DashboardPage: React.FC = () => {
       <div className="max-w-7xl mx-auto">
         <h1 className="text-3xl font-light text-gray-900 dark:text-darktext mb-8">Dashboard</h1>
         
+        {/* Comparison Cards */}
+        <ComparisonCards stats={stats} />
+        
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          {/* Streak Display */}
+          {/* Streak Visualization */}
           <div className="lg:col-span-1">
-            <StreakDisplay user={user} stats={stats} />
+            <StreakVisualization stats={stats} />
           </div>
           
           {/* Activity Heatmap */}

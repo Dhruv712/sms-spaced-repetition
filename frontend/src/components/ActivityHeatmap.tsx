@@ -122,7 +122,7 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({ stats }) => {
           {/* Calendar grid */}
           <div className="flex gap-1 relative">
             {calendarData.map((week, weekIndex) => (
-              <div key={weekIndex} className="flex flex-col gap-1">
+              <div key={weekIndex} className="flex flex-col gap-1 pb-4">
                 {week.map((dayData, dayIndex) => {
                   const { count, date } = dayData;
                   const isFuture = date && date > new Date();
@@ -142,19 +142,39 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({ stats }) => {
                     tooltipText = `${count} ${count === 1 ? 'review' : 'reviews'}`;
                   }
                   
+                  // Show date label on hover or for recent dates
+                  const daysAgo = date ? Math.floor((new Date().getTime() - date.getTime()) / (1000 * 60 * 60 * 24)) : null;
+                  const showDateLabel = date && daysAgo !== null && daysAgo <= 7; // Show date for last 7 days
+                  
                   return (
                     <div
                       key={dayIndex}
-                      className={`w-3 h-3 rounded ${getColor(count)} transition-all duration-150 ${
-                        date && !isFuture 
-                          ? 'hover:scale-125 hover:ring-2 hover:ring-primary-400 dark:hover:ring-primary-500 hover:z-10 cursor-pointer' 
-                          : ''
-                      } ${isFuture ? 'opacity-30' : ''}`}
-                      title={tooltipText}
-                      style={{
-                        position: 'relative'
-                      }}
-                    />
+                      className={`relative group ${date && !isFuture ? 'cursor-pointer' : ''}`}
+                    >
+                      <div
+                        className={`w-3 h-3 rounded ${getColor(count)} transition-all duration-150 ${
+                          date && !isFuture 
+                            ? 'hover:scale-125 hover:ring-2 hover:ring-primary-400 dark:hover:ring-primary-500 hover:z-10' 
+                            : ''
+                        } ${isFuture ? 'opacity-30' : ''}`}
+                        title={tooltipText}
+                      />
+                      {/* Custom tooltip */}
+                      {date && !isFuture && (
+                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-20 transition-opacity duration-150">
+                          {tooltipText}
+                          <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
+                            <div className="border-4 border-transparent border-t-gray-900 dark:border-t-gray-100"></div>
+                          </div>
+                        </div>
+                      )}
+                      {/* Date label for recent days */}
+                      {showDateLabel && date && (
+                        <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 text-[8px] text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                          {date.getDate()}
+                        </div>
+                      )}
+                    </div>
                   );
                 })}
                 {/* Month labels at bottom */}

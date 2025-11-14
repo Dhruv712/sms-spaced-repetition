@@ -216,17 +216,78 @@ def get_dashboard_stats(
     weakest_decks.sort(key=lambda x: x['accuracy'])
     weakest_decks = weakest_decks[:10]
     
+    # Calculate comparison data (this week vs last week, this month vs last month)
+    today = datetime.now(timezone.utc).date()
+    
+    # This week (Monday to Sunday)
+    days_since_monday = today.weekday()
+    this_week_start = today - timedelta(days=days_since_monday)
+    this_week_end = today
+    last_week_start = this_week_start - timedelta(days=7)
+    last_week_end = this_week_start - timedelta(days=1)
+    
+    # This month
+    this_month_start = today.replace(day=1)
+    last_month_start = (this_month_start - timedelta(days=1)).replace(day=1)
+    last_month_end = this_month_start - timedelta(days=1)
+    
+    def count_reviews_in_range(start_date, end_date):
+        """Count unique cards reviewed in date range"""
+        count = 0
+        current = start_date
+        while current <= end_date:
+            date_str = current.isoformat()
+            if date_str in all_dates:
+                count += all_dates[date_str]
+            current += timedelta(days=1)
+        return count
+    
+    this_week_count = count_reviews_in_range(this_week_start, this_week_end)
+    last_week_count = count_reviews_in_range(last_week_start, last_week_end)
+    this_month_count = count_reviews_in_range(this_month_start, today)
+    last_month_count = count_reviews_in_range(last_month_start, last_month_end)
+    
+    # Calculate streak history (last 30 days)
+    streak_history = []
+    for days_back in range(30):
+        check_date = today - timedelta(days=days_back)
+        start_of_day = datetime.combine(check_date, datetime.min.time(), tzinfo=timezone.utc)
+        end_of_day = datetime.combine(check_date, datetime.max.time(), tzinfo=timezone.utc)
+        
+        reviews = db.query(CardReview).filter(
+            and_(
+                CardReview.user_id == current_user.id,
+                CardReview.flashcard_id.in_(flashcard_ids),
+                CardReview.review_date >= start_of_day,
+                CardReview.review_date <= end_of_day
+            )
+        ).count()
+        
+        streak_history.append({
+            'date': check_date.isoformat(),
+            'reviewed': reviews > 0
+        })
+    
+    streak_history.reverse()  # Oldest to newest
+    
     return {
         'activity_heatmap': all_dates,
         'accuracy_over_time': accuracy_points,
         'deck_accuracy': list(deck_accuracy_map.values()),
         'streak': {
             'current': streak_days,
-            'longest': longest_streak
+            'longest': longest_streak,
+            'history': streak_history
         },
         'weakest_areas': {
             'tags': weakest_tags,
             'decks': weakest_decks
+        },
+        'comparisons': {
+            'this_week': this_week_count,
+            'last_week': last_week_count,
+            'this_month': this_month_count,
+            'last_month': last_month_count
         }
     }
 
