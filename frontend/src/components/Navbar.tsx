@@ -52,7 +52,7 @@ const Navbar: React.FC = () => {
 
         {/* Desktop Menu */}
         <div className="hidden md:flex items-center gap-4 flex-1 justify-center min-w-0">
-          <ul className="flex space-x-3 items-center">
+          <ul className="flex space-x-6 items-center">
             {user ? (
               <>
                 <li>
