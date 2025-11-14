@@ -698,3 +698,40 @@ async def grandfather_users_premium_public() -> Dict[str, Any]:
         }
     except Exception as e:
         return {"success": False, "error": str(e)}
+
+@router.post("/reset-premium-status-public")
+async def reset_premium_status_public(email: str) -> Dict[str, Any]:
+    """
+    Reset premium status for a user (for testing)
+    (Temporary public endpoint for testing)
+    """
+    try:
+        sql_command = """
+            UPDATE users 
+            SET is_premium = FALSE,
+                stripe_subscription_id = NULL,
+                stripe_subscription_status = NULL,
+                stripe_price_id = NULL,
+                subscription_start_date = NULL,
+                subscription_end_date = NULL
+            WHERE email = :email;
+        """
+        
+        with engine.connect() as conn:
+            result = conn.execute(text(sql_command), {"email": email})
+            conn.commit()
+            rows_updated = result.rowcount
+        
+        if rows_updated == 0:
+            return {
+                "success": False,
+                "message": f"No user found with email: {email}"
+            }
+        
+        return {
+            "success": True,
+            "message": f"Reset premium status for {email}",
+            "email": email
+        }
+    except Exception as e:
+        return {"success": False, "error": str(e)}
