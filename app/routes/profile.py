@@ -30,6 +30,12 @@ def get_user_profile(
     conversation_state = db.query(ConversationState).filter_by(user_id=current_user.id).first()
     has_sms_conversation = conversation_state is not None
     
+    # Get preferred_text_times, fallback to [preferred_start_hour] if not set (for backward compatibility)
+    preferred_text_times = current_user.preferred_text_times
+    if preferred_text_times is None:
+        # Migrate from old system: use start_hour as default
+        preferred_text_times = [current_user.preferred_start_hour] if current_user.preferred_start_hour else [12]
+    
     return UserProfile(
         name=current_user.name,
         phone_number=current_user.phone_number,
@@ -37,6 +43,7 @@ def get_user_profile(
         study_mode=current_user.study_mode,
         preferred_start_hour=current_user.preferred_start_hour,
         preferred_end_hour=current_user.preferred_end_hour,
+        preferred_text_times=preferred_text_times,
         timezone=current_user.timezone,
         sms_opt_in=current_user.sms_opt_in,
         has_sms_conversation=has_sms_conversation,
@@ -69,6 +76,12 @@ def update_user_profile(
     conversation_state = db.query(ConversationState).filter_by(user_id=current_user.id).first()
     has_sms_conversation = conversation_state is not None
     
+    # Get preferred_text_times, fallback to [preferred_start_hour] if not set (for backward compatibility)
+    preferred_text_times = current_user.preferred_text_times
+    if preferred_text_times is None:
+        # Migrate from old system: use start_hour as default
+        preferred_text_times = [current_user.preferred_start_hour] if current_user.preferred_start_hour else [12]
+    
     return UserProfile(
         name=current_user.name,
         phone_number=current_user.phone_number,
@@ -76,6 +89,7 @@ def update_user_profile(
         study_mode=current_user.study_mode,
         preferred_start_hour=current_user.preferred_start_hour,
         preferred_end_hour=current_user.preferred_end_hour,
+        preferred_text_times=preferred_text_times,
         timezone=current_user.timezone,
         sms_opt_in=current_user.sms_opt_in,
         has_sms_conversation=has_sms_conversation,
