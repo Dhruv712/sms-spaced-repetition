@@ -262,7 +262,7 @@ async def import_anki_deck(
             # If we filtered out all notes, let's check if there are ANY notes with actual content
             if not notes:
                 # Try getting notes that don't match the exact error message pattern
-                cursor.execute("SELECT id, flds, tags, sfld FROM notes WHERE flds IS NOT NULL AND flds != '' AND LENGTH(flds) > 10")
+                cursor.execute("SELECT id, flds, tags, sfld FROM notes WHERE flds IS NOT NULL AND flds != '' AND LENGTH(flds) > 10 AND flds NOT LIKE '%Please update to the latest Anki version%'")
                 notes = cursor.fetchall()
                 print(f"After filtering: found {len(notes)} notes with content")
             
@@ -270,7 +270,7 @@ async def import_anki_deck(
                 conn.close()
                 raise HTTPException(
                     status_code=400, 
-                    detail="No valid notes found in Anki deck. All notes appear to contain error messages or are empty. This might mean: 1) The deck in Anki itself has this error (try recreating the deck), 2) The file is corrupted, or 3) You need to update Anki and re-export. Please try creating a new deck in Anki and adding cards manually, then export that as .apkg."
+                    detail="No valid notes found in Anki deck. All notes contain the error message 'Please update to the latest Anki version, then import the .colpkg/.apkg file again.' This means the deck in Anki itself has this error message stored. To fix: 1) Open the deck in Anki and check if the cards display correctly, 2) If they show the error message in Anki too, you need to recreate the deck, 3) If they show correctly in Anki, try updating Anki to the latest version and re-exporting the deck."
                 )
             
             # Get or create deck
@@ -400,9 +400,17 @@ async def import_anki_deck(
                 "skipped_count": skipped_count
             }
             
+        except HTTPException:
+            # Re-raise HTTP exceptions as-is
+            raise
         except sqlite3.Error as e:
+            db.rollback()
             raise HTTPException(status_code=400, detail=f"Error reading Anki database: {str(e)}")
         except Exception as e:
             db.rollback()
+            import traceback
+            error_trace = traceback.format_exc()
+            print(f"Error importing Anki deck: {str(e)}")
+            print(f"Traceback: {error_trace}")
             raise HTTPException(status_code=500, detail=f"Error importing deck: {str(e)}")
 
