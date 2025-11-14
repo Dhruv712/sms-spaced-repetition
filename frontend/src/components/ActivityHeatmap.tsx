@@ -9,14 +9,14 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({ stats }) => {
     return stats?.activity_heatmap || {};
   }, [stats?.activity_heatmap]);
   
-  // Generate calendar grid for the past year
+  // Generate calendar grid for the past year with date information
   const calendarData = useMemo(() => {
     const today = new Date();
     const oneYearAgo = new Date(today);
     oneYearAgo.setFullYear(today.getFullYear() - 1);
     
-    const weeks: number[][] = [];
-    let currentWeek: number[] = [];
+    const weeks: Array<Array<{ count: number; date: Date | null; dateStr: string }>> = [];
+    let currentWeek: Array<{ count: number; date: Date | null; dateStr: string }> = [];
     const startDate = new Date(oneYearAgo);
     
     // Find the start of the week (Sunday)
@@ -29,7 +29,11 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({ stats }) => {
     while (currentDate <= endDate) {
       const dateStr = currentDate.toISOString().split('T')[0];
       const count = activityData[dateStr] || 0;
-      currentWeek.push(count);
+      currentWeek.push({
+        count,
+        date: new Date(currentDate),
+        dateStr
+      });
       
       if (currentWeek.length === 7) {
         weeks.push(currentWeek);
@@ -41,7 +45,7 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({ stats }) => {
     
     if (currentWeek.length > 0) {
       while (currentWeek.length < 7) {
-        currentWeek.push(0);
+        currentWeek.push({ count: 0, date: null, dateStr: '' });
       }
       weeks.push(currentWeek);
     }
@@ -119,13 +123,40 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({ stats }) => {
           <div className="flex gap-1 relative">
             {calendarData.map((week, weekIndex) => (
               <div key={weekIndex} className="flex flex-col gap-1">
-                {week.map((count, dayIndex) => (
-                  <div
-                    key={dayIndex}
-                    className={`w-3 h-3 rounded ${getColor(count)}`}
-                    title={`${count} reviews`}
-                  />
-                ))}
+                {week.map((dayData, dayIndex) => {
+                  const { count, date, dateStr } = dayData;
+                  const isFuture = date && date > new Date();
+                  
+                  // Format date for tooltip
+                  let tooltipText = '';
+                  if (date && !isFuture) {
+                    const formattedDate = date.toLocaleDateString('en-US', { 
+                      month: 'short', 
+                      day: 'numeric',
+                      year: date.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined
+                    });
+                    tooltipText = `${formattedDate}: ${count} ${count === 1 ? 'review' : 'reviews'}`;
+                  } else if (isFuture) {
+                    tooltipText = 'Future date';
+                  } else {
+                    tooltipText = `${count} ${count === 1 ? 'review' : 'reviews'}`;
+                  }
+                  
+                  return (
+                    <div
+                      key={dayIndex}
+                      className={`w-3 h-3 rounded ${getColor(count)} transition-all duration-150 ${
+                        date && !isFuture 
+                          ? 'hover:scale-125 hover:ring-2 hover:ring-primary-400 dark:hover:ring-primary-500 hover:z-10 cursor-pointer' 
+                          : ''
+                      } ${isFuture ? 'opacity-30' : ''}`}
+                      title={tooltipText}
+                      style={{
+                        position: 'relative'
+                      }}
+                    />
+                  );
+                })}
                 {/* Month labels at bottom */}
                 {monthLabels.some(m => m.weekIndex === weekIndex) && (
                   <div className="text-xs text-gray-500 dark:text-gray-400 mt-1" style={{ fontSize: '10px' }}>
