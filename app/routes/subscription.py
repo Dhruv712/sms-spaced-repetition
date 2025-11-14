@@ -32,10 +32,8 @@ async def create_checkout(
     Create a Stripe Checkout session for subscription
     """
     try:
-        # Determine success and cancel URLs based on environment
-        base_url = "https://trycue.xyz"  # Update this to your production URL
-        if settings.ENVIRONMENT == "development":
-            base_url = "http://localhost:3000"
+        # Use FRONTEND_URL from environment, fallback to production URL
+        base_url = settings.FRONTEND_URL or "https://trycue.xyz"
         
         success_url = f"{base_url}/subscription/success?session_id={{CHECKOUT_SESSION_ID}}"
         cancel_url = f"{base_url}/subscription/cancel"

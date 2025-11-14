@@ -52,6 +52,9 @@ class Settings(BaseSettings):
     STRIPE_WEBHOOK_SECRET: Optional[str] = None
     STRIPE_PRICE_ID_MONTHLY: Optional[str] = None
     
+    # Frontend URL for redirects
+    FRONTEND_URL: str = "https://trycue.xyz"
+    
     class Config:
         env_file = ".env"
 
