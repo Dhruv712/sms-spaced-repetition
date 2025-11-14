@@ -45,8 +45,11 @@ def cleanup_conversation_states_task():
 def send_due_flashcards_to_all_users():
     """
     Send due flashcards to all users who have opted into SMS
-    This is the main function that should be called by a scheduler
+    This function checks if the current hour (in user's timezone) matches their preferred_text_times
     """
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+    
     logger.info("🕐 Starting scheduled flashcard sending...")
     
     db = SessionLocal()
@@ -59,9 +62,41 @@ def send_due_flashcards_to_all_users():
         
         logger.info(f"📱 Found {len(users)} users with SMS opt-in")
         
+        # Get current UTC time
+        now_utc = datetime.now(ZoneInfo("UTC"))
+        
         results = []
         for user in users:
             try:
+                # Get user's preferred text times
+                preferred_times = user.preferred_text_times
+                if preferred_times is None:
+                    # Fallback to old system: use start_hour if available
+                    if user.preferred_start_hour is not None:
+                        preferred_times = [user.preferred_start_hour]
+                    else:
+                        preferred_times = [12]  # Default to noon
+                
+                # Convert current UTC time to user's timezone
+                try:
+                    user_tz = ZoneInfo(user.timezone)
+                    now_user_tz = now_utc.astimezone(user_tz)
+                    current_hour = now_user_tz.hour
+                except Exception as e:
+                    logger.warning(f"⚠️ Invalid timezone for user {user.id}: {user.timezone}, using UTC")
+                    current_hour = now_utc.hour
+                
+                # Check if current hour matches any of user's preferred times
+                if current_hour not in preferred_times:
+                    logger.info(f"⏭️ Skipping user {user.id}: current hour {current_hour} not in preferred times {preferred_times}")
+                    results.append({
+                        "user_id": user.id,
+                        "phone_number": user.phone_number,
+                        "result": {"success": True, "message": "skipped", "reason": f"Hour {current_hour} not in preferred times"}
+                    })
+                    continue
+                
+                # Send flashcards to this user
                 result = send_due_flashcards_to_user(user.id, db)
                 results.append({
                     "user_id": user.id,

@@ -588,6 +588,53 @@ async def delete_user_2_public(db: Session = Depends(get_db)) -> Dict[str, Any]:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Error deleting user: {str(e)}")
 
+@router.post("/migrate-preferred-text-times-public")
+async def migrate_preferred_text_times_public() -> Dict[str, Any]:
+    """
+    Add preferred_text_times field to users table
+    (Temporary public endpoint for Railway migration)
+    """
+    try:
+        sql_commands = [
+            """
+            ALTER TABLE users 
+            ADD COLUMN IF NOT EXISTS preferred_text_times JSON;
+            """,
+            """
+            -- Migrate existing users: convert start_hour to preferred_text_times array
+            UPDATE users 
+            SET preferred_text_times = json_build_array(preferred_start_hour)
+            WHERE preferred_text_times IS NULL AND preferred_start_hour IS NOT NULL;
+            """,
+            """
+            -- Set default for users with no preferred_start_hour
+            UPDATE users 
+            SET preferred_text_times = '[12]'::json
+            WHERE preferred_text_times IS NULL;
+            """
+        ]
+        
+        results = []
+        with engine.connect() as conn:
+            for i, sql in enumerate(sql_commands, 1):
+                try:
+                    conn.execute(text(sql))
+                    conn.commit()
+                    results.append(f"Command {i}: Success")
+                except Exception as e:
+                    results.append(f"Command {i}: Error - {str(e)}")
+        
+        return {
+            "success": True,
+            "message": "Migration completed",
+            "results": results
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
 @router.post("/migrate-subscription-fields-public")
 async def migrate_subscription_fields_public() -> Dict[str, Any]:
     """

@@ -19,13 +19,16 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
         )
     
     # Create new user with hashed password
+    # Default: once per day at noon in UTC (user can change timezone and times in profile)
     hashed_password = get_password_hash(user.password)
     db_user = User(
         email=user.email,
         password_hash=hashed_password,
         phone_number=user.phone_number,
         name=user.name,
-        sms_opt_in=user.sms_opt_in or False
+        sms_opt_in=user.sms_opt_in or False,
+        timezone="UTC",
+        preferred_text_times=[12]  # Default: noon
     )
     db.add(db_user)
     db.commit()

@@ -13,8 +13,9 @@ class UserProfile(BaseModel):
     phone_number: str | None
     google_id: str | None
     study_mode: str  # 'batch' or 'distributed'
-    preferred_start_hour: int
-    preferred_end_hour: int
+    preferred_start_hour: int  # Deprecated, kept for backward compatibility
+    preferred_end_hour: int  # Deprecated, kept for backward compatibility
+    preferred_text_times: list[int] | None  # Array of hours (0-23) when user wants texts
     timezone: str
     sms_opt_in: bool
     has_sms_conversation: bool
@@ -55,8 +56,9 @@ def update_user_profile(
     current_user.name = profile.name
     current_user.phone_number = profile.phone_number
     current_user.study_mode = profile.study_mode
-    current_user.preferred_start_hour = profile.preferred_start_hour
-    current_user.preferred_end_hour = profile.preferred_end_hour
+    current_user.preferred_start_hour = profile.preferred_start_hour  # Keep for backward compatibility
+    current_user.preferred_end_hour = profile.preferred_end_hour  # Keep for backward compatibility
+    current_user.preferred_text_times = profile.preferred_text_times if profile.preferred_text_times else [12]
     current_user.timezone = profile.timezone
     current_user.sms_opt_in = profile.sms_opt_in
 

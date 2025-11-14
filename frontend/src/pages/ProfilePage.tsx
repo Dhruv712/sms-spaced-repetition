@@ -9,6 +9,7 @@ interface UserProfile {
   study_mode: string;
   preferred_start_hour: number;
   preferred_end_hour: number;
+  preferred_text_times: number[] | null;
   timezone: string;
   sms_opt_in: boolean;
 }
@@ -382,39 +383,78 @@ const ProfilePage: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Start Hour (24-hour format)</label>
-            <input
-              type="number"
-              name="preferred_start_hour"
-              value={profile.preferred_start_hour}
-              onChange={handleChange}
-              min="0"
-              max="23"
-              className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-800 dark:text-darktext dark:border-gray-600 transition-colors duration-200"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">End Hour (24-hour format)</label>
-            <input
-              type="number"
-              name="preferred_end_hour"
-              value={profile.preferred_end_hour}
-              onChange={handleChange}
-              min="0"
-              max="23"
-              className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-800 dark:text-darktext dark:border-gray-600 transition-colors duration-200"
-            />
-          </div>
-
-          <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Timezone</label>
-            <input
+            <select
               name="timezone"
               value={profile.timezone}
               onChange={handleChange}
               className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-800 dark:text-darktext dark:border-gray-600 transition-colors duration-200"
-            />
+            >
+              <option value="UTC">UTC</option>
+              <option value="America/New_York">Eastern Time (ET)</option>
+              <option value="America/Chicago">Central Time (CT)</option>
+              <option value="America/Denver">Mountain Time (MT)</option>
+              <option value="America/Los_Angeles">Pacific Time (PT)</option>
+              <option value="Europe/London">London (GMT/BST)</option>
+              <option value="Europe/Paris">Paris (CET/CEST)</option>
+              <option value="Europe/Berlin">Berlin (CET/CEST)</option>
+              <option value="Asia/Tokyo">Tokyo (JST)</option>
+              <option value="Asia/Shanghai">Shanghai (CST)</option>
+              <option value="Asia/Kolkata">Mumbai (IST)</option>
+              <option value="Australia/Sydney">Sydney (AEDT/AEST)</option>
+              <option value="America/Sao_Paulo">São Paulo (BRT/BRST)</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Preferred Text Times (select all that apply)
+            </label>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+              Choose the hours when you'd like to receive flashcard texts (in your selected timezone)
+            </p>
+            <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
+              {Array.from({ length: 24 }, (_, i) => {
+                const hour = i;
+                const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+                const amPm = hour < 12 ? 'AM' : 'PM';
+                const isSelected = profile.preferred_text_times?.includes(hour) || false;
+                
+                return (
+                  <label
+                    key={hour}
+                    className={`flex flex-col items-center justify-center p-2 border rounded-md cursor-pointer transition-colors duration-200 ${
+                      isSelected
+                        ? 'bg-primary-500 text-white border-primary-600 dark:bg-primary-600 dark:border-primary-500'
+                        : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-primary-400 dark:hover:border-primary-500'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={(e) => {
+                        const currentTimes = profile.preferred_text_times || [];
+                        let newTimes: number[];
+                        if (e.target.checked) {
+                          newTimes = [...currentTimes, hour].sort((a, b) => a - b);
+                        } else {
+                          newTimes = currentTimes.filter((t) => t !== hour);
+                        }
+                        setProfile({ ...profile, preferred_text_times: newTimes.length > 0 ? newTimes : [12] });
+                      }}
+                      className="sr-only"
+                    />
+                    <span className="text-xs font-medium">{displayHour}</span>
+                    <span className="text-[10px] opacity-75">{amPm}</span>
+                  </label>
+                );
+              })}
+            </div>
+            {(!profile.preferred_text_times || profile.preferred_text_times.length === 0) && (
+              <p className="text-xs text-red-500 dark:text-red-400 mt-2">
+                Please select at least one time
+              </p>
+            )}
           </div>
 
           <div className="flex items-center">

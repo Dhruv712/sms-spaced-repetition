@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, JSON
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from app.database import Base
@@ -13,8 +13,9 @@ class User(Base):
     phone_number = Column(String(20), unique=True, index=True, nullable=True)  # Make optional for Google users
     name = Column(String(100))
     study_mode = Column(String(20), default="batch")  # 'batch' or 'distributed'
-    preferred_start_hour = Column(Integer, default=9)  # 24-hour format
-    preferred_end_hour = Column(Integer, default=21)
+    preferred_start_hour = Column(Integer, default=9)  # 24-hour format (deprecated, use preferred_text_times)
+    preferred_end_hour = Column(Integer, default=21)  # Deprecated, use preferred_text_times
+    preferred_text_times = Column(JSON, default=None)  # Array of hours (0-23) when user wants texts, e.g., [12, 21]
     timezone = Column(String(50), default="UTC")
     is_active = Column(Boolean, default=True)
     sms_opt_in = Column(Boolean, default=False)  # SMS opt-in preference

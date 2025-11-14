@@ -51,18 +51,15 @@ def main():
     """Main scheduler function"""
     print(f"⏰ Cron scheduler starting at {datetime.now()}")
     
-    # Schedule flashcard sending at 9am, 12pm, 3pm, 6pm, 9pm
-    schedule.every().day.at("09:00").do(send_flashcards)
-    schedule.every().day.at("12:00").do(send_flashcards)
-    schedule.every().day.at("15:00").do(send_flashcards)
-    schedule.every().day.at("18:00").do(send_flashcards)
-    schedule.every().day.at("21:00").do(send_flashcards)
+    # Schedule flashcard sending every hour
+    # The function will check each user's preferred_text_times and timezone
+    schedule.every().hour.at(":00").do(send_flashcards)
     
     # Schedule cleanup every 2 hours
     schedule.every(2).hours.do(cleanup_conversations)
     
     print("📅 Scheduled tasks:")
-    print("   - Send flashcards: 9am, 12pm, 3pm, 6pm, 9pm")
+    print("   - Send flashcards: Every hour (checks user's preferred times)")
     print("   - Cleanup conversations: Every 2 hours")
     
     # Run cleanup once on startup

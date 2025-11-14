@@ -234,7 +234,7 @@ async def process_user_message(user: User, body: str, passthrough: str, db: Sess
                     return "Card skipped. Next flashcard sent."
                 else:
                     # Send completion message with stats
-                    completion_message = generate_session_completion_message(user.id, db)
+                    completion_message = generate_session_completion_message(user.id, db, user)
                     if service:
                         service.send_feedback(user.phone_number, completion_message)
                     return "Card skipped. Completion message sent."
@@ -330,7 +330,7 @@ async def process_user_message(user: User, body: str, passthrough: str, db: Sess
         traceback.print_exc()
         return "Sorry, there was an error processing your message. Please try again."
 
-def generate_session_completion_message(user_id: int, db: Session) -> str:
+def generate_session_completion_message(user_id: int, db: Session, user: User = None) -> str:
     """
     Generate completion message with session stats and next review time
     """
@@ -349,9 +349,25 @@ def generate_session_completion_message(user_id: int, db: Session) -> str:
         CardReview.review_date <= end_of_day
     ).all()
     
+    # Get user if not provided
+    if user is None:
+        from app.models import User
+        user = db.query(User).filter_by(id=user_id).first()
+    
+    # Get preferred text times
+    preferred_times = user.preferred_text_times if user else None
+    if preferred_times is None and user:
+        # Fallback to old system
+        if user.preferred_start_hour is not None:
+            preferred_times = [user.preferred_start_hour]
+        else:
+            preferred_times = [12]
+    
+    user_timezone = user.timezone if user else "UTC"
+    
     if not today_reviews:
         # No reviews today, just send basic message
-        next_review_time = get_next_review_time()
+        next_review_time = get_next_review_time(user_timezone, preferred_times)
         return f"That's it for now! Next review: {next_review_time}"
     
     # Calculate stats
@@ -407,8 +423,23 @@ def generate_session_completion_message(user_id: int, db: Session) -> str:
     # Limit to top 3 issue areas
     issue_areas = issue_areas[:3]
     
-    # Get next review time (12 PM or 9 PM UTC)
-    next_review_time = get_next_review_time()
+    # Get user if not provided
+    if user is None:
+        user = db.query(User).filter_by(id=user_id).first()
+    
+    # Get preferred text times
+    preferred_times = user.preferred_text_times if user else None
+    if preferred_times is None and user:
+        # Fallback to old system
+        if user.preferred_start_hour is not None:
+            preferred_times = [user.preferred_start_hour]
+        else:
+            preferred_times = [12]
+    
+    user_timezone = user.timezone if user else "UTC"
+    
+    # Get next review time based on user's timezone and preferred times
+    next_review_time = get_next_review_time(user_timezone, preferred_times)
     
     # Build message
     message = f"That's it for now! 📊\n\n"
@@ -422,27 +453,49 @@ def generate_session_completion_message(user_id: int, db: Session) -> str:
     return message
 
 
-def get_next_review_time() -> str:
+def get_next_review_time(user_timezone: str = "UTC", preferred_times: list[int] = None) -> str:
     """
-    Get the next review time (12 PM or 9 PM UTC, whichever comes next)
+    Get the next review time based on user's timezone and preferred times
     """
-    from datetime import datetime, timezone, time
+    from datetime import datetime, timezone, time, timedelta
+    from zoneinfo import ZoneInfo
     
-    now = datetime.now(timezone.utc)
-    today = now.date()
+    if preferred_times is None or len(preferred_times) == 0:
+        preferred_times = [12]  # Default to noon
     
-    # 12 PM UTC
-    noon_utc = datetime.combine(today, time(12, 0), tzinfo=timezone.utc)
-    # 9 PM UTC
-    evening_utc = datetime.combine(today, time(21, 0), tzinfo=timezone.utc)
+    try:
+        user_tz = ZoneInfo(user_timezone)
+    except Exception:
+        user_tz = ZoneInfo("UTC")
     
-    if now < noon_utc:
-        return "12 PM UTC today"
-    elif now < evening_utc:
-        return "9 PM UTC today"
-    else:
-        # Next is tomorrow at 12 PM
-        return "12 PM UTC tomorrow"
+    now_utc = datetime.now(timezone.utc)
+    now_user_tz = now_utc.astimezone(user_tz)
+    today = now_user_tz.date()
+    current_hour = now_user_tz.hour
+    
+    # Sort preferred times
+    sorted_times = sorted(preferred_times)
+    
+    # Find next time today
+    for hour in sorted_times:
+        if hour > current_hour:
+            time_str = f"{hour}:00" if hour < 10 else f"{hour}:00"
+            am_pm = "AM" if hour < 12 else "PM"
+            display_hour = hour if hour <= 12 else hour - 12
+            if display_hour == 0:
+                display_hour = 12
+            return f"{display_hour}:00 {am_pm} {user_timezone} today"
+    
+    # If no time found today, use first time tomorrow
+    if sorted_times:
+        hour = sorted_times[0]
+        am_pm = "AM" if hour < 12 else "PM"
+        display_hour = hour if hour <= 12 else hour - 12
+        if display_hour == 0:
+            display_hour = 12
+        return f"{display_hour}:00 {am_pm} {user_timezone} tomorrow"
+    
+    return "12:00 PM UTC tomorrow"
 
 
 async def handle_flashcard_response(
@@ -591,7 +644,7 @@ async def handle_flashcard_response(
         else:
             print(f"📭 No more due flashcards - sending completion message with stats")
             # Send completion message with stats
-            completion_message = generate_session_completion_message(user.id, db)
+            completion_message = generate_session_completion_message(user.id, db, user)
             if service:
                 service.send_feedback(user.phone_number, completion_message)
             return f"Response processed. Feedback sent. Completion message sent."
@@ -611,7 +664,7 @@ async def handle_start_session(user: User, service: LoopMessageService, db: Sess
         card = get_next_due_flashcard(user.id, db)
         if not card:
             if service:
-                completion_message = generate_session_completion_message(user.id, db)
+                completion_message = generate_session_completion_message(user.id, db, user)
                 service.send_feedback(user.phone_number, completion_message)
             else:
                 print(f"📤 LoopMessage service not initialized, skipping reminder.")
