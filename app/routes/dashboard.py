@@ -28,181 +28,182 @@ def get_dashboard_stats(
     today = datetime.now(timezone.utc).date()
     one_year_ago = today - timedelta(days=365)
     
-    # Activity heatmap data - reviews per day for past year
-    activity_data = db.query(
-        func.date(CardReview.review_date).label('date'),
-        func.count(CardReview.id).label('count')
-    ).filter(
-        CardReview.user_id == current_user.id,
-        func.date(CardReview.review_date) >= one_year_ago
-    ).group_by(
-        func.date(CardReview.review_date)
-    ).all()
+    # Get all flashcards for the user
+    all_flashcards = db.query(Flashcard).filter(Flashcard.user_id == current_user.id).all()
+    flashcard_ids = [card.id for card in all_flashcards]
     
-    # Convert to dict for easier frontend consumption
-    activity_map = {str(row.date): row.count for row in activity_data}
+    if not flashcard_ids:
+        return {
+            'activity_heatmap': {},
+            'accuracy_over_time': [],
+            'deck_accuracy': [],
+            'streak': {
+                'current': current_user.current_streak_days or 0,
+                'longest': current_user.longest_streak_days or 0
+            },
+            'weakest_areas': {
+                'tags': [],
+                'decks': []
+            }
+        }
     
-    # Generate all dates in range for heatmap
+    # Get all reviews for the user's flashcards, ordered by date
+    reviews = db.query(CardReview).filter(
+        and_(
+            CardReview.user_id == current_user.id,
+            CardReview.flashcard_id.in_(flashcard_ids),
+            CardReview.review_date >= datetime.combine(one_year_ago, datetime.min.time()).replace(tzinfo=timezone.utc)
+        )
+    ).order_by(CardReview.review_date.asc()).all()
+    
+    # Group reviews by date and calculate daily performance (same pattern as mastery graphs)
+    daily_performance = {}
+    for review in reviews:
+        review_date = review.review_date.date()
+        if review_date not in daily_performance:
+            daily_performance[review_date] = {
+                "total": 0,
+                "correct": 0,
+                "unique_cards": set()
+            }
+        
+        daily_performance[review_date]["total"] += 1
+        daily_performance[review_date]["unique_cards"].add(review.flashcard_id)
+        if review.was_correct:
+            daily_performance[review_date]["correct"] += 1
+    
+    # Activity heatmap - generate all dates in range
     all_dates = {}
     current_date = one_year_ago
     while current_date <= today:
         date_str = current_date.isoformat()
-        all_dates[date_str] = activity_map.get(date_str, 0)
+        if current_date in daily_performance:
+            all_dates[date_str] = len(daily_performance[current_date]["unique_cards"])
+        else:
+            all_dates[date_str] = 0
         current_date += timedelta(days=1)
     
     # Accuracy over time - overall
-    accuracy_data = db.query(
-        func.date(CardReview.review_date).label('date'),
-        func.avg(
-            case(
-                (CardReview.was_correct == True, 100),
-                else_=0
-            )
-        ).label('accuracy'),
-        func.count(CardReview.id).label('cards_reviewed')
-    ).filter(
-        CardReview.user_id == current_user.id,
-        func.date(CardReview.review_date) >= one_year_ago
-    ).group_by(
-        func.date(CardReview.review_date)
-    ).order_by(
-        func.date(CardReview.review_date)
-    ).all()
-    
-    accuracy_points = [
-        {
-            'date': row.date.isoformat(),
-            'accuracy': float(row.accuracy) if row.accuracy else 0,
-            'cards_reviewed': row.cards_reviewed
-        }
-        for row in accuracy_data
-    ]
-    
-    # Accuracy per deck
-    deck_accuracy = db.query(
-        Deck.id,
-        Deck.name,
-        func.date(CardReview.review_date).label('date'),
-        func.avg(
-            case(
-                (CardReview.was_correct == True, 100),
-                else_=0
-            )
-        ).label('accuracy'),
-        func.count(CardReview.id).label('cards_reviewed')
-    ).join(
-        Flashcard, Flashcard.deck_id == Deck.id
-    ).join(
-        CardReview, CardReview.flashcard_id == Flashcard.id
-    ).filter(
-        CardReview.user_id == current_user.id,
-        func.date(CardReview.review_date) >= one_year_ago
-    ).group_by(
-        Deck.id,
-        Deck.name,
-        func.date(CardReview.review_date)
-    ).order_by(
-        func.date(CardReview.review_date)
-    ).all()
-    
-    # Group by deck
-    deck_accuracy_map: Dict[int, List[Dict[str, Any]]] = {}
-    for row in deck_accuracy:
-        if row.id not in deck_accuracy_map:
-            deck_accuracy_map[row.id] = {
-                'deck_id': row.id,
-                'deck_name': row.name,
-                'data_points': []
-            }
-        deck_accuracy_map[row.id]['data_points'].append({
-            'date': row.date.isoformat(),
-            'accuracy': float(row.accuracy) if row.accuracy else 0,
-            'cards_reviewed': row.cards_reviewed
+    accuracy_points = []
+    for date, stats in sorted(daily_performance.items()):
+        accuracy = (stats["correct"] / stats["total"] * 100) if stats["total"] > 0 else 0
+        cards_reviewed = len(stats["unique_cards"])
+        
+        accuracy_points.append({
+            'date': date.isoformat(),
+            'accuracy': round(accuracy, 1),
+            'cards_reviewed': cards_reviewed
         })
+    
+    # Accuracy per deck - group by deck
+    deck_reviews: Dict[int, Dict[datetime.date, Dict[str, Any]]] = {}
+    for review in reviews:
+        flashcard = next((f for f in all_flashcards if f.id == review.flashcard_id), None)
+        if not flashcard or not flashcard.deck_id:
+            continue
+        
+        deck_id = flashcard.deck_id
+        review_date = review.review_date.date()
+        
+        if deck_id not in deck_reviews:
+            deck_reviews[deck_id] = {}
+        
+        if review_date not in deck_reviews[deck_id]:
+            deck_reviews[deck_id][review_date] = {
+                "total": 0,
+                "correct": 0,
+                "unique_cards": set()
+            }
+        
+        deck_reviews[deck_id][review_date]["total"] += 1
+        deck_reviews[deck_id][review_date]["unique_cards"].add(review.flashcard_id)
+        if review.was_correct:
+            deck_reviews[deck_id][review_date]["correct"] += 1
+    
+    # Convert deck reviews to data points
+    deck_accuracy_map: Dict[int, Dict[str, Any]] = {}
+    for deck_id, daily_stats in deck_reviews.items():
+        deck = db.query(Deck).filter(Deck.id == deck_id).first()
+        if not deck:
+            continue
+        
+        data_points = []
+        for date, stats in sorted(daily_stats.items()):
+            accuracy = (stats["correct"] / stats["total"] * 100) if stats["total"] > 0 else 0
+            cards_reviewed = len(stats["unique_cards"])
+            
+            data_points.append({
+                'date': date.isoformat(),
+                'accuracy': round(accuracy, 1),
+                'cards_reviewed': cards_reviewed
+            })
+        
+        deck_accuracy_map[deck_id] = {
+            'deck_id': deck_id,
+            'deck_name': deck.name,
+            'data_points': data_points
+        }
     
     # Current streak
     streak_days = current_user.current_streak_days or 0
     longest_streak = current_user.longest_streak_days or 0
     
-    # Weakest areas - tags with lowest accuracy
-    tag_accuracy = db.query(
-        Flashcard.tags,
-        func.avg(
-            case(
-                (CardReview.was_correct == True, 100),
-                else_=0
-            )
-        ).label('accuracy'),
-        func.count(CardReview.id).label('review_count')
-    ).join(
-        CardReview, CardReview.flashcard_id == Flashcard.id
-    ).filter(
-        CardReview.user_id == current_user.id,
-        Flashcard.tags.isnot(None),
-        Flashcard.tags != ''
-    ).group_by(
-        Flashcard.tags
-    ).having(
-        func.count(CardReview.id) >= 5  # Only show tags with at least 5 reviews
-    ).order_by(
-        func.avg(
-            func.case(
-                (CardReview.was_correct == True, 100),
-                else_=0
-            )
-        ).asc()
-    ).limit(10).all()
+    # Weakest areas - calculate from reviews we already fetched
+    # Group by tags
+    tag_stats: Dict[str, Dict[str, int]] = {}
+    for review in reviews:
+        flashcard = next((f for f in all_flashcards if f.id == review.flashcard_id), None)
+        if not flashcard or not flashcard.tags:
+            continue
+        
+        tag = flashcard.tags
+        if tag not in tag_stats:
+            tag_stats[tag] = {'total': 0, 'correct': 0}
+        
+        tag_stats[tag]['total'] += 1
+        if review.was_correct:
+            tag_stats[tag]['correct'] += 1
     
-    weakest_tags = [
-        {
-            'tag': row.tags,
-            'accuracy': float(row.accuracy) if row.accuracy else 0,
-            'review_count': row.review_count
-        }
-        for row in tag_accuracy
-    ]
+    # Calculate accuracy for each tag and filter by minimum reviews
+    weakest_tags = []
+    for tag, stats in tag_stats.items():
+        if stats['total'] >= 5:  # Only show tags with at least 5 reviews
+            accuracy = (stats['correct'] / stats['total'] * 100) if stats['total'] > 0 else 0
+            weakest_tags.append({
+                'tag': tag,
+                'accuracy': round(accuracy, 1),
+                'review_count': stats['total']
+            })
     
-    # Weakest decks
-    deck_weakest = db.query(
-        Deck.id,
-        Deck.name,
-        func.avg(
-            case(
-                (CardReview.was_correct == True, 100),
-                else_=0
-            )
-        ).label('accuracy'),
-        func.count(CardReview.id).label('review_count')
-    ).join(
-        Flashcard, Flashcard.deck_id == Deck.id
-    ).join(
-        CardReview, CardReview.flashcard_id == Flashcard.id
-    ).filter(
-        CardReview.user_id == current_user.id,
-        Deck.user_id == current_user.id
-    ).group_by(
-        Deck.id,
-        Deck.name
-    ).having(
-        func.count(CardReview.id) >= 5
-    ).order_by(
-        func.avg(
-            func.case(
-                (CardReview.was_correct == True, 100),
-                else_=0
-            )
-        ).asc()
-    ).limit(10).all()
+    # Sort by accuracy (lowest first) and limit to 10
+    weakest_tags.sort(key=lambda x: x['accuracy'])
+    weakest_tags = weakest_tags[:10]
     
-    weakest_decks = [
-        {
-            'deck_id': row.id,
-            'deck_name': row.name,
-            'accuracy': float(row.accuracy) if row.accuracy else 0,
-            'review_count': row.review_count
-        }
-        for row in deck_weakest
-    ]
+    # Weakest decks - calculate from deck_reviews we already have
+    weakest_decks = []
+    for deck_id, daily_stats in deck_reviews.items():
+        deck = db.query(Deck).filter(Deck.id == deck_id).first()
+        if not deck:
+            continue
+        
+        total_reviews = 0
+        correct_reviews = 0
+        for date_stats in daily_stats.values():
+            total_reviews += date_stats['total']
+            correct_reviews += date_stats['correct']
+        
+        if total_reviews >= 5:  # Only show decks with at least 5 reviews
+            accuracy = (correct_reviews / total_reviews * 100) if total_reviews > 0 else 0
+            weakest_decks.append({
+                'deck_id': deck_id,
+                'deck_name': deck.name,
+                'accuracy': round(accuracy, 1),
+                'review_count': total_reviews
+            })
+    
+    # Sort by accuracy (lowest first) and limit to 10
+    weakest_decks.sort(key=lambda x: x['accuracy'])
+    weakest_decks = weakest_decks[:10]
     
     return {
         'activity_heatmap': all_dates,
