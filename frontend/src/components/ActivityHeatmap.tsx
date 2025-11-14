@@ -65,22 +65,57 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({ stats }) => {
   
   const weekDays = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
   
+  // Generate month labels for horizontal scale
+  const monthLabels = useMemo(() => {
+    const today = new Date();
+    const oneYearAgo = new Date(today);
+    oneYearAgo.setFullYear(today.getFullYear() - 1);
+    
+    const labels: { weekIndex: number; label: string }[] = [];
+    const startDate = new Date(oneYearAgo);
+    const dayOfWeek = startDate.getDay();
+    startDate.setDate(startDate.getDate() - dayOfWeek);
+    
+    let currentDate = new Date(startDate);
+    let lastMonth = -1;
+    let weekIndex = 0;
+    
+    while (currentDate <= today) {
+      const month = currentDate.getMonth();
+      if (month !== lastMonth && currentDate.getDate() <= 7) {
+        labels.push({
+          weekIndex,
+          label: currentDate.toLocaleDateString('en-US', { month: 'short' })
+        });
+        lastMonth = month;
+      }
+      
+      if (currentDate.getDay() === 6) { // End of week
+        weekIndex++;
+      }
+      
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+    
+    return labels;
+  }, []);
+  
   return (
     <div className="bg-white dark:bg-darksurface rounded-lg border border-gray-200 dark:border-gray-800 p-6">
       <h2 className="text-lg font-light text-gray-900 dark:text-darktext mb-4">Activity</h2>
       <div className="overflow-x-auto">
         <div className="flex gap-1">
-          {/* Day labels */}
+          {/* Day labels - show all days */}
           <div className="flex flex-col gap-1 mr-2">
             {weekDays.map((day, i) => (
               <div key={i} className="h-3 text-xs text-gray-500 dark:text-gray-400" style={{ lineHeight: '12px' }}>
-                {i % 2 === 0 ? day : ''}
+                {day}
               </div>
             ))}
           </div>
           
           {/* Calendar grid */}
-          <div className="flex gap-1">
+          <div className="flex gap-1 relative">
             {calendarData.map((week, weekIndex) => (
               <div key={weekIndex} className="flex flex-col gap-1">
                 {week.map((count, dayIndex) => (
@@ -90,6 +125,12 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({ stats }) => {
                     title={`${count} reviews`}
                   />
                 ))}
+                {/* Month labels at bottom */}
+                {monthLabels.some(m => m.weekIndex === weekIndex) && (
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-1" style={{ fontSize: '10px' }}>
+                    {monthLabels.find(m => m.weekIndex === weekIndex)?.label}
+                  </div>
+                )}
               </div>
             ))}
           </div>

@@ -7,6 +7,7 @@ from app.schemas.review import ManualReviewSchema, ReviewOut, ReviewWithFlashcar
 from app.services.evaluator import evaluate_answer
 from app.services.scheduler import compute_next_review
 from app.services.auth import get_current_active_user
+from app.services.summary_service import calculate_streak_days
 from datetime import datetime, timezone
 
 router = APIRouter()
@@ -52,6 +53,19 @@ def manual_review(
     )
 
     db.add(review)
+    
+    # Update user streak tracking
+    today = datetime.now(timezone.utc).date()
+    user_today = current_user.last_study_date.date() if current_user.last_study_date else None
+    
+    if user_today != today:
+        # New day - update streak
+        streak_days = calculate_streak_days(current_user.id, db)
+        current_user.current_streak_days = streak_days
+        if streak_days > (current_user.longest_streak_days or 0):
+            current_user.longest_streak_days = streak_days
+        current_user.last_study_date = datetime.now(timezone.utc)
+    
     db.commit()
     db.refresh(review)
     return review

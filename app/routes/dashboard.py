@@ -144,9 +144,18 @@ def get_dashboard_stats(
             'data_points': data_points
         }
     
-    # Current streak
-    streak_days = current_user.current_streak_days or 0
+    # Current streak - recalculate to ensure it's up to date
+    from app.services.summary_service import calculate_streak_days
+    streak_days = calculate_streak_days(current_user.id, db)
     longest_streak = current_user.longest_streak_days or 0
+    
+    # Update user's current streak if it changed
+    if streak_days != (current_user.current_streak_days or 0):
+        current_user.current_streak_days = streak_days
+        if streak_days > longest_streak:
+            current_user.longest_streak_days = streak_days
+            longest_streak = streak_days
+        db.commit()
     
     # Weakest areas - calculate from reviews we already fetched
     # Group by tags
