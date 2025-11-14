@@ -7,13 +7,42 @@ import zipfile
 import sqlite3
 import tempfile
 import os
-from typing import List, Dict, Any
+import re
+from typing import List, Dict, Any, Tuple, Optional
 from app.database import get_db
 from app.models import User, Flashcard, Deck
 from app.services.auth import get_current_active_user
 from app.services.premium_service import check_premium_status
 
 router = APIRouter()
+
+
+def parse_cloze_deletion(text: str) -> Optional[Tuple[str, str]]:
+    """
+    Parse cloze deletion format: {{c1::answer}} or {{c1::hint::answer}}
+    Returns (front, back) tuple if cloze found, None otherwise
+    """
+    # Pattern to match {{c1::text}} or {{c1::hint::text}}
+    cloze_pattern = r'\{\{c\d+::(?:[^:]+::)?([^}]+)\}\}'
+    
+    matches = list(re.finditer(cloze_pattern, text))
+    if not matches:
+        return None
+    
+    # Extract all cloze deletions
+    cloze_texts = []
+    front_text = text
+    
+    for match in reversed(matches):  # Reverse to maintain positions when replacing
+        cloze_text = match.group(1)  # The answer text
+        cloze_texts.append(cloze_text)
+        # Replace with ellipsis or placeholder
+        front_text = front_text[:match.start()] + "..." + front_text[match.end():]
+    
+    # For multiple clozes, combine them; otherwise use single answer
+    back_text = ", ".join(cloze_texts) if len(cloze_texts) > 1 else cloze_texts[0]
+    
+    return (front_text.strip(), back_text.strip())
 
 
 @router.post("/import")
@@ -102,28 +131,54 @@ async def import_anki_deck(
                 # flds is pipe-separated fields (usually front|back for basic cards)
                 fields = flds.split('\x1f')  # Anki uses \x1f as field separator
                 
-                if len(fields) < 2:
+                if len(fields) < 1:
                     skipped_count += 1
                     continue
                 
-                # First field is usually the front (concept), second is back (definition)
-                concept = fields[0].strip()
-                definition = fields[1].strip()
+                # Get the first field (main content)
+                main_field = fields[0].strip()
                 
-                if not concept or not definition:
+                if not main_field:
                     skipped_count += 1
                     continue
+                
+                # Check if this is a cloze deletion card
+                cloze_result = parse_cloze_deletion(main_field)
+                
+                if cloze_result:
+                    # It's a cloze deletion card
+                    concept, definition = cloze_result
+                else:
+                    # Regular card - check if we have a second field
+                    if len(fields) >= 2:
+                        concept = main_field
+                        definition = fields[1].strip()
+                    else:
+                        # Single field card - use the field as both concept and definition
+                        concept = main_field
+                        definition = main_field
+                
+                if not concept:
+                    skipped_count += 1
+                    continue
+                
+                # If definition is empty, use concept as definition
+                if not definition:
+                    definition = concept
                 
                 # Parse tags (space-separated, may have # prefix)
                 tag_list = []
                 if tags:
                     tag_list = [tag.strip().lstrip('#') for tag in tags.split() if tag.strip()]
                 
+                # Convert tags to comma-separated string
+                tags_string = ', '.join(tag_list) if tag_list else None
+                
                 # Create flashcard
                 flashcard = Flashcard(
                     concept=concept,
                     definition=definition,
-                    tags=tag_list if tag_list else None,
+                    tags=tags_string,
                     deck_id=deck.id,
                     user_id=current_user.id
                 )
