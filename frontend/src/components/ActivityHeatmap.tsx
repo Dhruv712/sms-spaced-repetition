@@ -5,7 +5,9 @@ interface ActivityHeatmapProps {
 }
 
 const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({ stats }) => {
-  const activityData = stats?.activity_heatmap || {};
+  const activityData = useMemo(() => {
+    return stats?.activity_heatmap || {};
+  }, [stats?.activity_heatmap]);
   
   // Generate calendar grid for the past year
   const calendarData = useMemo(() => {

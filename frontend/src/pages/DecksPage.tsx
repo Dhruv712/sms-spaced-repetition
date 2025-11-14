@@ -5,16 +5,6 @@ import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import { buildApiUrl } from '../config';
 import AnkiImport from '../components/AnkiImport';
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer
-} from 'recharts';
 
 interface Deck {
   id: number;
@@ -33,8 +23,6 @@ const DecksPage: React.FC = () => {
   const [creatingDeck, setCreatingDeck] = useState(false);
   const [uploadingImage, setUploadingImage] = useState<number | null>(null);
   const [togglingSms, setTogglingSms] = useState<number | null>(null);
-  const [masteryData, setMasteryData] = useState<any>(null);
-  const [loadingMastery, setLoadingMastery] = useState(false);
   const [limits, setLimits] = useState<any>(null);
   const { token, user } = useAuth();
   const navigate = useNavigate();
@@ -86,30 +74,6 @@ const DecksPage: React.FC = () => {
   useEffect(() => {
     fetchLimits();
   }, [fetchLimits]);
-
-  const fetchMasteryData = useCallback(async () => {
-    if (!token || decks.length === 0) return;
-    
-    setLoadingMastery(true);
-    try {
-      const response = await axios.get(buildApiUrl('/decks/mastery/all'), {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-      setMasteryData(response.data);
-    } catch (err) {
-      console.error('Error fetching mastery data:', err);
-    } finally {
-      setLoadingMastery(false);
-    }
-  }, [token, decks.length]);
-
-  useEffect(() => {
-    if (decks.length > 0) {
-      fetchMasteryData();
-    }
-  }, [decks.length, fetchMasteryData]);
 
   const handleCreateDeck = async (e: React.FormEvent) => {
     e.preventDefault();
