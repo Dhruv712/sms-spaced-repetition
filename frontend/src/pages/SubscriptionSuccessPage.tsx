@@ -6,20 +6,15 @@ import { buildApiUrl } from '../config';
 const SubscriptionSuccessPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isPremium, setIsPremium] = useState(false);
 
   useEffect(() => {
     const verifySubscription = async () => {
       const sessionId = searchParams.get('session_id');
       
-      if (!sessionId) {
-        setError('No session ID found');
-        setLoading(false);
-        return;
-      }
-
       // Wait a moment for webhook to process
       setTimeout(async () => {
         try {
@@ -31,13 +26,32 @@ const SubscriptionSuccessPage: React.FC = () => {
           });
           
           if (response.ok) {
-            // The AuthContext should pick this up automatically
-            // But we can force a refresh by reloading
-            window.location.reload();
+            const userData = await response.json();
+            setIsPremium(userData.is_premium || false);
+            
+            // If user is premium, show success (even without session_id)
+            if (userData.is_premium) {
+              // The AuthContext should pick this up automatically
+              // But we can force a refresh by reloading
+              setTimeout(() => {
+                window.location.reload();
+              }, 1000);
+            } else if (!sessionId) {
+              // No session ID and not premium - show error
+              setError('No session ID found. If your subscription was activated, please refresh the page.');
+            } else {
+              // Has session ID but not premium yet - wait a bit more
+              setError('Subscription may still be processing. Please wait a moment and refresh the page.');
+            }
           }
         } catch (err) {
           console.error('Error verifying subscription:', err);
-          setError('Subscription may have been activated. Please refresh the page.');
+          // Check if user is already premium (from AuthContext)
+          if (user?.is_premium) {
+            setIsPremium(true);
+          } else {
+            setError('Subscription may have been activated. Please refresh the page.');
+          }
         } finally {
           setLoading(false);
         }
@@ -49,7 +63,7 @@ const SubscriptionSuccessPage: React.FC = () => {
     } else {
       setLoading(false);
     }
-  }, [searchParams, token]);
+  }, [searchParams, token, user]);
 
   if (loading) {
     return (
@@ -66,7 +80,7 @@ const SubscriptionSuccessPage: React.FC = () => {
     <div className="min-h-screen bg-secondary-50 dark:bg-secondary-900 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-2xl mx-auto">
         <div className="bg-white dark:bg-secondary-800 rounded-lg shadow-soft p-8 text-center">
-          {error ? (
+          {error && !isPremium ? (
             <>
               <div className="text-6xl mb-4">⚠️</div>
               <h1 className="text-3xl font-bold text-secondary-900 dark:text-white mb-4">
