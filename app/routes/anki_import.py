@@ -142,6 +142,27 @@ async def import_anki_deck(
             if 'notes' not in tables:
                 raise HTTPException(status_code=400, detail="Anki database structure not recognized. No 'notes' table found.")
             
+            # Check the col table for deck information (if it exists)
+            deck_name_from_file = None
+            if 'col' in tables:
+                try:
+                    cursor.execute("SELECT decks FROM col")
+                    col_data = cursor.fetchone()
+                    if col_data and col_data[0]:
+                        import json
+                        try:
+                            decks_json = json.loads(col_data[0])
+                            # decks_json is a dict where keys are deck IDs and values are deck info
+                            # Get the first deck name as a fallback
+                            if decks_json:
+                                first_deck = list(decks_json.values())[0]
+                                deck_name_from_file = first_deck.get('name', None)
+                                print(f"Found deck name from col table: {deck_name_from_file}")
+                        except:
+                            pass
+                except Exception as e:
+                    print(f"Could not read col table: {e}")
+            
             # Get notes from database
             # Anki notes table structure: id, guid, mid (model id), mod, usn, tags, flds, sfld, csum, flags, data
             # Let's also check the schema
@@ -167,11 +188,24 @@ async def import_anki_deck(
                 has_error = any(indicator in sample_flds or indicator in sample_sfld for indicator in error_indicators)
                 
                 if has_error:
-                    conn.close()
-                    raise HTTPException(
-                        status_code=400,
-                        detail="This appears to be an Anki Collection Package (.colpkg) file, which is not supported. Please export your deck from Anki as 'Anki Deck Package (*.apkg)' instead. In Anki: File → Export → Select 'Anki Deck Package (*.apkg)' → Choose your deck → Export."
-                    )
+                    # Check if there are any cards in the cards table that might have real data
+                    if 'cards' in tables:
+                        cursor.execute("SELECT COUNT(*) FROM cards")
+                        card_count = cursor.fetchone()[0]
+                        print(f"Found {card_count} cards in cards table")
+                        
+                        if card_count == 0:
+                            conn.close()
+                            raise HTTPException(
+                                status_code=400,
+                                detail="This Anki file appears to be corrupted or from an incompatible Anki version. The notes contain an error message instead of actual card content. Please try: 1) Update Anki to the latest version, 2) Re-export your deck as 'Anki Deck Package (*.apkg)', 3) If the deck was originally imported from a .colpkg file, you may need to recreate the cards manually."
+                            )
+                    else:
+                        conn.close()
+                        raise HTTPException(
+                            status_code=400,
+                            detail="This appears to be an Anki Collection Package (.colpkg) file, which is not supported. Please export your deck from Anki as 'Anki Deck Package (*.apkg)' instead. In Anki: File → Export → Select 'Anki Deck Package (*.apkg)' → Choose your deck → Export."
+                        )
             
             # Check if all notes contain the error message (indicates .colpkg format issue)
             cursor.execute("SELECT COUNT(*) FROM notes WHERE flds LIKE '%Please update to the latest Anki version%'")
@@ -181,17 +215,22 @@ async def import_anki_deck(
             total_notes = cursor.fetchone()[0]
             
             if error_note_count == total_notes and total_notes > 0:
+                conn.close()
                 raise HTTPException(
                     status_code=400,
-                    detail="This appears to be an Anki Collection Package (.colpkg) file, which is not supported. Please export your deck from Anki as 'Anki Deck Package (*.apkg)' instead. In Anki: File → Export → Select 'Anki Deck Package (*.apkg)' → Choose your deck → Export."
+                    detail="This Anki file appears to be corrupted or from an incompatible Anki version. All notes contain an error message instead of actual card content. Please try: 1) Update Anki to the latest version, 2) Re-export your deck as 'Anki Deck Package (*.apkg)', 3) If the deck was originally imported from a .colpkg file, you may need to recreate the cards manually."
                 )
             
-            # Get all notes from database
-            cursor.execute("SELECT id, flds, tags, sfld FROM notes")
+            # Get all notes from database, but filter out error messages
+            cursor.execute("SELECT id, flds, tags, sfld FROM notes WHERE flds NOT LIKE '%Please update to the latest Anki version%'")
             notes = cursor.fetchall()
             
             if not notes:
-                raise HTTPException(status_code=400, detail="No notes found in Anki deck")
+                conn.close()
+                raise HTTPException(
+                    status_code=400, 
+                    detail="No valid notes found in Anki deck. All notes appear to contain error messages. This might be a corrupted file or from an incompatible Anki version. Please try re-exporting the deck from Anki."
+                )
             
             # Get or create deck
             if deck_id:
@@ -202,8 +241,11 @@ async def import_anki_deck(
                 if not deck:
                     raise HTTPException(status_code=404, detail="Deck not found")
             else:
-                # Create a new deck with the filename (without extension)
-                deck_name = os.path.splitext(file.filename)[0]
+                # Create a new deck - use deck name from col table if available, otherwise use filename
+                if deck_name_from_file:
+                    deck_name = deck_name_from_file
+                else:
+                    deck_name = os.path.splitext(file.filename)[0]
                 deck = Deck(
                     name=deck_name,
                     user_id=current_user.id
