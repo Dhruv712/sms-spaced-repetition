@@ -16,9 +16,25 @@ def create_stripe_customer(user: User, db: Session) -> str:
     Create a Stripe customer for a user
     Returns the Stripe customer ID
     """
+    # If user has a customer ID, verify it exists in the current mode
     if user.stripe_customer_id:
-        return user.stripe_customer_id
+        try:
+            # Try to retrieve the customer to verify it exists in current mode
+            stripe.Customer.retrieve(user.stripe_customer_id)
+            return user.stripe_customer_id
+        except stripe.error.InvalidRequestError as e:
+            # Customer doesn't exist in current mode (e.g., exists in live but we're in test)
+            # Clear it and create a new one
+            print(f"Customer ID {user.stripe_customer_id} not valid in current mode, creating new customer: {e}")
+            user.stripe_customer_id = None
+            db.commit()
+        except Exception as e:
+            # Other errors - log and create new customer
+            print(f"Error retrieving customer {user.stripe_customer_id}: {e}")
+            user.stripe_customer_id = None
+            db.commit()
     
+    # Create a new customer
     try:
         customer = stripe.Customer.create(
             email=user.email,
