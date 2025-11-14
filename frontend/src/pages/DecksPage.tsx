@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import { buildApiUrl } from '../config';
 import AnkiImport from '../components/AnkiImport';
+import PdfImport from '../components/PdfImport';
 
 interface Deck {
   id: number;
@@ -253,6 +254,13 @@ const DecksPage: React.FC = () => {
             Organize your flashcards into custom collections.
           </p>
         </div>
+
+        {/* PDF Import for Premium Users */}
+        {user?.is_premium && (
+          <div className="mb-8">
+            <PdfImport onSuccess={fetchDecks} />
+          </div>
+        )}
 
         {/* Anki Import for Premium Users */}
         {user?.is_premium && (
