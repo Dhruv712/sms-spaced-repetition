@@ -211,18 +211,77 @@ const AccuracyGraph: React.FC<AccuracyGraphProps> = ({ stats }) => {
                 borderRadius: '4px',
               }}
               formatter={(value: any, name: string, props: any) => {
-                // For scatter plots, value is the y coordinate (accuracy)
-                // props.payload contains the actual data point
-                const accuracy = props.payload?.y ?? value;
-                const dateLabel = props.payload?.dateLabel || props.payload?.date || 'Accuracy';
-                return [`${accuracy.toFixed(1)}%`, name || dateLabel];
+                // Check if this is a trend line (name contains "Trend")
+                if (name && name.includes('Trend')) {
+                  // For trend lines, use the trend value from the payload
+                  const trendValue = props.payload?.trend ?? value;
+                  return [`${trendValue.toFixed(1)}%`, name];
+                } else {
+                  // For scatter points, use the y coordinate (accuracy)
+                  const accuracy = props.payload?.y ?? value;
+                  return [`${accuracy.toFixed(1)}%`, name];
+                }
               }}
               labelFormatter={(label: any, payload: any[]) => {
                 // Show the date label from the first payload item
-                if (payload && payload.length > 0 && payload[0].payload?.dateLabel) {
-                  return payload[0].payload.dateLabel;
+                if (payload && payload.length > 0) {
+                  // Find the first non-trend payload for date label
+                  const dataPayload = payload.find((p: any) => p.payload && !p.name?.includes('Trend')) || payload[0];
+                  if (dataPayload?.payload?.dateLabel) {
+                    return dataPayload.payload.dateLabel;
+                  }
+                  if (dataPayload?.payload?.date) {
+                    return new Date(dataPayload.payload.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                  }
                 }
                 return label;
+              }}
+              content={({ active, payload, label }) => {
+                if (!active || !payload || payload.length === 0) {
+                  return null;
+                }
+                
+                // Get date label from first data payload (not trend)
+                const dataPayload = payload.find((p: any) => p.payload && !p.name?.includes('Trend')) || payload[0];
+                const dateLabel = dataPayload?.payload?.dateLabel || 
+                                 (dataPayload?.payload?.date ? new Date(dataPayload.payload.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : label);
+                
+                return (
+                  <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-3">
+                    <p className="font-medium text-gray-900 dark:text-gray-100 mb-2">{dateLabel}</p>
+                    <div className="space-y-1">
+                      {payload.map((entry: any, index: number) => {
+                        // Determine the value to display
+                        let displayValue: number;
+                        if (entry.name && entry.name.includes('Trend')) {
+                          // For trend lines, use the trend value
+                          displayValue = entry.payload?.trend ?? entry.value;
+                        } else {
+                          // For scatter points, use the y coordinate
+                          displayValue = entry.payload?.y ?? entry.value;
+                        }
+                        
+                        // Get color from entry or use default
+                        const color = entry.color || DECK_COLORS[index % DECK_COLORS.length];
+                        
+                        return (
+                          <div key={index} className="flex items-center justify-between text-sm">
+                            <div className="flex items-center gap-2">
+                              <div 
+                                className="w-3 h-3 rounded-full" 
+                                style={{ backgroundColor: color }}
+                              />
+                              <span className="text-gray-700 dark:text-gray-300">{entry.name}</span>
+                            </div>
+                            <span className="font-medium text-gray-900 dark:text-gray-100">
+                              {displayValue.toFixed(1)}%
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
               }}
             />
             <Legend />
