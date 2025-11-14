@@ -4,13 +4,12 @@ import { buildApiUrl } from '../config';
 import axios from 'axios';
 import ActivityHeatmap from '../components/ActivityHeatmap';
 import AccuracyGraph from '../components/AccuracyGraph';
-import StreakDisplay from '../components/StreakDisplay';
 import StreakVisualization from '../components/StreakVisualization';
 import ComparisonCards from '../components/ComparisonCards';
 import WeakestAreas from '../components/WeakestAreas';
 
 const DashboardPage: React.FC = () => {
-  const { token, user } = useAuth();
+  const { token } = useAuth();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<any>(null);
 
