@@ -123,8 +123,6 @@ const DecksPage: React.FC = () => {
         },
       });
       setDecks(prevDecks => prevDecks.filter(deck => deck.id !== deckId));
-      // Refresh mastery data after deleting a deck
-      setTimeout(() => fetchMasteryData(), 500);
     } catch (err) {
       console.error('Error deleting deck:', err);
       setError('Failed to delete deck. Please try again.');
