@@ -193,18 +193,7 @@ async def process_user_message(user: User, body: str, passthrough: str, db: Sess
         else:
             print(f"⚠️ LoopMessage service initialization failed or timed out")
         
-        # Check if this is a response to a flashcard
-        if passthrough and passthrough.startswith("flashcard_id:"):
-            flashcard_id = int(passthrough.split(":")[1])
-            print(f"📎 Found flashcard_id in passthrough: {flashcard_id}")
-            # Only process if there's actual user input
-            if body and body.strip():
-                return await handle_flashcard_response(user, flashcard_id, body, service, db)
-            else:
-                print(f"⚠️ Empty body received with passthrough, ignoring")
-                return "No user input received"
-        
-        # Check conversation state
+        # Check conversation state first (needed for skip command check)
         try:
             print(f"🗣️ Looking up conversation state for user {user.id}...")
             state = db.query(ConversationState).filter_by(user_id=user.id).first()
@@ -222,6 +211,46 @@ async def process_user_message(user: User, body: str, passthrough: str, db: Sess
             import traceback
             traceback.print_exc()
             state = None
+        
+        # Handle skip command FIRST (before processing as answer)
+        if body and body.strip() and body.strip().lower() == "skip":
+            print(f"⏭️ User wants to skip current flashcard")
+            if state and state.state == "waiting_for_answer" and state.current_flashcard_id:
+                # Mark the card as skipped (don't create a review, just move to next)
+                state.state = "idle"
+                state.current_flashcard_id = None
+                db.commit()
+                
+                # Get next due flashcard
+                next_card = get_next_due_flashcard(user.id, db)
+                if next_card:
+                    set_conversation_state(user.id, next_card.id, db)
+                    if service:
+                        state_after = db.query(ConversationState).filter_by(user_id=user.id).first()
+                        message_count = state_after.message_count if state_after else 0
+                        result = service.send_flashcard(user.phone_number, next_card, message_count)
+                        if result.get("success"):
+                            return "Card skipped. Next flashcard sent."
+                    return "Card skipped. Next flashcard sent."
+                else:
+                    if service:
+                        service.send_feedback(user.phone_number, "Card skipped. You're all caught up!")
+                    return "Card skipped. No more due flashcards."
+            else:
+                if service:
+                    service.send_feedback(user.phone_number, "No card to skip. Send 'Yes' to start a session.")
+                return "No card to skip."
+        
+        # Check if this is a response to a flashcard
+        if passthrough and passthrough.startswith("flashcard_id:"):
+            flashcard_id = int(passthrough.split(":")[1])
+            print(f"📎 Found flashcard_id in passthrough: {flashcard_id}")
+            # Only process if there's actual user input
+            if body and body.strip():
+                return await handle_flashcard_response(user, flashcard_id, body, service, db)
+            else:
+                print(f"⚠️ Empty body received with passthrough, ignoring")
+                return "No user input received"
         
         # Fallback: If no passthrough but conversation state exists, use that
         print(f"🔍 Checking conversation state fallback...")
@@ -267,35 +296,6 @@ async def process_user_message(user: User, body: str, passthrough: str, db: Sess
                 return "Please reply 'SAVE' to save the flashcard or 'NO' to try again."
         else:
             print(f"❌ No flashcard confirmation state found. State: {state.state if state else 'None'}")
-        
-        # Handle skip command
-        if body.strip().lower() == "skip":
-            print(f"⏭️ User wants to skip current flashcard")
-            if state and state.state == "waiting_for_answer" and state.current_flashcard_id:
-                # Mark the card as skipped (don't create a review, just move to next)
-                state.state = "idle"
-                state.current_flashcard_id = None
-                db.commit()
-                
-                # Get next due flashcard
-                next_card = get_next_due_flashcard(user.id, db)
-                if next_card:
-                    set_conversation_state(user.id, next_card.id, db)
-                    if service:
-                        state_after = db.query(ConversationState).filter_by(user_id=user.id).first()
-                        message_count = state_after.message_count if state_after else 0
-                        result = service.send_flashcard(user.phone_number, next_card, message_count)
-                        if result.get("success"):
-                            return "Card skipped. Next flashcard sent."
-                    return "Card skipped. Next flashcard sent."
-                else:
-                    if service:
-                        service.send_feedback(user.phone_number, "Card skipped. You're all caught up!")
-                    return "Card skipped. No more due flashcards."
-            else:
-                if service:
-                    service.send_feedback(user.phone_number, "No card to skip. Send 'Yes' to start a session.")
-                return "No card to skip."
         
         # Handle general commands
         if "yes" in body.lower():
