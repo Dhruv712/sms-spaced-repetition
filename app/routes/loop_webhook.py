@@ -611,10 +611,11 @@ async def handle_start_session(user: User, service: LoopMessageService, db: Sess
         card = get_next_due_flashcard(user.id, db)
         if not card:
             if service:
-                service.send_feedback(user.phone_number, "You're all caught up! No flashcards due right now.")
+                completion_message = generate_session_completion_message(user.id, db)
+                service.send_feedback(user.phone_number, completion_message)
             else:
                 print(f"📤 LoopMessage service not initialized, skipping reminder.")
-            return "No due flashcards. Reminder sent."
+            return "No due flashcards. Completion message sent."
         
         # Set conversation state
         set_conversation_state(user.id, card.id, db)
