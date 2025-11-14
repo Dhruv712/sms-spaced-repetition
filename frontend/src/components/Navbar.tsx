@@ -56,6 +56,9 @@ const Navbar: React.FC = () => {
             {user ? (
               <>
                 <li>
+                  <Link to="/dashboard" className="text-primary-600 dark:text-primary-300 hover:underline hover:text-primary-800 dark:hover:text-primary-100 transition-colors duration-200">Dashboard</Link>
+                </li>
+                <li>
                   <Link to="/" className="text-primary-600 dark:text-primary-300 hover:underline hover:text-primary-800 dark:hover:text-primary-100 transition-colors duration-200">Flashcards</Link>
                 </li>
                 <li>
@@ -74,15 +77,15 @@ const Navbar: React.FC = () => {
                   <Link to="/help" className="text-primary-600 dark:text-primary-300 hover:underline hover:text-primary-800 dark:hover:text-primary-100 transition-colors duration-200">Help</Link>
                 </li>
                 {!user.is_premium && (
-                  <li>
-                    <Link to="/premium" className="bg-primary-600 text-white px-3 py-1 rounded hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600 transition-colors duration-200 font-medium">
-                      Get Premium
+                  <li className="whitespace-nowrap">
+                    <Link to="/premium" className="bg-primary-600 text-white px-3 py-1.5 rounded hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600 transition-colors duration-200 text-sm font-medium">
+                      Premium
                     </Link>
                   </li>
                 )}
                 {user.is_premium && (
-                  <li>
-                    <span className="bg-green-600 text-white px-3 py-1 rounded font-medium">
+                  <li className="whitespace-nowrap">
+                    <span className="bg-green-600 text-white px-3 py-1.5 rounded text-sm font-medium">
                       ⭐ Premium
                     </span>
                   </li>
@@ -165,6 +168,13 @@ const Navbar: React.FC = () => {
           <div className="pt-4 space-y-2">
             {user ? (
               <>
+                <Link 
+                  to="/dashboard" 
+                  onClick={closeMenu}
+                  className="block px-4 py-2 text-primary-600 dark:text-primary-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors duration-200"
+                >
+                  Dashboard
+                </Link>
                 <Link 
                   to="/" 
                   onClick={closeMenu}

@@ -16,6 +16,7 @@ import HelpPage from './pages/HelpPage';
 import PremiumPage from './pages/PremiumPage';
 import SubscriptionSuccessPage from './pages/SubscriptionSuccessPage';
 import SubscriptionCancelPage from './pages/SubscriptionCancelPage';
+import DashboardPage from './pages/DashboardPage';
 import PhoneNumberModal from './components/PhoneNumberModal';
 
 const AppContent: React.FC = () => {
@@ -121,6 +122,14 @@ const AppContent: React.FC = () => {
             element={
               <ProtectedRoute>
                 <SubscriptionCancelPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <DashboardPage />
               </ProtectedRoute>
             }
           />
