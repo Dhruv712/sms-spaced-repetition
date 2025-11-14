@@ -93,8 +93,7 @@ def get_review_stats(
     stats = (
         db.query(
             func.count(CardReview.id).label("total"),
-            func.sum(cast(CardReview.was_correct, Integer)).label("correct"),
-            func.avg(CardReview.confidence_score).label("average_confidence")
+            func.sum(cast(CardReview.was_correct, Integer)).label("correct")
         )
         .filter(CardReview.user_id == current_user.id)
         .first()
@@ -102,6 +101,5 @@ def get_review_stats(
 
     return {
         "total": stats.total or 0,
-        "correct": int(stats.correct or 0),
-        "average_confidence": round(stats.average_confidence or 0, 2)
+        "correct": int(stats.correct or 0)
     }

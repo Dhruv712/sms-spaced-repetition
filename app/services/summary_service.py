@@ -3,6 +3,8 @@ from app.models import User, CardReview, Flashcard
 from datetime import datetime, timezone, timedelta
 from typing import Dict, List, Any
 from sqlalchemy import func, and_
+from openai import OpenAI
+from app.utils.config import settings
 
 def get_daily_review_summary(user_id: int, db: Session, date: datetime = None) -> Dict[str, Any]:
     """
@@ -38,7 +40,7 @@ def get_daily_review_summary(user_id: int, db: Session, date: datetime = None) -
             "total_reviews": 0,
             "correct_reviews": 0,
             "percent_correct": 0.0,
-            "problem_areas": [],
+            "study_analysis": None,
             "streak_days": 0,
             "next_due_cards": 0,
             "message": "No reviews today. Time to start studying!"
@@ -59,26 +61,8 @@ def get_daily_review_summary(user_id: int, db: Session, date: datetime = None) -
     
     percent_correct = (correct_reviews / total_reviews) * 100 if total_reviews > 0 else 0
     
-    # Get problem areas (cards with low confidence scores)
-    problem_areas = []
-    
-    for flashcard_id in unique_flashcards_reviewed:
-        # Get the most recent review for this flashcard today
-        latest_review = max([r for r in reviews if r.flashcard_id == flashcard_id], 
-                           key=lambda r: r.review_date)
-        
-        if latest_review.confidence_score < 0.7:
-            flashcard = db.query(Flashcard).filter_by(id=flashcard_id).first()
-            if flashcard:
-                problem_areas.append({
-                    "concept": flashcard.concept,
-                    "confidence_score": latest_review.confidence_score,
-                    "user_response": latest_review.user_response
-                })
-    
-    # Sort by confidence score (lowest first) and take top 5
-    problem_areas.sort(key=lambda x: x["confidence_score"])
-    problem_areas = problem_areas[:5]
+    # Generate GPT analysis of areas to study hardest
+    study_analysis = generate_study_analysis(reviews, db)
     
     # Calculate streak (consecutive days with reviews)
     streak_days = calculate_streak_days(user_id, db)
@@ -87,14 +71,14 @@ def get_daily_review_summary(user_id: int, db: Session, date: datetime = None) -
     next_due_cards = count_next_due_cards(user_id, db)
     
     # Generate personalized message
-    message = generate_summary_message(total_reviews, percent_correct, streak_days, problem_areas)
+    message = generate_summary_message(total_reviews, percent_correct, streak_days, [])
     
     return {
         "date": date.strftime("%Y-%m-%d"),
         "total_reviews": total_reviews,
         "correct_reviews": correct_reviews,
         "percent_correct": round(percent_correct, 1),
-        "problem_areas": problem_areas,
+        "study_analysis": study_analysis,
         "streak_days": streak_days,
         "next_due_cards": next_due_cards,
         "message": message
@@ -188,6 +172,78 @@ def count_next_due_cards(user_id: int, db: Session) -> int:
     
     return due_cards
 
+def generate_study_analysis(reviews: List[CardReview], db: Session) -> str | None:
+    """
+    Generate a 1-2 sentence GPT analysis of areas the user needs to study hardest
+    """
+    if not reviews or not settings.OPENAI_API_KEY:
+        return None
+    
+    try:
+        # Get flashcards that were answered incorrectly or with low confidence
+        problem_flashcards = []
+        for review in reviews:
+            if not review.was_correct or (review.confidence_score and review.confidence_score < 0.7):
+                flashcard = db.query(Flashcard).filter_by(id=review.flashcard_id).first()
+                if flashcard:
+                    problem_flashcards.append({
+                        "concept": flashcard.concept,
+                        "tags": flashcard.tags if flashcard.tags else "",
+                        "was_correct": review.was_correct,
+                        "confidence": review.confidence_score
+                    })
+        
+        if not problem_flashcards:
+            return None
+        
+        # Group by tags/decks to identify patterns
+        tag_issues = {}
+        for card in problem_flashcards[:10]:  # Limit to top 10 for context
+            tags = card["tags"].split(",") if card["tags"] else []
+            for tag in tags:
+                tag = tag.strip()
+                if tag:
+                    if tag not in tag_issues:
+                        tag_issues[tag] = 0
+                    tag_issues[tag] += 1
+        
+        # Prepare context for GPT
+        problem_concepts = [card["concept"] for card in problem_flashcards[:5]]
+        top_tags = sorted(tag_issues.items(), key=lambda x: x[1], reverse=True)[:3]
+        
+        client = OpenAI(api_key=settings.OPENAI_API_KEY)
+        
+        prompt = f"""Based on the user's flashcard review performance, generate a brief 1-2 sentence analysis of areas they need to study hardest.
+
+Problem concepts: {', '.join(problem_concepts[:5])}
+Problem tags: {', '.join([tag for tag, _ in top_tags]) if top_tags else 'None'}
+
+Generate a concise, helpful analysis (1-2 sentences) focusing on the main areas of weakness. Be specific but brief. Don't mention individual flashcard concepts, focus on broader topics or patterns.
+
+Example: "You're struggling most with neuroscience concepts, particularly memory formation and synaptic plasticity. Consider reviewing these topics more frequently."
+
+Response (just the analysis, no quotes or formatting):"""
+        
+        response = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.7,
+            max_tokens=100
+        )
+        
+        analysis = response.choices[0].message.content.strip()
+        # Remove quotes if present
+        if analysis.startswith('"') and analysis.endswith('"'):
+            analysis = analysis[1:-1]
+        if analysis.startswith("'") and analysis.endswith("'"):
+            analysis = analysis[1:-1]
+        
+        return analysis if analysis else None
+        
+    except Exception as e:
+        print(f"Error generating study analysis: {e}")
+        return None
+
 def generate_summary_message(total_reviews: int, percent_correct: float, streak_days: int, problem_areas: List[Dict]) -> str:
     """Generate a personalized summary message"""
     
@@ -214,13 +270,7 @@ def generate_summary_message(total_reviews: int, percent_correct: float, streak_
     else:
         streak_msg = "Start building your streak tomorrow!"
     
-    # Problem areas message
-    if problem_areas:
-        problem_msg = f"\n\nAreas to focus on: {', '.join([area['concept'] for area in problem_areas[:3]])}"
-    else:
-        problem_msg = "\n\nNo problem areas today - you're crushing it!"
-    
-    return f"{performance}\n\n📊 Today's Stats:\n• {total_reviews} cards reviewed\n• {percent_correct}% correct\n\n{streak_msg}{problem_msg}"
+    return f"{performance}\n\n📊 Today's Stats:\n• {total_reviews} cards reviewed\n• {percent_correct}% correct\n\n{streak_msg}"
 
 def send_daily_summary_to_user(user: User, db: Session) -> Dict[str, Any]:
     """Send daily summary to a specific user"""
@@ -274,7 +324,7 @@ def format_summary_for_sms(summary: Dict[str, Any]) -> str:
     
     message += summary["message"]
     
-    if summary["problem_areas"]:
-        message += "\n\nFocus on: " + ", ".join([area["concept"] for area in summary["problem_areas"][:3]])
+    if summary.get("study_analysis"):
+        message += f"\n\n📝 {summary['study_analysis']}"
     
     return message

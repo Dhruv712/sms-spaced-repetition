@@ -7,10 +7,7 @@ interface DailySummaryData {
   total_reviews: number;
   correct_reviews: number;
   percent_correct: number;
-  problem_areas: Array<{
-    concept: string;
-    confidence_score: number;
-  }>;
+  study_analysis: string | null;
   streak_days: number;
   next_due_cards: number;
 }
@@ -94,19 +91,14 @@ const DailySummary: React.FC = () => {
         </div>
       </div>
 
-      {/* Problem Areas */}
-      {summary.problem_areas && summary.problem_areas.length > 0 && (
+      {/* Study Analysis */}
+      {summary.study_analysis && (
         <div className="mb-4">
-          <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">🎯 Areas to Review</h3>
-          <div className="space-y-2">
-            {summary.problem_areas.slice(0, 3).map((area, index) => (
-              <div key={index} className="flex justify-between items-center p-2 bg-red-50 dark:bg-red-900/20 rounded">
-                <span className="text-sm text-gray-700 dark:text-gray-300">{area.concept}</span>
-                <span className="text-xs text-red-600 dark:text-red-400">
-                  {formatPercent(area.confidence_score)} confidence
-                </span>
-              </div>
-            ))}
+          <h3 className="text-sm font-light text-gray-700 dark:text-gray-300 mb-2">Areas to Review</h3>
+          <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+            <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+              {summary.study_analysis}
+            </p>
           </div>
         </div>
       )}

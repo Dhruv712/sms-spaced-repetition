@@ -95,12 +95,12 @@ const Navbar: React.FC = () => {
             {user && (
               <>
                 {!user.is_premium ? (
-                  <Link to="/premium" className="bg-primary-600 text-white px-3 py-1.5 rounded hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600 transition-colors duration-200 text-sm font-medium whitespace-nowrap">
+                  <Link to="/premium" className="text-primary-600 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-100 px-3 py-1.5 text-sm font-light whitespace-nowrap transition-colors duration-200">
                     Premium
                   </Link>
                 ) : (
-                  <span className="bg-green-600 text-white px-3 py-1.5 rounded text-sm font-medium whitespace-nowrap">
-                    ⭐ Premium
+                  <span className="text-gray-600 dark:text-gray-400 px-3 py-1.5 text-sm font-light whitespace-nowrap">
+                    Premium
                   </span>
                 )}
               </>
@@ -122,7 +122,7 @@ const Navbar: React.FC = () => {
                 <span className="text-gray-600 dark:text-gray-300 text-sm whitespace-nowrap hidden lg:inline">{user.email}</span>
                 <button
                   onClick={handleLogout}
-                  className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 transition-colors duration-200 whitespace-nowrap text-sm"
+                  className="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 px-4 py-2 text-sm font-light whitespace-nowrap transition-colors duration-200"
                 >
                   Logout
                 </button>
@@ -226,8 +226,8 @@ const Navbar: React.FC = () => {
                   </Link>
                 )}
                 {user.is_premium && (
-                  <div className="px-4 py-2 bg-green-600 text-white rounded font-medium text-center">
-                    ⭐ Premium
+                  <div className="px-4 py-2 text-gray-600 dark:text-gray-400 text-sm font-light text-center">
+                    Premium
                   </div>
                 )}
                 <div className="px-4 py-2 text-gray-600 dark:text-gray-300 text-sm">
@@ -235,7 +235,7 @@ const Navbar: React.FC = () => {
                 </div>
                 <button
                   onClick={handleLogout}
-                  className="w-full text-left px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 transition-colors duration-200"
+                  className="w-full text-left px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors duration-200"
                 >
                   Logout
                 </button>
