@@ -124,7 +124,7 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({ stats }) => {
             {calendarData.map((week, weekIndex) => (
               <div key={weekIndex} className="flex flex-col gap-1">
                 {week.map((dayData, dayIndex) => {
-                  const { count, date, dateStr } = dayData;
+                  const { count, date } = dayData;
                   const isFuture = date && date > new Date();
                   
                   // Format date for tooltip
