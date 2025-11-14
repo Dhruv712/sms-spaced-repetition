@@ -128,3 +128,10 @@ def check_flashcard_limit_in_deck(deck_id: int, user: User, db: Session) -> dict
         "remaining": remaining
     }
 
+
+def check_premium_status(user: User) -> bool:
+    """
+    Check if user has premium status
+    """
+    return user.is_premium or False
+

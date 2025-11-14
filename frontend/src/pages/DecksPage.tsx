@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import { buildApiUrl } from '../config';
+import AnkiImport from '../components/AnkiImport';
 import {
   LineChart,
   Line,
@@ -282,6 +283,13 @@ const DecksPage: React.FC = () => {
           </p>
         </div>
 
+        {/* Anki Import for Premium Users */}
+        {user?.is_premium && (
+          <div className="mb-8">
+            <AnkiImport onSuccess={fetchDecks} />
+          </div>
+        )}
+
         <div className="bg-white dark:bg-secondary-800 rounded-lg shadow-soft p-6 mb-8">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold text-secondary-900 dark:text-white">Create New Deck</h2>
@@ -411,89 +419,6 @@ const DecksPage: React.FC = () => {
           )}
         </div>
 
-        {/* Unified Mastery Graph */}
-        {decks.length > 0 && (
-          <div className="bg-white dark:bg-secondary-800 rounded-lg shadow-soft p-6 mt-8">
-            <h2 className="text-xl font-semibold text-secondary-900 dark:text-white mb-4">
-              Unified Mastery Graph
-            </h2>
-            <p className="text-sm text-secondary-600 dark:text-secondary-400 mb-4">
-              Track your accuracy across all decks over time
-            </p>
-            
-            {loadingMastery ? (
-              <div className="flex items-center justify-center h-64">
-                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary-500"></div>
-              </div>
-            ) : masteryData && masteryData.data_points && masteryData.data_points.length > 0 ? (
-              <div>
-                <ResponsiveContainer width="100%" height={400}>
-                  <LineChart data={masteryData.data_points.map((point: any) => ({
-                    ...point,
-                    date: new Date(point.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-                  }))}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis
-                      dataKey="date"
-                      stroke="#6b7280"
-                      style={{ fontSize: '12px' }}
-                    />
-                    <YAxis
-                      yAxisId="left"
-                      stroke="#3b82f6"
-                      style={{ fontSize: '12px' }}
-                      domain={[0, 100]}
-                      label={{ value: 'Accuracy (%)', angle: -90, position: 'insideLeft' }}
-                    />
-                    <YAxis
-                      yAxisId="right"
-                      orientation="right"
-                      stroke="#10b981"
-                      style={{ fontSize: '12px' }}
-                      label={{ value: 'Cards Reviewed', angle: 90, position: 'insideRight' }}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: '#ffffff',
-                        border: '1px solid #e5e7eb',
-                        borderRadius: '8px',
-                      }}
-                      formatter={(value: any, name: string) => {
-                        if (name === 'accuracy') return [`${value}%`, 'Accuracy'];
-                        if (name === 'cards_reviewed') return [value, 'Cards Reviewed'];
-                        return [value, name];
-                      }}
-                      labelFormatter={(label) => `Date: ${label}`}
-                    />
-                    <Legend />
-                    <Line
-                      yAxisId="left"
-                      type="monotone"
-                      dataKey="accuracy"
-                      stroke="#3b82f6"
-                      strokeWidth={2}
-                      name="Overall Accuracy (%)"
-                      dot={{ r: 4 }}
-                    />
-                    <Line
-                      yAxisId="right"
-                      type="monotone"
-                      dataKey="cards_reviewed"
-                      stroke="#10b981"
-                      strokeWidth={2}
-                      name="Cards Reviewed"
-                      dot={{ r: 4 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            ) : (
-              <div className="text-center py-8 text-secondary-600 dark:text-secondary-400">
-                No review data yet. Start reviewing cards to see your progress across all decks!
-              </div>
-            )}
-          </div>
-        )}
       </div>
     </div>
   );

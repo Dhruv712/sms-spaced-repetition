@@ -18,6 +18,7 @@ from app.routes.loop_webhook import router as loop_webhook_router
 from app.routes.help import router as help_router
 from app.routes.subscription import router as subscription_router
 from app.routes.dashboard import router as dashboard_router
+from app.routes.anki_import import router as anki_import_router
 
 # Safe database setup - only create tables if they don't exist
 try:
@@ -77,3 +78,4 @@ app.include_router(loop_webhook_router, prefix="/loop-webhook", tags=["Loop_Webh
 app.include_router(help_router, prefix="/help", tags=["Help"])
 app.include_router(subscription_router, prefix="/subscription", tags=["Subscription"])
 app.include_router(dashboard_router, prefix="/dashboard", tags=["Dashboard"])
+app.include_router(anki_import_router, prefix="/anki", tags=["Anki Import"])
