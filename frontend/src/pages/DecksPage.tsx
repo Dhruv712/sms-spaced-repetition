@@ -93,8 +93,6 @@ const DecksPage: React.FC = () => {
       );
       setDecks(prevDecks => [...prevDecks, response.data]);
       setNewDeckName('');
-      // Refresh mastery data after creating a deck
-      setTimeout(() => fetchMasteryData(), 500);
     } catch (err: any) {
       console.error('Error creating deck:', err);
       const errorMessage = err.response?.data?.detail || 'Failed to create deck. Please try again.';
