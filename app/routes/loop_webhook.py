@@ -233,9 +233,11 @@ async def process_user_message(user: User, body: str, passthrough: str, db: Sess
                             return "Card skipped. Next flashcard sent."
                     return "Card skipped. Next flashcard sent."
                 else:
+                    # Send completion message with stats
+                    completion_message = generate_session_completion_message(user.id, db)
                     if service:
-                        service.send_feedback(user.phone_number, "Card skipped. You're all caught up!")
-                    return "Card skipped. No more due flashcards."
+                        service.send_feedback(user.phone_number, completion_message)
+                    return "Card skipped. Completion message sent."
             else:
                 if service:
                     service.send_feedback(user.phone_number, "No card to skip. Send 'Yes' to start a session.")
@@ -327,6 +329,121 @@ async def process_user_message(user: User, body: str, passthrough: str, db: Sess
         import traceback
         traceback.print_exc()
         return "Sorry, there was an error processing your message. Please try again."
+
+def generate_session_completion_message(user_id: int, db: Session) -> str:
+    """
+    Generate completion message with session stats and next review time
+    """
+    from app.models import CardReview, Flashcard
+    from datetime import datetime, timezone, timedelta
+    
+    today = datetime.now(timezone.utc).date()
+    start_of_day = datetime.combine(today, datetime.min.time(), tzinfo=timezone.utc)
+    end_of_day = datetime.combine(today, datetime.max.time(), tzinfo=timezone.utc)
+    
+    # Get all SMS reviews from today
+    today_reviews = db.query(CardReview).filter(
+        CardReview.user_id == user_id,
+        CardReview.is_sms_review == True,
+        CardReview.review_date >= start_of_day,
+        CardReview.review_date <= end_of_day
+    ).all()
+    
+    if not today_reviews:
+        # No reviews today, just send basic message
+        next_review_time = get_next_review_time()
+        return f"That's it for now! Next review: {next_review_time}"
+    
+    # Calculate stats
+    total_reviews = len(today_reviews)
+    correct_reviews = sum(1 for r in today_reviews if r.was_correct)
+    percent_correct = (correct_reviews / total_reviews * 100) if total_reviews > 0 else 0
+    
+    # Find issue areas (tags/decks with lowest accuracy)
+    tag_stats = {}
+    deck_stats = {}
+    
+    for review in today_reviews:
+        flashcard = db.query(Flashcard).filter_by(id=review.flashcard_id).first()
+        if not flashcard:
+            continue
+        
+        # Track by tag
+        if flashcard.tags:
+            tag = flashcard.tags
+            if tag not in tag_stats:
+                tag_stats[tag] = {'total': 0, 'correct': 0}
+            tag_stats[tag]['total'] += 1
+            if review.was_correct:
+                tag_stats[tag]['correct'] += 1
+        
+        # Track by deck
+        if flashcard.deck_id:
+            deck_id = flashcard.deck_id
+            if deck_id not in deck_stats:
+                deck_stats[deck_id] = {'total': 0, 'correct': 0}
+            deck_stats[deck_id]['total'] += 1
+            if review.was_correct:
+                deck_stats[deck_id]['correct'] += 1
+    
+    # Find weakest areas (lowest accuracy, minimum 2 reviews)
+    issue_areas = []
+    
+    for tag, stats in tag_stats.items():
+        if stats['total'] >= 2:
+            accuracy = (stats['correct'] / stats['total'] * 100) if stats['total'] > 0 else 0
+            if accuracy < 70:  # Less than 70% correct
+                issue_areas.append(f"{tag} ({int(accuracy)}%)")
+    
+    for deck_id, stats in deck_stats.items():
+        if stats['total'] >= 2:
+            from app.models import Deck
+            deck = db.query(Deck).filter_by(id=deck_id).first()
+            if deck:
+                accuracy = (stats['correct'] / stats['total'] * 100) if stats['total'] > 0 else 0
+                if accuracy < 70:  # Less than 70% correct
+                    issue_areas.append(f"{deck.name} ({int(accuracy)}%)")
+    
+    # Limit to top 3 issue areas
+    issue_areas = issue_areas[:3]
+    
+    # Get next review time (12 PM or 9 PM UTC)
+    next_review_time = get_next_review_time()
+    
+    # Build message
+    message = f"That's it for now! 📊\n\n"
+    message += f"Today: {correct_reviews}/{total_reviews} correct ({int(percent_correct)}%)\n"
+    
+    if issue_areas:
+        message += f"\nFocus areas: {', '.join(issue_areas)}\n"
+    
+    message += f"\nNext review: {next_review_time}"
+    
+    return message
+
+
+def get_next_review_time() -> str:
+    """
+    Get the next review time (12 PM or 9 PM UTC, whichever comes next)
+    """
+    from datetime import datetime, timezone, time
+    
+    now = datetime.now(timezone.utc)
+    today = now.date()
+    
+    # 12 PM UTC
+    noon_utc = datetime.combine(today, time(12, 0), tzinfo=timezone.utc)
+    # 9 PM UTC
+    evening_utc = datetime.combine(today, time(21, 0), tzinfo=timezone.utc)
+    
+    if now < noon_utc:
+        return "12 PM UTC today"
+    elif now < evening_utc:
+        return "9 PM UTC today"
+    else:
+        # Next is tomorrow at 12 PM
+        return "12 PM UTC tomorrow"
+
 
 async def handle_flashcard_response(
     user: User, 
@@ -472,8 +589,12 @@ async def handle_flashcard_response(
                 print(f"📤 LoopMessage service not initialized, skipping next flashcard.")
                 return f"Response processed. Feedback sent. Error sending next flashcard."
         else:
-            print(f"📭 No more due flashcards")
-            return f"Response processed. Feedback sent. You're all caught up!"
+            print(f"📭 No more due flashcards - sending completion message with stats")
+            # Send completion message with stats
+            completion_message = generate_session_completion_message(user.id, db)
+            if service:
+                service.send_feedback(user.phone_number, completion_message)
+            return f"Response processed. Feedback sent. Completion message sent."
         
     except Exception as e:
         print(f"❌ Error handling flashcard response: {e}")
