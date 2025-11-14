@@ -153,7 +153,25 @@ async def import_anki_deck(
             cursor.execute("SELECT id, flds, tags, sfld FROM notes LIMIT 1")
             sample = cursor.fetchone()
             if sample:
-                print(f"Sample note - id: {sample[0]}, flds: {sample[1][:100] if sample[1] else None}, tags: {sample[2]}, sfld: {sample[3]}")
+                sample_flds = str(sample[1]) if sample[1] is not None else ""
+                sample_sfld = str(sample[3]) if sample[3] is not None else ""
+                print(f"Sample note - id: {sample[0]}, flds: {sample_flds[:100]}, tags: {sample[2]}, sfld: {sample_sfld[:100]}")
+                
+                # Check if the sample contains the error message - if so, this is definitely a .colpkg issue
+                error_indicators = [
+                    "Please update to the latest Anki version",
+                    "import the .colpkg/.apkg file again",
+                    ".colpkg"
+                ]
+                
+                has_error = any(indicator in sample_flds or indicator in sample_sfld for indicator in error_indicators)
+                
+                if has_error:
+                    conn.close()
+                    raise HTTPException(
+                        status_code=400,
+                        detail="This appears to be an Anki Collection Package (.colpkg) file, which is not supported. Please export your deck from Anki as 'Anki Deck Package (*.apkg)' instead. In Anki: File → Export → Select 'Anki Deck Package (*.apkg)' → Choose your deck → Export."
+                    )
             
             # Check if all notes contain the error message (indicates .colpkg format issue)
             cursor.execute("SELECT COUNT(*) FROM notes WHERE flds LIKE '%Please update to the latest Anki version%'")
@@ -198,29 +216,37 @@ async def import_anki_deck(
             skipped_count = 0
             
             for note_id, flds, tags, sfld in notes:
-                # flds is pipe-separated fields (usually front|back for basic cards)
-                fields = flds.split('\x1f')  # Anki uses \x1f as field separator
-                
-                if len(fields) < 1:
-                    skipped_count += 1
-                    continue
-                
-                # Get the first field (main content) and strip HTML
-                main_field = strip_html(fields[0].strip()) if fields[0] else ""
-                
-                # If main_field is empty or looks like an error, try using sfld (sort field) as fallback
-                if not main_field or "Please update to the latest Anki version" in main_field or "import the .colpkg/.apkg file again" in main_field:
-                    if sfld:
-                        main_field = strip_html(sfld.strip())
-                        # Re-split fields if we're using sfld - it might be different
-                        if not main_field or "Please update to the latest Anki version" in main_field:
-                            print(f"Skipping note {note_id} - appears to be an error message or empty")
-                            skipped_count += 1
-                            continue
-                    else:
-                        print(f"Skipping note {note_id} - empty field and no sfld")
+                try:
+                    # Convert sfld to string if it's not already (it might be an integer in the schema)
+                    sfld_str = str(sfld) if sfld is not None else ""
+                    
+                    # flds is pipe-separated fields (usually front|back for basic cards)
+                    fields = flds.split('\x1f') if flds else []  # Anki uses \x1f as field separator
+                    
+                    if len(fields) < 1:
                         skipped_count += 1
                         continue
+                    
+                    # Get the first field (main content) and strip HTML
+                    main_field = strip_html(fields[0].strip()) if fields[0] else ""
+                    
+                    # If main_field is empty or looks like an error, try using sfld (sort field) as fallback
+                    if not main_field or "Please update to the latest Anki version" in main_field or "import the .colpkg/.apkg file again" in main_field:
+                        if sfld_str and sfld_str != "None" and not sfld_str.isdigit():
+                            main_field = strip_html(sfld_str.strip())
+                            # Re-split fields if we're using sfld - it might be different
+                            if not main_field or "Please update to the latest Anki version" in main_field:
+                                print(f"Skipping note {note_id} - appears to be an error message or empty")
+                                skipped_count += 1
+                                continue
+                        else:
+                            print(f"Skipping note {note_id} - empty field and no valid sfld")
+                            skipped_count += 1
+                            continue
+                except Exception as e:
+                    print(f"Error processing note {note_id}: {str(e)}")
+                    skipped_count += 1
+                    continue
                 
                 # Check if this is a cloze deletion card
                 cloze_result = parse_cloze_deletion(main_field)
@@ -269,6 +295,15 @@ async def import_anki_deck(
                 )
                 db.add(flashcard)
                 created_count += 1
+            
+            # Check if we actually created any flashcards
+            if created_count == 0:
+                db.rollback()
+                conn.close()
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Could not import any flashcards from this Anki deck. All {skipped_count} notes were skipped. This might be an Anki Collection Package (.colpkg) file. Please export your deck from Anki as 'Anki Deck Package (*.apkg)' instead. In Anki: File → Export → Select 'Anki Deck Package (*.apkg)' → Choose your deck → Export."
+                )
             
             db.commit()
             conn.close()
