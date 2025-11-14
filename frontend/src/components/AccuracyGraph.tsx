@@ -15,12 +15,25 @@ interface AccuracyGraphProps {
   stats: any;
 }
 
+// Better color palette - more distinct colors (moved outside component to avoid dependency issues)
+const DECK_COLORS = [
+  '#3b82f6', // Blue
+  '#ef4444', // Red
+  '#10b981', // Green
+  '#f59e0b', // Amber
+  '#8b5cf6', // Purple
+  '#ec4899', // Pink
+  '#06b6d4', // Cyan
+  '#f97316', // Orange
+];
+
 const AccuracyGraph: React.FC<AccuracyGraphProps> = ({ stats }) => {
   const [viewMode, setViewMode] = useState<'overall' | 'decks'>('overall');
   const [selectedDecks, setSelectedDecks] = useState<number[]>([]);
   
-  const overallData = stats?.accuracy_over_time || [];
-  const deckData = stats?.deck_accuracy || [];
+  // Memoize data to avoid dependency issues
+  const overallData = useMemo(() => stats?.accuracy_over_time || [], [stats?.accuracy_over_time]);
+  const deckData = useMemo(() => stats?.deck_accuracy || [], [stats?.deck_accuracy]);
   
   const handleDeckToggle = (deckId: number) => {
     setSelectedDecks(prev => 
@@ -29,18 +42,6 @@ const AccuracyGraph: React.FC<AccuracyGraphProps> = ({ stats }) => {
         : [...prev, deckId]
     );
   };
-  
-  // Better color palette - more distinct colors
-  const deckColors = [
-    '#3b82f6', // Blue
-    '#ef4444', // Red
-    '#10b981', // Green
-    '#f59e0b', // Amber
-    '#8b5cf6', // Purple
-    '#ec4899', // Pink
-    '#06b6d4', // Cyan
-    '#f97316', // Orange
-  ];
   
   // Calculate linear regression for trend line
   const calculateTrend = (points: any[]) => {
@@ -97,12 +98,12 @@ const AccuracyGraph: React.FC<AccuracyGraphProps> = ({ stats }) => {
         scatter.push({
           name: deck.deck_name,
           data: points,
-          color: deckColors[index % deckColors.length]
+          color: DECK_COLORS[index % DECK_COLORS.length]
         });
         trend.push({
           name: `${deck.deck_name} Trend`,
           data: withTrend,
-          color: deckColors[index % deckColors.length]
+          color: DECK_COLORS[index % DECK_COLORS.length]
         });
       });
       
@@ -172,7 +173,7 @@ const AccuracyGraph: React.FC<AccuracyGraphProps> = ({ stats }) => {
                     : 'bg-white text-gray-700 border border-gray-300 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700'
                 }`}
                 style={selectedDecks.includes(deck.deck_id) ? {
-                  backgroundColor: deckColors[selectedDecks.indexOf(deck.deck_id) % deckColors.length]
+                  backgroundColor: DECK_COLORS[selectedDecks.indexOf(deck.deck_id) % DECK_COLORS.length]
                 } : {}}
               >
                 {deck.deck_name}
