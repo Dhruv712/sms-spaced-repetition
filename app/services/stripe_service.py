@@ -59,7 +59,16 @@ def create_checkout_session(user: User, db: Session, success_url: str, cancel_ur
     Create a Stripe Checkout session for subscription
     Returns the session URL
     """
+    # Validate price ID is set
+    if not settings.STRIPE_PRICE_ID_MONTHLY:
+        raise ValueError("STRIPE_PRICE_ID_MONTHLY is not configured. Please set it in environment variables.")
+    
     try:
+        # Verify the price exists and is a recurring price
+        price = stripe.Price.retrieve(settings.STRIPE_PRICE_ID_MONTHLY)
+        if price.type != 'recurring':
+            raise ValueError(f"Price {settings.STRIPE_PRICE_ID_MONTHLY} is not a recurring price. It must be a subscription price.")
+        
         # Ensure user has a Stripe customer ID
         customer_id = create_stripe_customer(user, db)
         
@@ -82,6 +91,9 @@ def create_checkout_session(user: User, db: Session, success_url: str, cancel_ur
             "session_id": session.id,
             "url": session.url
         }
+    except stripe.error.InvalidRequestError as e:
+        print(f"Stripe API error creating checkout session: {e}")
+        raise ValueError(f"Stripe error: {str(e)}")
     except Exception as e:
         print(f"Error creating checkout session: {e}")
         raise
