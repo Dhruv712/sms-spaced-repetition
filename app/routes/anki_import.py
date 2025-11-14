@@ -129,9 +129,30 @@ async def import_anki_deck(
             conn = sqlite3.connect(db_file)
             cursor = conn.cursor()
             
+            # First, let's check what tables exist
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
+            tables = [row[0] for row in cursor.fetchall()]
+            print(f"Available tables: {tables}")
+            
+            # Check if we have a notes table
+            if 'notes' not in tables:
+                raise HTTPException(status_code=400, detail="Anki database structure not recognized. No 'notes' table found.")
+            
             # Get notes from database
             # Anki notes table structure: id, guid, mid (model id), mod, usn, tags, flds, sfld, csum, flags, data
-            cursor.execute("SELECT id, flds, tags FROM notes")
+            # Let's also check the schema
+            cursor.execute("PRAGMA table_info(notes)")
+            columns = cursor.fetchall()
+            print(f"Notes table columns: {columns}")
+            
+            # Get a sample note to see what we're working with
+            cursor.execute("SELECT id, flds, tags, sfld FROM notes LIMIT 1")
+            sample = cursor.fetchone()
+            if sample:
+                print(f"Sample note - id: {sample[0]}, flds: {sample[1][:100] if sample[1] else None}, tags: {sample[2]}, sfld: {sample[3]}")
+            
+            # Get all notes from database
+            cursor.execute("SELECT id, flds, tags, sfld FROM notes")
             notes = cursor.fetchall()
             
             if not notes:
@@ -159,7 +180,7 @@ async def import_anki_deck(
             created_count = 0
             skipped_count = 0
             
-            for note_id, flds, tags in notes:
+            for note_id, flds, tags, sfld in notes:
                 # flds is pipe-separated fields (usually front|back for basic cards)
                 fields = flds.split('\x1f')  # Anki uses \x1f as field separator
                 
@@ -168,11 +189,21 @@ async def import_anki_deck(
                     continue
                 
                 # Get the first field (main content) and strip HTML
-                main_field = strip_html(fields[0].strip())
+                main_field = strip_html(fields[0].strip()) if fields[0] else ""
                 
-                if not main_field:
-                    skipped_count += 1
-                    continue
+                # If main_field is empty or looks like an error, try using sfld (sort field) as fallback
+                if not main_field or "Please update to the latest Anki version" in main_field or "import the .colpkg/.apkg file again" in main_field:
+                    if sfld:
+                        main_field = strip_html(sfld.strip())
+                        # Re-split fields if we're using sfld - it might be different
+                        if not main_field or "Please update to the latest Anki version" in main_field:
+                            print(f"Skipping note {note_id} - appears to be an error message or empty")
+                            skipped_count += 1
+                            continue
+                    else:
+                        print(f"Skipping note {note_id} - empty field and no sfld")
+                        skipped_count += 1
+                        continue
                 
                 # Check if this is a cloze deletion card
                 cloze_result = parse_cloze_deletion(main_field)
@@ -182,9 +213,14 @@ async def import_anki_deck(
                     concept, definition = cloze_result
                 else:
                     # Regular card - check if we have a second field
-                    if len(fields) >= 2:
+                    if len(fields) >= 2 and fields[1]:
                         concept = main_field
                         definition = strip_html(fields[1].strip())
+                        # Skip if definition is also the error message
+                        if "Please update to the latest Anki version" in definition:
+                            print(f"Skipping note {note_id} - definition field contains error message")
+                            skipped_count += 1
+                            continue
                     else:
                         # Single field card - use the field as both concept and definition
                         concept = main_field
