@@ -170,13 +170,34 @@ async def import_anki_deck(
             columns = cursor.fetchall()
             print(f"Notes table columns: {columns}")
             
-            # Get a sample note to see what we're working with
-            cursor.execute("SELECT id, flds, tags, sfld FROM notes LIMIT 1")
-            sample = cursor.fetchone()
-            if sample:
+            # Get a sample note to see what we're working with - also check the data field
+            cursor.execute("SELECT id, flds, tags, sfld, data FROM notes LIMIT 5")
+            sample_notes = cursor.fetchall()
+            print(f"Sample notes (first 5):")
+            for sample in sample_notes:
                 sample_flds = str(sample[1]) if sample[1] is not None else ""
                 sample_sfld = str(sample[3]) if sample[3] is not None else ""
-                print(f"Sample note - id: {sample[0]}, flds: {sample_flds[:100]}, tags: {sample[2]}, sfld: {sample_sfld[:100]}")
+                sample_data = str(sample[4]) if sample[4] is not None else ""
+                print(f"  Note {sample[0]}: flds={sample_flds[:100]}, sfld={sample_sfld[:100]}, data={sample_data[:100]}")
+            
+            # Check if we have cards table and see what's there
+            if 'cards' in tables:
+                cursor.execute("SELECT COUNT(*) FROM cards")
+                card_count = cursor.fetchone()[0]
+                print(f"Total cards in cards table: {card_count}")
+                
+                if card_count > 0:
+                    # Get a sample card to see structure
+                    cursor.execute("SELECT id, nid, did, ord FROM cards LIMIT 1")
+                    sample_card = cursor.fetchone()
+                    if sample_card:
+                        print(f"Sample card: id={sample_card[0]}, nid={sample_card[1]}, did={sample_card[2]}, ord={sample_card[3]}")
+            
+            # Get a sample note to check for error messages
+            if sample_notes:
+                sample = sample_notes[0]
+                sample_flds = str(sample[1]) if sample[1] is not None else ""
+                sample_sfld = str(sample[3]) if sample[3] is not None else ""
                 
                 # Check if the sample contains the error message - if so, this is definitely a .colpkg issue
                 error_indicators = [
@@ -221,15 +242,35 @@ async def import_anki_deck(
                     detail="This Anki file appears to be corrupted or from an incompatible Anki version. All notes contain an error message instead of actual card content. Please try: 1) Update Anki to the latest version, 2) Re-export your deck as 'Anki Deck Package (*.apkg)', 3) If the deck was originally imported from a .colpkg file, you may need to recreate the cards manually."
                 )
             
+            # Check models table to see what note types exist
+            if 'notetypes' in tables or 'models' in tables:
+                model_table = 'notetypes' if 'notetypes' in tables else 'models'
+                cursor.execute(f"SELECT COUNT(*) FROM {model_table}")
+                model_count = cursor.fetchone()[0]
+                print(f"Found {model_count} note types/models")
+                
+                if model_count > 0:
+                    cursor.execute(f"SELECT id, name, flds FROM {model_table} LIMIT 1")
+                    sample_model = cursor.fetchone()
+                    if sample_model:
+                        print(f"Sample model: id={sample_model[0]}, name={sample_model[1]}, flds={sample_model[2][:100] if sample_model[2] else None}")
+            
             # Get all notes from database, but filter out error messages
             cursor.execute("SELECT id, flds, tags, sfld FROM notes WHERE flds NOT LIKE '%Please update to the latest Anki version%'")
             notes = cursor.fetchall()
+            
+            # If we filtered out all notes, let's check if there are ANY notes with actual content
+            if not notes:
+                # Try getting notes that don't match the exact error message pattern
+                cursor.execute("SELECT id, flds, tags, sfld FROM notes WHERE flds IS NOT NULL AND flds != '' AND LENGTH(flds) > 10")
+                notes = cursor.fetchall()
+                print(f"After filtering: found {len(notes)} notes with content")
             
             if not notes:
                 conn.close()
                 raise HTTPException(
                     status_code=400, 
-                    detail="No valid notes found in Anki deck. All notes appear to contain error messages. This might be a corrupted file or from an incompatible Anki version. Please try re-exporting the deck from Anki."
+                    detail="No valid notes found in Anki deck. All notes appear to contain error messages or are empty. This might mean: 1) The deck in Anki itself has this error (try recreating the deck), 2) The file is corrupted, or 3) You need to update Anki and re-export. Please try creating a new deck in Anki and adding cards manually, then export that as .apkg."
                 )
             
             # Get or create deck
