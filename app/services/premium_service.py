@@ -53,8 +53,8 @@ def check_sms_limit(user: User, db: Session) -> dict:
         return {
             "within_limit": True,
             "count": 0,
-            "limit": float('inf'),
-            "remaining": float('inf')
+            "limit": None,  # None represents unlimited for premium users
+            "remaining": None
         }
     
     count = get_sms_reviews_this_month(user.id, db)
@@ -83,8 +83,8 @@ def check_deck_limit(user: User, db: Session) -> dict:
         return {
             "can_create": True,
             "count": 0,
-            "limit": float('inf'),
-            "remaining": float('inf')
+            "limit": None,  # None represents unlimited for premium users
+            "remaining": None
         }
     
     count = get_deck_count(user.id, db)
@@ -113,8 +113,8 @@ def check_flashcard_limit_in_deck(deck_id: int, user: User, db: Session) -> dict
         return {
             "can_add": True,
             "count": 0,
-            "limit": float('inf'),
-            "remaining": float('inf')
+            "limit": None,  # None represents unlimited for premium users
+            "remaining": None
         }
     
     count = get_flashcard_count_in_deck(deck_id, db)
