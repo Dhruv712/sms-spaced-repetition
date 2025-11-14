@@ -8,6 +8,8 @@ import sqlite3
 import tempfile
 import os
 import re
+import html
+from html.parser import HTMLParser
 from typing import List, Dict, Any, Tuple, Optional
 from app.database import get_db
 from app.models import User, Flashcard, Deck
@@ -15,6 +17,36 @@ from app.services.auth import get_current_active_user
 from app.services.premium_service import check_premium_status
 
 router = APIRouter()
+
+
+class HTMLStripper(HTMLParser):
+    """Strip HTML tags from text"""
+    def __init__(self):
+        super().__init__()
+        self.reset()
+        self.strict = False
+        self.convert_charrefs = True
+        self.text = []
+    
+    def handle_data(self, data):
+        self.text.append(data)
+    
+    def get_text(self):
+        return ''.join(self.text)
+
+
+def strip_html(html_text: str) -> str:
+    """Strip HTML tags and decode HTML entities"""
+    if not html_text:
+        return html_text
+    
+    # First unescape HTML entities (like &nbsp;, &lt;, etc.)
+    text = html.unescape(html_text)
+    
+    # Then strip HTML tags
+    stripper = HTMLStripper()
+    stripper.feed(text)
+    return stripper.get_text().strip()
 
 
 def parse_cloze_deletion(text: str) -> Optional[Tuple[str, str]]:
@@ -135,8 +167,8 @@ async def import_anki_deck(
                     skipped_count += 1
                     continue
                 
-                # Get the first field (main content)
-                main_field = fields[0].strip()
+                # Get the first field (main content) and strip HTML
+                main_field = strip_html(fields[0].strip())
                 
                 if not main_field:
                     skipped_count += 1
@@ -152,7 +184,7 @@ async def import_anki_deck(
                     # Regular card - check if we have a second field
                     if len(fields) >= 2:
                         concept = main_field
-                        definition = fields[1].strip()
+                        definition = strip_html(fields[1].strip())
                     else:
                         # Single field card - use the field as both concept and definition
                         concept = main_field
