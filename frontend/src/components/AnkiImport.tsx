@@ -48,7 +48,7 @@ const AnkiImport: React.FC<AnkiImportProps> = ({ onSuccess }) => {
 
   const handleImport = async () => {
     if (!file || !token) {
-      setError('Please select an .apkg file');
+      setError('Please select an .apkg or .txt file');
       return;
     }
 
@@ -125,13 +125,22 @@ const AnkiImport: React.FC<AnkiImportProps> = ({ onSuccess }) => {
       )}
 
       <div className="space-y-4">
+        <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded text-sm text-blue-800 dark:text-blue-300">
+          <p className="font-medium mb-1">Export Options:</p>
+          <ul className="list-disc list-inside space-y-1 text-xs">
+            <li><strong>Recommended:</strong> Export as "Notes in Plain Text" (.txt) from Anki</li>
+            <li>Or export as "Anki Deck Package" (.apkg)</li>
+          </ul>
+          <p className="mt-2 text-xs">In Anki: File → Export → Select format → Choose your deck → Export</p>
+        </div>
+
         <div>
           <label className="block text-sm text-gray-700 dark:text-gray-300 mb-2">
-            Select .apkg file
+            Select .apkg or .txt file
           </label>
           <input
             type="file"
-            accept=".apkg"
+            accept=".apkg,.txt"
             onChange={handleFileChange}
             className="block w-full text-sm text-gray-500 dark:text-gray-400
               file:mr-4 file:py-2 file:px-4

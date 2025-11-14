@@ -52,9 +52,35 @@ def strip_html(html_text: str) -> str:
 def parse_cloze_deletion(text: str) -> Optional[Tuple[str, str]]:
     """
     Parse cloze deletion format: {{c1::answer}} or {{c1::hint::answer}}
+    Also supports HTML cloze format: <span class="cloze" data-cloze="answer">[...]</span>
     Returns (front, back) tuple if cloze found, None otherwise
     """
-    # Pattern to match {{c1::text}} or {{c1::hint::text}}
+    # First try HTML cloze format (from plain text export)
+    # Pattern matches: <span class="cloze" data-cloze="answer">[...]</span>
+    html_cloze_pattern = r'<span\s+class=["\']cloze["\'][^>]*data-cloze=["\']([^"\']+)["\'][^>]*>\[\.\.\.\]</span>'
+    html_matches = list(re.finditer(html_cloze_pattern, text, re.IGNORECASE))
+    
+    if html_matches:
+        # Extract all cloze deletions
+        cloze_texts = []
+        front_text = text
+        
+        for match in reversed(html_matches):  # Reverse to maintain positions when replacing
+            cloze_text = html.unescape(match.group(1))  # Decode HTML entities like &#x20; (space), &#x2E; (.)
+            cloze_texts.append(cloze_text)
+            # Replace with ellipsis
+            front_text = front_text[:match.start()] + "..." + front_text[match.end():]
+        
+        # For multiple clozes, combine them; otherwise use single answer
+        back_text = ", ".join(cloze_texts) if len(cloze_texts) > 1 else cloze_texts[0]
+        
+        # Strip remaining HTML from front
+        front_text = strip_html(front_text)
+        back_text = strip_html(back_text)
+        
+        return (front_text.strip(), back_text.strip())
+    
+    # Fall back to Anki {{c1::text}} format
     cloze_pattern = r'\{\{c\d+::(?:[^:]+::)?([^}]+)\}\}'
     
     matches = list(re.finditer(cloze_pattern, text))
@@ -77,6 +103,113 @@ def parse_cloze_deletion(text: str) -> Optional[Tuple[str, str]]:
     return (front_text.strip(), back_text.strip())
 
 
+async def import_anki_plain_text(
+    file: UploadFile,
+    deck_id: int,
+    current_user: User,
+    db: Session
+):
+    """
+    Import Anki plain text export format (tab-separated front/back)
+    """
+    # Read file content
+    content = await file.read()
+    text_content = content.decode('utf-8')
+    
+    # Get or create deck
+    if deck_id:
+        deck = db.query(Deck).filter(
+            Deck.id == deck_id,
+            Deck.user_id == current_user.id
+        ).first()
+        if not deck:
+            raise HTTPException(status_code=404, detail="Deck not found")
+    else:
+        # Create a new deck with the filename (without extension)
+        deck_name = os.path.splitext(file.filename)[0]
+        deck = Deck(
+            name=deck_name,
+            user_id=current_user.id
+        )
+        db.add(deck)
+        db.flush()
+    
+    # Parse lines - each line is tab-separated: front\tback
+    lines = text_content.strip().split('\n')
+    created_count = 0
+    skipped_count = 0
+    
+    for line_num, line in enumerate(lines, 1):
+        try:
+            # Split by tab
+            parts = line.split('\t')
+            
+            if len(parts) < 1:
+                skipped_count += 1
+                continue
+            
+            # Get front and back (back is optional)
+            front_raw = parts[0].strip()
+            back_raw = parts[1].strip() if len(parts) > 1 else ""
+            
+            if not front_raw:
+                skipped_count += 1
+                continue
+            
+            # Check if this is a cloze deletion card
+            cloze_result = parse_cloze_deletion(front_raw)
+            
+            if cloze_result:
+                # It's a cloze deletion card
+                concept, definition = cloze_result
+            else:
+                # Regular card
+                concept = strip_html(front_raw)
+                if back_raw:
+                    definition = strip_html(back_raw)
+                else:
+                    # Single field card - use front as both
+                    definition = concept
+            
+            if not concept:
+                skipped_count += 1
+                continue
+            
+            # Create flashcard
+            flashcard = Flashcard(
+                concept=concept,
+                definition=definition,
+                tags=None,
+                deck_id=deck.id,
+                user_id=current_user.id
+            )
+            db.add(flashcard)
+            created_count += 1
+            
+        except Exception as e:
+            print(f"Error processing line {line_num}: {str(e)}")
+            skipped_count += 1
+            continue
+    
+    if created_count == 0:
+        db.rollback()
+        raise HTTPException(
+            status_code=400,
+            detail=f"Could not import any flashcards from the plain text file. {skipped_count} lines were skipped. Please ensure the file is in Anki's plain text export format (tab-separated front and back)."
+        )
+    
+    db.commit()
+    
+    return {
+        "success": True,
+        "message": f"Imported {created_count} flashcards from Anki plain text export",
+        "deck_id": deck.id,
+        "deck_name": deck.name,
+        "created_count": created_count,
+        "skipped_count": skipped_count
+    }
+
+
 @router.post("/import")
 async def import_anki_deck(
     file: UploadFile = File(...),
@@ -95,10 +228,15 @@ async def import_anki_deck(
             detail="Anki import is a premium feature. Please upgrade to Premium to use this feature."
         )
     
-    # Validate file type - support both .apkg and .colpkg
-    if not (file.filename.endswith('.apkg') or file.filename.endswith('.colpkg')):
-        raise HTTPException(status_code=400, detail="File must be an .apkg or .colpkg file")
+    # Validate file type - support .apkg, .colpkg, and .txt (plain text export)
+    if not (file.filename.endswith('.apkg') or file.filename.endswith('.colpkg') or file.filename.endswith('.txt')):
+        raise HTTPException(status_code=400, detail="File must be an .apkg, .colpkg, or .txt file (Anki plain text export)")
     
+    # Handle plain text export format (.txt)
+    if file.filename.endswith('.txt'):
+        return await import_anki_plain_text(file, deck_id, current_user, db)
+    
+    # Handle .apkg/.colpkg format (zip file with database)
     # Create temporary directory for extraction
     with tempfile.TemporaryDirectory() as temp_dir:
         # Save uploaded file
