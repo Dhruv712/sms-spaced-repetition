@@ -149,7 +149,7 @@ const PremiumPage: React.FC = () => {
             Upgrade to Premium
           </h1>
           <p className="text-lg text-secondary-600 dark:text-secondary-400">
-            Unlock unlimited access to all features for just $5/month
+            Unlock unlimited access to all features for just $8/month
           </p>
         </div>
 
@@ -196,7 +196,7 @@ const PremiumPage: React.FC = () => {
               </span>
             </div>
             <div className="mb-6">
-              <span className="text-4xl font-bold text-secondary-900 dark:text-white">$5</span>
+              <span className="text-4xl font-bold text-secondary-900 dark:text-white">$8</span>
               <span className="text-secondary-600 dark:text-secondary-400">/month</span>
             </div>
             <ul className="space-y-3 text-secondary-700 dark:text-secondary-300 mb-6">
