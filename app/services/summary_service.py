@@ -213,22 +213,34 @@ def generate_study_analysis(reviews: List[CardReview], db: Session) -> str | Non
         
         client = OpenAI(api_key=settings.OPENAI_API_KEY)
         
-        prompt = f"""Based on the user's flashcard review performance, generate a brief 1-2 sentence analysis of areas they need to study hardest.
+        # Build a more specific context with actual concepts that were wrong
+        concepts_list = ', '.join([f'"{c}"' for c in problem_concepts[:5]])
+        tags_list = ', '.join([tag for tag, _ in top_tags]) if top_tags else 'None'
+        
+        prompt = f"""Based on the user's actual flashcard review performance, generate a brief, concise analysis (1 sentence max, ideally 10-15 words).
 
-Problem concepts: {', '.join(problem_concepts[:5])}
-Problem tags: {', '.join([tag for tag, _ in top_tags]) if top_tags else 'None'}
+ACTUAL concepts they got wrong: {concepts_list}
+Tags (if any): {tags_list}
 
-Generate a concise, helpful analysis (1-2 sentences) focusing on the main areas of weakness. Be specific but brief. Don't mention individual flashcard concepts, focus on broader topics or patterns.
+CRITICAL RULES:
+1. Be extremely concise - maximum 1 sentence, ideally 10-15 words
+2. Only mention concepts/topics that actually appear in the list above - DO NOT make up or infer additional details
+3. Do NOT add explanations about "interactions" or "relationships" unless explicitly stated in the concepts
+4. Focus on the specific topics/concepts listed, not general patterns
+5. If tags are provided, you can mention the tag category, but keep it brief
 
-Example: "You're struggling most with neuroscience concepts, particularly memory formation and synaptic plasticity. Consider reviewing these topics more frequently."
+Examples of good responses:
+- "Review reinforcement learning concepts, especially policy and value functions."
+- "Focus on neuroscience topics you missed today."
+- "Review the specific concepts you got wrong today."
 
-Response (just the analysis, no quotes or formatting):"""
+Response (just the analysis, no quotes, no formatting, maximum 1 sentence):"""
         
         response = client.chat.completions.create(
             model="gpt-4o",
             messages=[{"role": "user", "content": prompt}],
-            temperature=0.7,
-            max_tokens=100
+            temperature=0.3,  # Lower temperature for more grounded responses
+            max_tokens=50  # Reduced token limit to force conciseness
         )
         
         analysis = response.choices[0].message.content.strip()

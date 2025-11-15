@@ -124,7 +124,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (profileResponse.ok) {
         const userData = await profileResponse.json();
         setUser(userData);
-        navigate('/');
+        navigate('/dashboard');
       } else {
         throw new Error('Failed to fetch user profile after login');
       }
@@ -169,7 +169,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (profileResponse.ok) {
         const userData = await profileResponse.json();
         setUser(userData);
-        navigate('/');
+        navigate('/dashboard');
       } else {
         throw new Error('Failed to fetch user profile after registration');
       }
