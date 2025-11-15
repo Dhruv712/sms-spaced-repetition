@@ -18,6 +18,7 @@ class User(Base):
     preferred_text_times = Column(JSON, default=None)  # Array of hours (0-23) when user wants texts, e.g., [12, 21]
     timezone = Column(String(50), default="UTC")
     is_active = Column(Boolean, default=True)
+    is_admin = Column(Boolean, default=False)  # Admin access flag
     sms_opt_in = Column(Boolean, default=False)  # SMS opt-in preference
     current_streak_days = Column(Integer, default=0)  # Current consecutive days with reviews
     longest_streak_days = Column(Integer, default=0)  # Longest streak achieved

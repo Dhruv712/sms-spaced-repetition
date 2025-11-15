@@ -351,7 +351,7 @@ const DecksPage: React.FC = () => {
                       <button
                         onClick={() => handleToggleSms(deck.id, deck.sms_enabled || false)}
                         disabled={togglingSms === deck.id}
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
+                        className={`relative inline-flex h-6 w-12 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
                           deck.sms_enabled 
                             ? 'bg-primary-600' 
                             : 'bg-gray-300 dark:bg-gray-600'
@@ -360,7 +360,7 @@ const DecksPage: React.FC = () => {
                       >
                         <span
                           className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ${
-                            deck.sms_enabled ? 'translate-x-6' : 'translate-x-1'
+                            deck.sms_enabled ? 'translate-x-7' : 'translate-x-1'
                           }`}
                         />
                       </button>

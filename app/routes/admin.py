@@ -1,9 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from app.database import get_db, engine
 from app.models import User
-from app.services.auth import get_current_active_user
+from app.services.auth import get_current_active_user, require_admin_access
 from app.services.scheduler_service import send_due_flashcards_to_all_users, send_due_flashcards_to_user, get_user_flashcard_stats, cleanup_old_conversation_states
 from app.services.summary_service import send_daily_summary_to_user, get_daily_review_summary
 from typing import Dict, Any
@@ -11,11 +11,15 @@ from typing import Dict, Any
 router = APIRouter(tags=["Admin"])
 
 @router.post("/create-user-deck-sms-settings-table")
-async def create_user_deck_sms_settings_table() -> Dict[str, Any]:
+async def create_user_deck_sms_settings_table(
+    request: Request,
+    db: Session = Depends(get_db)
+) -> Dict[str, Any]:
     """
     Create user_deck_sms_settings table for deck muting feature
-    (Temporary public endpoint for one-time migration)
+    (Admin access required)
     """
+    await require_admin_access(request, db)
     try:
         sql_commands = [
             """
@@ -66,7 +70,7 @@ async def migrate_sm2_columns(
     (Admin only)
     """
     # Check if user is admin
-    if current_user.email != "dhruv.sumathi@gmail.com":
+    if not current_user.is_admin:
         raise HTTPException(status_code=403, detail="Admin access required")
     
     try:
@@ -105,11 +109,15 @@ async def migrate_sm2_columns(
         raise HTTPException(status_code=500, detail=f"Error migrating database: {str(e)}")
 
 @router.post("/migrate-sm2-columns-public")
-async def migrate_sm2_columns_public() -> Dict[str, Any]:
+async def migrate_sm2_columns_public(
+    request: Request,
+    db: Session = Depends(get_db)
+) -> Dict[str, Any]:
     """
     Add SM-2 columns to card_reviews table
-    (Temporary public endpoint for one-time fix)
+    (Admin access required)
     """
+    await require_admin_access(request, db)
     try:
         # SQL to add the SM-2 columns
         sql_commands = [
@@ -145,8 +153,8 @@ async def trigger_scheduled_flashcards(
     Manually trigger sending due flashcards to all users
     (Admin only)
     """
-    # Check if user is admin (you can add admin field to User model later)
-    if current_user.email != "dhruv.sumathi@gmail.com":  # Temporary admin check
+    # Check if user is admin
+    if not current_user.is_admin:
         raise HTTPException(status_code=403, detail="Admin access required")
     
     try:
@@ -209,7 +217,7 @@ async def get_user_stats(
     Get flashcard statistics for a user
     """
     # Check if user is admin or requesting their own stats
-    if current_user.email != "dhruv.sumathi@gmail.com" and current_user.id != user_id:
+    if not current_user.is_admin and current_user.id != user_id:
         raise HTTPException(status_code=403, detail="Access denied")
     
     try:
@@ -232,7 +240,7 @@ async def send_flashcards_to_user(
     Manually send due flashcards to a specific user
     """
     # Check if user is admin
-    if current_user.email != "dhruv.sumathi@gmail.com":
+    if not current_user.is_admin:
         raise HTTPException(status_code=403, detail="Admin access required")
     
     try:
@@ -247,11 +255,16 @@ async def send_flashcards_to_user(
         raise HTTPException(status_code=500, detail=f"Error sending flashcards: {str(e)}")
 
 @router.post("/cron/send-flashcards")
-async def cron_send_flashcards() -> Dict[str, Any]:
+async def cron_send_flashcards(
+    request: Request,
+    db: Session = Depends(get_db)
+) -> Dict[str, Any]:
     """
     Cron endpoint for sending due flashcards
     This can be called by Railway's cron service
+    (Requires admin secret key in X-Admin-Secret header)
     """
+    await require_admin_access(request, db)
     try:
         from app.services.scheduler_service import send_due_flashcards_to_all_users
         
@@ -267,8 +280,14 @@ async def cron_send_flashcards() -> Dict[str, Any]:
         raise HTTPException(status_code=500, detail=f"Error in cron task: {str(e)}")
 
 @router.post("/cron/cleanup")
-async def cron_cleanup() -> Dict[str, Any]:
-    """Railway cron endpoint for cleaning up old conversation states"""
+async def cron_cleanup(
+    request: Request,
+    db: Session = Depends(get_db)
+) -> Dict[str, Any]:
+    """Railway cron endpoint for cleaning up old conversation states
+    (Requires admin secret key in X-Admin-Secret header)
+    """
+    await require_admin_access(request, db)
     try:
         print("🧹 Starting cleanup of old conversation states...")
         result = cleanup_old_conversation_states()
@@ -279,12 +298,17 @@ async def cron_cleanup() -> Dict[str, Any]:
         return {"success": False, "error": str(e)}
 
 @router.post("/cron/daily-summary")
-async def cron_daily_summary(db: Session = Depends(get_db)) -> Dict[str, Any]:
+async def cron_daily_summary(
+    request: Request,
+    db: Session = Depends(get_db)
+) -> Dict[str, Any]:
     """
     Railway cron endpoint for sending daily summaries to all users
     This should be called hourly. It will only send summaries to users
     when it's 9 PM or 10 PM in their timezone.
+    (Requires admin secret key in X-Admin-Secret header)
     """
+    await require_admin_access(request, db)
     try:
         from datetime import datetime
         from zoneinfo import ZoneInfo
@@ -383,7 +407,7 @@ async def delete_user_admin(
     (Admin only)
     """
     # Check if user is admin
-    if current_user.email != "dhruv.sumathi@gmail.com":
+    if not current_user.is_admin:
         raise HTTPException(status_code=403, detail="Admin access required")
     
     try:
@@ -499,11 +523,15 @@ async def migrate_google_oauth() -> Dict[str, Any]:
         raise HTTPException(status_code=500, detail=f"Error migrating database: {str(e)}")
 
 @router.post("/migrate-conversation-state-fields-public")
-async def migrate_conversation_state_fields_public() -> Dict[str, Any]:
+async def migrate_conversation_state_fields_public(
+    request: Request,
+    db: Session = Depends(get_db)
+) -> Dict[str, Any]:
     """
     Add message_count and last_sent_flashcard_id to conversation_state table
-    (Temporary public endpoint for one-time migration)
+    (Admin access required)
     """
+    await require_admin_access(request, db)
     try:
         sql_commands = [
             "ALTER TABLE conversation_state ADD COLUMN IF NOT EXISTS message_count INTEGER DEFAULT 0",
@@ -553,11 +581,15 @@ async def migrate_conversation_state_fields_public() -> Dict[str, Any]:
         raise HTTPException(status_code=500, detail=f"Error migrating database: {str(e)}")
 
 @router.post("/migrate-user-streak-fields-public")
-async def migrate_user_streak_fields_public() -> Dict[str, Any]:
+async def migrate_user_streak_fields_public(
+    request: Request,
+    db: Session = Depends(get_db)
+) -> Dict[str, Any]:
     """
     Add streak tracking fields to users table
-    (Temporary public endpoint for one-time migration)
+    (Admin access required)
     """
+    await require_admin_access(request, db)
     try:
         sql_commands = [
             "ALTER TABLE users ADD COLUMN IF NOT EXISTS current_streak_days INTEGER DEFAULT 0",
@@ -584,10 +616,14 @@ async def migrate_user_streak_fields_public() -> Dict[str, Any]:
         raise HTTPException(status_code=500, detail=f"Error migrating database: {str(e)}")
 
 @router.delete("/delete-user-2-public")
-async def delete_user_2_public(db: Session = Depends(get_db)) -> Dict[str, Any]:
+async def delete_user_2_public(
+    request: Request,
+    db: Session = Depends(get_db)
+) -> Dict[str, Any]:
     """
-    Delete user ID 2 (waterfire712@gmail.com) - public endpoint for one-time use
+    Delete user ID 2 (waterfire712@gmail.com) - Admin access required
     """
+    await require_admin_access(request, db)
     try:
         from app.models import User, Flashcard, CardReview, ConversationState
         
@@ -627,11 +663,15 @@ async def delete_user_2_public(db: Session = Depends(get_db)) -> Dict[str, Any]:
         raise HTTPException(status_code=500, detail=f"Error deleting user: {str(e)}")
 
 @router.post("/migrate-preferred-text-times-public")
-async def migrate_preferred_text_times_public() -> Dict[str, Any]:
+async def migrate_preferred_text_times_public(
+    request: Request,
+    db: Session = Depends(get_db)
+) -> Dict[str, Any]:
     """
     Add preferred_text_times field to users table
-    (Temporary public endpoint for Railway migration)
+    (Admin access required)
     """
+    await require_admin_access(request, db)
     try:
         sql_commands = [
             """
@@ -674,11 +714,15 @@ async def migrate_preferred_text_times_public() -> Dict[str, Any]:
         }
 
 @router.post("/migrate-subscription-fields-public")
-async def migrate_subscription_fields_public() -> Dict[str, Any]:
+async def migrate_subscription_fields_public(
+    request: Request,
+    db: Session = Depends(get_db)
+) -> Dict[str, Any]:
     """
     Add Stripe subscription fields to users table
-    (Temporary public endpoint for Railway migration)
+    (Admin access required)
     """
+    await require_admin_access(request, db)
     try:
         sql_commands = [
             """
@@ -736,11 +780,15 @@ async def migrate_subscription_fields_public() -> Dict[str, Any]:
         return {"success": False, "error": str(e)}
 
 @router.post("/migrate-sms-review-field-public")
-async def migrate_sms_review_field_public() -> Dict[str, Any]:
+async def migrate_sms_review_field_public(
+    request: Request,
+    db: Session = Depends(get_db)
+) -> Dict[str, Any]:
     """
     Add is_sms_review field to card_reviews table
-    (Temporary public endpoint for Railway migration)
+    (Admin access required)
     """
+    await require_admin_access(request, db)
     try:
         sql_command = """
             ALTER TABLE card_reviews 
@@ -759,11 +807,15 @@ async def migrate_sms_review_field_public() -> Dict[str, Any]:
         return {"success": False, "error": str(e)}
 
 @router.post("/grandfather-users-premium-public")
-async def grandfather_users_premium_public() -> Dict[str, Any]:
+async def grandfather_users_premium_public(
+    request: Request,
+    db: Session = Depends(get_db)
+) -> Dict[str, Any]:
     """
     Grandfather existing users to premium (except dhruv.sumathi@gmail.com for testing)
-    (Temporary public endpoint for Railway migration)
+    (Admin access required)
     """
+    await require_admin_access(request, db)
     try:
         sql_command = """
             UPDATE users 
@@ -785,11 +837,16 @@ async def grandfather_users_premium_public() -> Dict[str, Any]:
         return {"success": False, "error": str(e)}
 
 @router.post("/reset-premium-status-public")
-async def reset_premium_status_public(email: str) -> Dict[str, Any]:
+async def reset_premium_status_public(
+    email: str,
+    request: Request,
+    db: Session = Depends(get_db)
+) -> Dict[str, Any]:
     """
     Reset premium status for a user (for testing)
-    (Temporary public endpoint for testing)
+    (Admin access required)
     """
+    await require_admin_access(request, db)
     try:
         sql_command = """
             UPDATE users 
@@ -820,3 +877,61 @@ async def reset_premium_status_public(email: str) -> Dict[str, Any]:
         }
     except Exception as e:
         return {"success": False, "error": str(e)}
+
+@router.post("/migrate-admin-field-public")
+async def migrate_admin_field_public(
+    request: Request,
+    db: Session = Depends(get_db)
+) -> Dict[str, Any]:
+    """
+    Add is_admin field to users table and set dhruv.sumathi@gmail.com as admin
+    (Admin access required - use X-Admin-Secret header for first-time setup)
+    """
+    from app.utils.config import settings
+    
+    # For first-time setup, allow admin secret key
+    admin_secret = request.headers.get("X-Admin-Secret")
+    if not (admin_secret and settings.ADMIN_SECRET_KEY and admin_secret == settings.ADMIN_SECRET_KEY):
+        # Try to get admin user
+        try:
+            await require_admin_access(request, db)
+        except:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Admin access required. Provide X-Admin-Secret header for first-time setup."
+            )
+    
+    try:
+        sql_commands = [
+            """
+            ALTER TABLE users 
+            ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT FALSE;
+            """,
+            """
+            -- Set dhruv.sumathi@gmail.com as admin
+            UPDATE users 
+            SET is_admin = TRUE 
+            WHERE email = 'dhruv.sumathi@gmail.com';
+            """
+        ]
+        
+        results = []
+        with engine.connect() as conn:
+            for i, sql in enumerate(sql_commands, 1):
+                try:
+                    conn.execute(text(sql))
+                    conn.commit()
+                    results.append(f"Command {i}: Success")
+                except Exception as e:
+                    results.append(f"Command {i}: Error - {str(e)}")
+        
+        return {
+            "success": True,
+            "message": "Admin field migration completed",
+            "results": results
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e)
+        }

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import User, Flashcard
@@ -11,8 +11,13 @@ from typing import Dict, Any
 router = APIRouter(tags=["Loop_Test"])
 
 @router.post("/send-test-flashcard")
-async def send_test_flashcard(db: Session = Depends(get_db)):
-    """Send a test flashcard (for testing purposes only)"""
+async def send_test_flashcard(
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    """Send a test flashcard (for testing purposes only - Admin access required)"""
+    from app.services.auth import require_admin_access
+    await require_admin_access(request, db)
     
     try:
         # Find user

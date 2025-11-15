@@ -37,6 +37,7 @@ class Settings(BaseSettings):
     
     # App Settings
     SECRET_KEY: str = "your-secret-key-here"  # Change this in production!
+    ADMIN_SECRET_KEY: Optional[str] = None  # Secret key for admin endpoints (for Railway cron, etc.)
     DEBUG: bool = True
     ENVIRONMENT: str = "development"
     ALGORITHM: str = "HS256"

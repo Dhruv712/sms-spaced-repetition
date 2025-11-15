@@ -19,10 +19,19 @@ def send_flashcards():
     """Send due flashcards"""
     try:
         app_url = os.getenv('APP_URL', 'https://sms-spaced-repetition-production.up.railway.app')
+        admin_secret = os.getenv('ADMIN_SECRET_KEY')
+        
+        if not admin_secret:
+            print(f"❌ {datetime.now()}: ADMIN_SECRET_KEY not set!")
+            return False
         
         print(f"📤 {datetime.now()}: Sending due flashcards...")
         
-        response = requests.post(f"{app_url}/admin/cron/send-flashcards")
+        headers = {
+            'X-Admin-Secret': admin_secret
+        }
+        
+        response = requests.post(f"{app_url}/admin/cron/send-flashcards", headers=headers)
         
         if response.status_code == 200:
             result = response.json()
@@ -40,10 +49,19 @@ def send_daily_summary():
     """Send daily summaries"""
     try:
         app_url = os.getenv('APP_URL', 'https://sms-spaced-repetition-production.up.railway.app')
+        admin_secret = os.getenv('ADMIN_SECRET_KEY')
+        
+        if not admin_secret:
+            print(f"❌ {datetime.now()}: ADMIN_SECRET_KEY not set!")
+            return False
         
         print(f"📊 {datetime.now()}: Sending daily summaries...")
         
-        response = requests.post(f"{app_url}/admin/cron/daily-summary")
+        headers = {
+            'X-Admin-Secret': admin_secret
+        }
+        
+        response = requests.post(f"{app_url}/admin/cron/daily-summary", headers=headers)
         
         if response.status_code == 200:
             result = response.json()
