@@ -280,17 +280,53 @@ async def cron_cleanup() -> Dict[str, Any]:
 
 @router.post("/cron/daily-summary")
 async def cron_daily_summary(db: Session = Depends(get_db)) -> Dict[str, Any]:
-    """Railway cron endpoint for sending daily summaries to all users"""
+    """
+    Railway cron endpoint for sending daily summaries to all users
+    This should be called hourly. It will only send summaries to users
+    when it's 9 PM or 10 PM in their timezone.
+    """
     try:
+        from datetime import datetime
+        from zoneinfo import ZoneInfo
+        
         print("📊 Starting daily summary generation...")
         
         # Get all users with SMS opt-in
         users = db.query(User).filter_by(sms_opt_in=True).all()
         print(f"📱 Found {len(users)} users with SMS opt-in")
         
+        # Get current UTC time
+        now_utc = datetime.now(ZoneInfo("UTC"))
+        
         results = []
         for user in users:
             try:
+                # Check if it's an appropriate time in user's timezone (9 PM or 10 PM)
+                try:
+                    user_tz = ZoneInfo(user.timezone)
+                    now_user_tz = now_utc.astimezone(user_tz)
+                    current_hour = now_user_tz.hour
+                    
+                    if current_hour not in [21, 22]:  # 9 PM or 10 PM
+                        print(f"⏭️ Skipping user {user.id}: current hour {current_hour} not summary time (9-10 PM)")
+                        results.append({
+                            "success": True,
+                            "user_id": user.id,
+                            "phone": user.phone_number,
+                            "message": "skipped",
+                            "reason": f"Not summary time (hour {current_hour} in {user.timezone})"
+                        })
+                        continue
+                except Exception as e:
+                    print(f"⚠️ Error checking timezone for user {user.id}: {e}, skipping")
+                    results.append({
+                        "success": False,
+                        "user_id": user.id,
+                        "phone": user.phone_number,
+                        "error": f"Invalid timezone: {str(e)}"
+                    })
+                    continue
+                
                 result = send_daily_summary_to_user(user, db)
                 results.append(result)
                 print(f"📤 Summary sent to {user.phone_number}: {result.get('success', False)}")
@@ -324,11 +360,13 @@ async def get_user_daily_summary(
 ) -> Dict[str, Any]:
     """Get daily summary for a specific user (requires auth)"""
     try:
+        # Get user to get their timezone
         user = db.query(User).filter_by(id=user_id).first()
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
         
-        summary = get_daily_review_summary(user_id, db)
+        # Get summary for yesterday in user's timezone
+        summary = get_daily_review_summary(user_id, db, user_timezone=user.timezone)
         return {"success": True, "summary": summary}
         
     except Exception as e:

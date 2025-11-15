@@ -58,34 +58,23 @@ def send_daily_summary():
         return False
 
 def main():
-    """Main function - determine what to do based on current time"""
-    current_hour = datetime.now(timezone.utc).hour
+    """Main function - send flashcards and daily summaries"""
     current_time = datetime.now(timezone.utc)
     
-    print(f"🕐 {current_time}: Current UTC hour: {current_hour}")
+    print(f"🕐 {current_time}: Running scheduled tasks...")
     
-    # Schedule:
-    # 12:00 UTC (12:00 PM UTC) - Send flashcards + Daily summary
-    # 21:00 UTC (9:00 PM UTC) - Send flashcards
+    # Send flashcards (checks user timezones internally)
+    print(f"📚 {current_time}: Sending flashcards...")
+    flashcard_success = send_flashcards()
     
-    if current_hour == 12:
-        # 12:00 UTC - Send both flashcards and daily summary
-        print(f"🌙 {current_time}: Noon time - sending flashcards and daily summary")
-        flashcard_success = send_flashcards()
-        summary_success = send_daily_summary()
-        
-        if flashcard_success and summary_success:
-            print(f"✅ {current_time}: Noon time tasks completed successfully")
-        else:
-            print(f"⚠️ {current_time}: Some noon time tasks failed")
-    elif current_hour == 21:
-        # 21:00 UTC - Just send flashcards
-        print(f"📚 {current_time}: Evening time - sending flashcards only")
-        send_flashcards()
+    # Send daily summaries (checks user timezones internally - only sends at 9-10 PM user time)
+    print(f"📊 {current_time}: Checking daily summaries...")
+    summary_success = send_daily_summary()
+    
+    if flashcard_success and summary_success:
+        print(f"✅ {current_time}: Tasks completed successfully")
     else:
-        # Other times - just send flashcards (for backwards compatibility)
-        print(f"📚 {current_time}: Regular time - sending flashcards only")
-        send_flashcards()
+        print(f"⚠️ {current_time}: Some tasks may have failed")
 
 if __name__ == "__main__":
     main()

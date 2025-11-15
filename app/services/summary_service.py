@@ -6,24 +6,44 @@ from sqlalchemy import func, and_
 from openai import OpenAI
 from app.utils.config import settings
 
-def get_daily_review_summary(user_id: int, db: Session, date: datetime = None) -> Dict[str, Any]:
+def get_daily_review_summary(user_id: int, db: Session, date: datetime.date = None, user_timezone: str = "UTC") -> Dict[str, Any]:
     """
     Generate a daily summary of flashcard reviews for a user
     
     Args:
         user_id: User ID to get summary for
         db: Database session
-        date: Date to get summary for (defaults to today)
+        date: Date to get summary for (defaults to yesterday in user's timezone)
+        user_timezone: User's timezone (defaults to UTC)
     
     Returns:
         Dictionary with summary statistics
     """
-    if date is None:
-        date = datetime.now(timezone.utc).date()
+    from zoneinfo import ZoneInfo
     
-    # Get start and end of the specified date
-    start_of_day = datetime.combine(date, datetime.min.time(), tzinfo=timezone.utc)
-    end_of_day = datetime.combine(date, datetime.max.time(), tzinfo=timezone.utc)
+    # If no date provided, use yesterday in user's timezone
+    if date is None:
+        try:
+            user_tz = ZoneInfo(user_timezone)
+            now_user_tz = datetime.now(timezone.utc).astimezone(user_tz)
+            # Get yesterday in user's timezone
+            date = (now_user_tz.date() - timedelta(days=1))
+        except Exception:
+            # Fallback to UTC if timezone is invalid
+            date = (datetime.now(timezone.utc).date() - timedelta(days=1))
+    
+    # Get start and end of the specified date in user's timezone, then convert to UTC
+    try:
+        user_tz = ZoneInfo(user_timezone)
+        start_of_day_local = datetime.combine(date, datetime.min.time(), tzinfo=user_tz)
+        end_of_day_local = datetime.combine(date, datetime.max.time(), tzinfo=user_tz)
+        # Convert to UTC for database queries
+        start_of_day = start_of_day_local.astimezone(timezone.utc)
+        end_of_day = end_of_day_local.astimezone(timezone.utc)
+    except Exception:
+        # Fallback to UTC if timezone is invalid
+        start_of_day = datetime.combine(date, datetime.min.time(), tzinfo=timezone.utc)
+        end_of_day = datetime.combine(date, datetime.max.time(), tzinfo=timezone.utc)
     
     # Get all reviews for the user on this date
     reviews = db.query(CardReview).filter(
@@ -288,9 +308,30 @@ def send_daily_summary_to_user(user: User, db: Session) -> Dict[str, Any]:
     """Send daily summary to a specific user"""
     try:
         from app.services.loop_message_service import LoopMessageService
+        from zoneinfo import ZoneInfo
         
-        # Get summary
-        summary = get_daily_review_summary(user.id, db)
+        # Check if it's an appropriate time to send summary (9 PM or 10 PM in user's timezone)
+        try:
+            user_tz = ZoneInfo(user.timezone)
+            now_utc = datetime.now(timezone.utc)
+            now_user_tz = now_utc.astimezone(user_tz)
+            current_hour = now_user_tz.hour
+            
+            # Only send summary at 9 PM or 10 PM in user's timezone
+            if current_hour not in [21, 22]:
+                return {
+                    "success": True,
+                    "user_id": user.id,
+                    "phone": user.phone_number,
+                    "message": "skipped",
+                    "reason": f"Not summary time (current hour: {current_hour} in {user.timezone})"
+                }
+        except Exception as e:
+            print(f"⚠️ Error checking timezone for user {user.id}: {e}")
+            # Continue anyway if timezone check fails
+        
+        # Get summary for yesterday in user's timezone
+        summary = get_daily_review_summary(user.id, db, user_timezone=user.timezone)
         
         # Format message for SMS
         message = format_summary_for_sms(summary)
