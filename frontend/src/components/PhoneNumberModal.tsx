@@ -51,10 +51,10 @@ const PhoneNumberModal: React.FC<PhoneNumberModalProps> = ({
             </p>
             <div className="flex items-center gap-2">
               <a 
-                href="imessage://sandbox.loopmessage.com@imsg.im"
+                href="imessage://cue@a.imsg.co"
                 className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 text-sm font-mono bg-white dark:bg-gray-800 px-2 py-1 rounded border border-blue-300 dark:border-blue-600 break-all"
               >
-                imessage://sandbox.loopmessage.com@imsg.im
+                imessage://cue@a.imsg.co
               </a>
             </div>
             <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">

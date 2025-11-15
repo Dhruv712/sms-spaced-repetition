@@ -357,10 +357,10 @@ const ProfilePage: React.FC = () => {
                   Text "START" to this link to begin using Cue's SMS features:
                 </p>
                 <a 
-                  href="imessage://sandbox.loopmessage.com@imsg.im"
+                  href="imessage://cue@a.imsg.co"
                   className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 text-xs font-mono bg-white dark:bg-gray-800 px-2 py-1 rounded border border-blue-300 dark:border-blue-600 break-all block"
                 >
-                  imessage://sandbox.loopmessage.com@imsg.im
+                  imessage://cue@a.imsg.co
                 </a>
                 <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
                   💡 On mobile, tap the link above to open Messages
