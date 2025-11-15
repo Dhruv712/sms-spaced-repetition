@@ -45,26 +45,26 @@ async def send_welcome_message(user: User, first_message: str, db: Session) -> s
     """
     try:
         # Create welcome message
-        welcome_text = f"""🎉 Welcome to Cue, {user.name or 'there'}!
+        welcome_text = f"""Welcome to Cue, {user.name or 'there'}!
 
-I'm your AI-powered spaced repetition assistant. Here's how to get started:
+I'm your AI-powered spaced repetition assistant. Here's how it works:
 
-📝 **Create New Flashcards:**
+📚 **Automatic Reviews:**
+I'll automatically send you flashcards to review at your preferred times. Just reply with your answer!
+
+📝 **Create Flashcards:**
 Text "NEW" followed by your instructions. For example:
 "NEW card for the year of the declaration of independence"
 
 🏷️ **Add Tags:**
 Include tags in brackets: "NEW card about photosynthesis [biology, science]"
 
-📚 **Review Flashcards:**
-I'll send you flashcards to review based on spaced repetition. Just reply with your answer!
-
-💡 **Pro Tips:**
+💡 **Tips:**
+• Type "skip" to skip a card
 • Be specific in your NEW requests
 • Use tags to organize your cards
-• I'll remember your progress and schedule reviews optimally
 
-Ready to start learning? Send "NEW" with your first flashcard!"""
+Ready to start? Send "NEW" with your first flashcard!"""
 
         # Initialize LoopMessage service
         service = await initialize_loop_service_with_timeout()
@@ -240,7 +240,7 @@ async def process_user_message(user: User, body: str, passthrough: str, db: Sess
                     return "Card skipped. Completion message sent."
             else:
                 if service:
-                    service.send_feedback(user.phone_number, "No card to skip. Send 'Yes' to start a session.")
+                    service.send_feedback(user.phone_number, "No card to skip. I'll send you flashcards automatically at your preferred times.")
                 return "No card to skip."
         
         # Check if this is a response to a flashcard
@@ -322,7 +322,7 @@ async def process_user_message(user: User, body: str, passthrough: str, db: Sess
         
         # Default response
         print(f"❓ Unknown message, sending default response")
-        return "I didn't understand that. Reply 'Yes' to start a review session, or 'NEW' followed by a description to create a flashcard."
+        return "I didn't understand that. Text 'NEW' followed by a description to create a flashcard, or reply directly to flashcards I send you."
         
     except Exception as e:
         print(f"❌ Error processing user message: {e}")
@@ -515,7 +515,7 @@ async def handle_flashcard_response(
         card = db.query(Flashcard).filter_by(id=flashcard_id).first()
         if not card:
             print(f"❌ Flashcard {flashcard_id} not found")
-            return "Hmm, we lost track of your flashcard. Say 'Yes' to start again."
+            return "Hmm, we lost track of your flashcard. I'll send you the next one automatically."
         
         print(f"✅ Found flashcard: {card.concept}")
         

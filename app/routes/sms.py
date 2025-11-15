@@ -35,7 +35,7 @@ async def receive_sms(
     if state and state.state == "waiting_for_answer":
         card = db.query(Flashcard).filter_by(id=state.current_flashcard_id).first()
         if not card:
-            return _twiml_response("Hmm, we lost track of your flashcard. Say 'Yes' to start again.")
+            return _twiml_response("Hmm, we lost track of your flashcard. I'll send you the next one automatically.")
 
         result = evaluate_answer(
             concept=card.concept,
@@ -79,7 +79,7 @@ async def receive_sms(
         set_conversation_state(user.id, card.id, db)
         return _twiml_response(f"{card.concept}?\n(Reply with your answer)")
 
-    return _twiml_response("I didn't understand that. Reply 'Yes' to start a review session.")
+    return _twiml_response("I didn't understand that. Text 'NEW' followed by a description to create a flashcard, or reply directly to flashcards I send you.")
 
 
 def _twiml_response(message: str) -> PlainTextResponse:

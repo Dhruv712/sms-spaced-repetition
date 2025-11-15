@@ -57,7 +57,7 @@ class LoopMessageService:
         Returns:
             Dict containing API response
         """
-        message_text = "Hey! You've got flashcards to review. Reply 'Yes' to begin."
+        message_text = "You're all caught up! I'll send you flashcards automatically when they're due."
         
         return self._send_message(
             recipient=phone_number,
