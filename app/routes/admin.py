@@ -885,21 +885,17 @@ async def migrate_admin_field_public(
 ) -> Dict[str, Any]:
     """
     Add is_admin field to users table and set dhruv.sumathi@gmail.com as admin
-    (Admin access required - use X-Admin-Secret header for first-time setup)
+    (Requires X-Admin-Secret header - this endpoint works before is_admin column exists)
     """
     from app.utils.config import settings
     
-    # For first-time setup, allow admin secret key
+    # For first-time setup, ONLY allow admin secret key (can't check is_admin yet!)
     admin_secret = request.headers.get("X-Admin-Secret")
     if not (admin_secret and settings.ADMIN_SECRET_KEY and admin_secret == settings.ADMIN_SECRET_KEY):
-        # Try to get admin user
-        try:
-            await require_admin_access(request, db)
-        except:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Admin access required. Provide X-Admin-Secret header for first-time setup."
-            )
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required. Provide X-Admin-Secret header."
+        )
     
     try:
         sql_commands = [
