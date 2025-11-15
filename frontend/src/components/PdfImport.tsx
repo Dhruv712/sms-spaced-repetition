@@ -113,7 +113,10 @@ const PdfImport: React.FC<PdfImportProps> = ({ onSuccess }) => {
 
   return (
     <div className="bg-white dark:bg-darksurface rounded-lg border border-gray-200 dark:border-gray-800 p-6 mb-8">
-      <h2 className="text-lg font-light text-gray-900 dark:text-darktext mb-4">Create Flashcards from PDF</h2>
+      <h2 className="text-lg font-light text-gray-900 dark:text-darktext mb-2">Create Flashcards from PDF</h2>
+      <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+        Upload a paper, book chapter, notes, etc. and GPT will generate flashcards for you.
+      </p>
       
       {error && (
         <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-sm text-red-800 dark:text-red-300">
