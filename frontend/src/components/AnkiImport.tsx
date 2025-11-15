@@ -38,9 +38,24 @@ const AnkiImport: React.FC<AnkiImportProps> = ({ onSuccess }) => {
     fetchDecks();
   }, [token]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
+      const selectedFile = e.target.files[0];
+      
+      // For .txt files, check if it might have too many cards
+      if (selectedFile.name.endsWith('.txt')) {
+        // Read file to count lines (rough estimate of card count)
+        const text = await selectedFile.text();
+        const lineCount = text.split('\n').filter(line => line.trim().length > 0).length;
+        
+        if (lineCount > 100) {
+          setError(`This file appears to contain more than 100 cards (estimated ${lineCount} lines). Please limit your import to 100 cards or fewer.`);
+          setFile(null);
+          return;
+        }
+      }
+      
+      setFile(selectedFile);
       setError(null);
       setSuccess(null);
     }
@@ -132,6 +147,7 @@ const AnkiImport: React.FC<AnkiImportProps> = ({ onSuccess }) => {
             <li>Or export as "Anki Deck Package" (.apkg)</li>
           </ul>
           <p className="mt-2 text-xs">In Anki: File → Export → Select format → Choose your deck → Export</p>
+          <p className="mt-2 text-xs font-medium">⚠️ Please limit your import to 100 cards or fewer per file.</p>
         </div>
 
         <div>
@@ -175,7 +191,7 @@ const AnkiImport: React.FC<AnkiImportProps> = ({ onSuccess }) => {
           disabled={loading || !file}
           className="w-full px-4 py-2 bg-primary-500 text-white rounded hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 text-sm"
         >
-          {loading ? 'Importing...' : 'Import Deck'}
+          {loading ? 'Processing... this could take a couple minutes' : 'Import Deck'}
         </button>
       </div>
     </div>

@@ -241,6 +241,13 @@ Now parse this Anki export:
                 detail="GPT returned invalid format. Expected a JSON array."
             )
         
+        # Enforce 100 card limit
+        if len(flashcards_data) > 100:
+            raise HTTPException(
+                status_code=400,
+                detail=f"This import contains {len(flashcards_data)} cards, which exceeds the limit of 100 cards per import. Please split your deck into smaller files."
+            )
+        
         # Create flashcards from structured data
         created_count = 0
         skipped_count = 0
@@ -619,6 +626,15 @@ async def import_anki_deck(
                 raise HTTPException(
                     status_code=400,
                     detail=f"Could not import any flashcards from this Anki deck. All {skipped_count} notes were skipped. This might be an Anki Collection Package (.colpkg) file. Please export your deck from Anki as 'Anki Deck Package (*.apkg)' instead. In Anki: File → Export → Select 'Anki Deck Package (*.apkg)' → Choose your deck → Export."
+                )
+            
+            # Enforce 100 card limit
+            if created_count > 100:
+                db.rollback()
+                conn.close()
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"This import contains {created_count} cards, which exceeds the limit of 100 cards per import. Please split your deck into smaller files."
                 )
             
             db.commit()
