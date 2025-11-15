@@ -7,6 +7,8 @@ import AccuracyGraph from '../components/AccuracyGraph';
 import StreakVisualization from '../components/StreakVisualization';
 import ComparisonCards from '../components/ComparisonCards';
 import WeakestAreas from '../components/WeakestAreas';
+import ReviewStats from '../components/ReviewStats';
+import DailySummary from '../components/DailySummary';
 
 const DashboardPage: React.FC = () => {
   const { token } = useAuth();
@@ -60,6 +62,12 @@ const DashboardPage: React.FC = () => {
           <div className="lg:col-span-2">
             <ActivityHeatmap stats={stats} />
           </div>
+        </div>
+
+        {/* Review Stats and Today's Summary */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <ReviewStats />
+          <DailySummary />
         </div>
 
         {/* Accuracy Graph */}
