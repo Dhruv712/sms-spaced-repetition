@@ -117,32 +117,42 @@ async def import_flashcards_from_pdf(
         db.flush()
     
     # Build GPT prompt with base instructions + user instructions
-    base_instructions = """Base instructions:
+    base_instructions = """CRITICAL: Create EXTREMELY concise flashcards. The definition should be as short as possible - ideally just a few words, a number, a name, or a single fact.
+
+Examples of good concise flashcards:
+- Concept: "Avogadro's number" → Definition: "6.02e23"
+- Concept: "Elon's birthplace" → Definition: "Pretoria"
+- Concept: "Capital of France" → Definition: "Paris"
+- Concept: "Year WW2 ended" → Definition: "1945"
+- Concept: "Photosynthesis equation" → Definition: "6CO2 + 6H2O → C6H12O6 + 6O2"
+
+Base instructions:
 - Don't create too many flashcards (aim for 10-30 cards unless the user specifies otherwise)
-- Keep flashcards concise - concepts should be brief questions or prompts, definitions should be clear but not overly long
-- Focus on key concepts, important facts, and essential information
-- Skip trivial details or overly specific information
-- If the PDF is very long, prioritize the most important content"""
+- DEFINITIONS MUST BE EXTREMELY CONCISE: Just the essential answer - a number, name, short phrase, or key fact. NO repetition of the concept/question in the definition.
+- Concepts should be brief questions or prompts (one sentence or phrase max)
+- Focus on key facts, definitions, numbers, names, dates, and essential information
+- Skip verbose explanations, examples, or content that requires long answers
+- If the PDF is very long, prioritize the most important content
+- NEVER repeat the concept/question in the definition - the definition should ONLY contain the answer"""
     
-    user_instructions_text = f"\n\nUser's specific instructions:\n{instructions}" if instructions.strip() else ""
+    user_instructions_text = f"\n\nUser's specific instructions (apply these in addition to the base instructions above):\n{instructions}" if instructions.strip() else ""
     
     prompt = f"""You are creating flashcards from a PDF document. {base_instructions}{user_instructions_text}
 
 Extract flashcards from the PDF text below and return them as a JSON array.
 
 Each flashcard should have:
-- "concept": The front/question/prompt of the card (brief and clear)
-- "definition": The back/answer/explanation of the card (concise but complete)
+- "concept": The front/question/prompt of the card (brief and clear, one sentence or phrase)
+- "definition": The back/answer - MUST be extremely concise (just the essential answer: a number, name, short phrase, or key fact)
 - "tags": Optional comma-separated tags relevant to the content, otherwise empty string
 
 Rules:
-1. Create high-quality flashcards that test understanding, not just memorization
-2. Keep concepts brief (ideally one sentence or phrase)
-3. Keep definitions concise but informative (2-3 sentences max)
-4. Focus on important concepts, key facts, definitions, and relationships
-5. Skip trivial details, examples that are too specific, or content that doesn't make good flashcards
-6. Return ONLY valid JSON, no markdown code blocks, no explanation
-7. Follow the user's specific instructions above
+1. DEFINITIONS MUST BE AS CONCISE AS POSSIBLE - aim for 1-5 words, a number, or a short phrase
+2. NEVER repeat the concept/question in the definition - if the concept asks "What is X?", the definition should just be "X" or the answer, not "X is..."
+3. Focus on factual information: numbers, names, dates, definitions, key terms
+4. Skip verbose explanations, examples, or content that requires long answers
+5. Return ONLY valid JSON, no markdown code blocks, no explanation
+6. Follow the user's specific instructions above (in addition to these base rules)
 
 PDF content:
 {pdf_text[:100000]}  # Limit to 100k chars to avoid token limits
