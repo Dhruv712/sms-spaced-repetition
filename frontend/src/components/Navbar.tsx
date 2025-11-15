@@ -96,12 +96,12 @@ const Navbar: React.FC = () => {
               <>
                 {!user.is_premium ? (
                   <Link to="/premium" className="text-primary-600 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-100 px-3 py-1.5 text-sm font-light whitespace-nowrap transition-colors duration-200">
-                    Premium
+                    Get Premium
                   </Link>
                 ) : (
-                  <span className="text-gray-600 dark:text-gray-400 px-3 py-1.5 text-sm font-light whitespace-nowrap">
+                  <Link to="/premium" className="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 px-3 py-1.5 text-sm font-light whitespace-nowrap transition-colors duration-200">
                     Premium
-                  </span>
+                  </Link>
                 )}
               </>
             )}
@@ -226,9 +226,13 @@ const Navbar: React.FC = () => {
                   </Link>
                 )}
                 {user.is_premium && (
-                  <div className="px-4 py-2 text-gray-600 dark:text-gray-400 text-sm font-light text-center">
+                  <Link 
+                    to="/premium" 
+                    onClick={closeMenu}
+                    className="block px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors duration-200 text-center"
+                  >
                     Premium
-                  </div>
+                  </Link>
                 )}
                 <div className="px-4 py-2 text-gray-600 dark:text-gray-300 text-sm">
                   {user.email}

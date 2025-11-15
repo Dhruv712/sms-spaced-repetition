@@ -10,12 +10,29 @@ const PremiumPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [subscriptionStatus, setSubscriptionStatus] = useState<any>(null);
+
   useEffect(() => {
-    if (user?.is_premium) {
-      // User is already premium, redirect to home
-      navigate('/');
+    if (user?.is_premium && token) {
+      // Fetch subscription status for premium users
+      const fetchStatus = async () => {
+        try {
+          const response = await axios.get(
+            buildApiUrl('/subscription/status'),
+            {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+              },
+            }
+          );
+          setSubscriptionStatus(response.data);
+        } catch (err) {
+          console.error('Error fetching subscription status:', err);
+        }
+      };
+      fetchStatus();
     }
-  }, [user, navigate]);
+  }, [user, token]);
 
   const handleUpgrade = async () => {
     if (!token) {
@@ -83,18 +100,67 @@ const PremiumPage: React.FC = () => {
   };
 
   if (user?.is_premium) {
+    const formatDate = (dateString: string | null) => {
+      if (!dateString) return 'N/A';
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    };
+
     return (
       <div className="min-h-screen bg-secondary-50 dark:bg-secondary-900 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-8">
             <h1 className="text-4xl font-bold text-secondary-900 dark:text-white mb-4">
-              ⭐ You're a Premium Member!
+              ⭐ Premium Membership
             </h1>
             <p className="text-lg text-secondary-600 dark:text-secondary-400">
               Thank you for your support. Enjoy unlimited access to all features.
             </p>
           </div>
 
+          {/* Subscription Status */}
+          <div className="bg-white dark:bg-secondary-800 rounded-lg shadow-soft p-6 mb-6">
+            <h2 className="text-2xl font-semibold text-secondary-900 dark:text-white mb-4">
+              Subscription Details
+            </h2>
+            {subscriptionStatus ? (
+              <div className="space-y-3 text-secondary-700 dark:text-secondary-300">
+                <div className="flex justify-between">
+                  <span className="font-medium">Status:</span>
+                  <span className={`font-semibold ${
+                    subscriptionStatus.stripe_subscription_status === 'active' 
+                      ? 'text-green-600 dark:text-green-400' 
+                      : 'text-yellow-600 dark:text-yellow-400'
+                  }`}>
+                    {subscriptionStatus.stripe_subscription_status === 'active' ? 'Active' : subscriptionStatus.stripe_subscription_status}
+                  </span>
+                </div>
+                {subscriptionStatus.subscription_end_date && (
+                  <div className="flex justify-between">
+                    <span className="font-medium">Next billing date:</span>
+                    <span>{formatDate(subscriptionStatus.subscription_end_date)}</span>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <p className="text-secondary-600 dark:text-secondary-400">Loading subscription details...</p>
+            )}
+
+            <div className="mt-6">
+              <button
+                onClick={handleManageSubscription}
+                disabled={loading}
+                className="px-6 py-3 bg-primary-600 text-white rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+              >
+                {loading ? 'Loading...' : 'Manage Subscription'}
+              </button>
+              <p className="text-sm text-secondary-600 dark:text-secondary-400 mt-2">
+                Manage your subscription, update payment method, or cancel from the Stripe customer portal.
+              </p>
+            </div>
+          </div>
+
+          {/* Premium Features */}
           <div className="bg-white dark:bg-secondary-800 rounded-lg shadow-soft p-6">
             <h2 className="text-2xl font-semibold text-secondary-900 dark:text-white mb-4">
               Premium Features
@@ -125,16 +191,6 @@ const PremiumPage: React.FC = () => {
                 All premium features unlocked
               </li>
             </ul>
-
-            <div className="mt-6">
-              <button
-                onClick={handleManageSubscription}
-                disabled={loading}
-                className="px-6 py-3 bg-primary-600 text-white rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-              >
-                {loading ? 'Loading...' : 'Manage Subscription'}
-              </button>
-            </div>
           </div>
         </div>
       </div>
@@ -187,13 +243,10 @@ const PremiumPage: React.FC = () => {
 
           {/* Premium Plan */}
           <div className="bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-900/20 dark:to-primary-800/20 rounded-lg shadow-soft p-6 border-2 border-primary-500">
-            <div className="flex items-center justify-between mb-4">
+            <div className="mb-4">
               <h2 className="text-2xl font-semibold text-secondary-900 dark:text-white">
                 Premium
               </h2>
-              <span className="bg-primary-600 text-white px-3 py-1 rounded-full text-sm font-medium">
-                Popular
-              </span>
             </div>
             <div className="mb-6">
               <span className="text-4xl font-bold text-secondary-900 dark:text-white">$8</span>
@@ -230,7 +283,7 @@ const PremiumPage: React.FC = () => {
               disabled={loading || !token}
               className="w-full px-6 py-3 bg-primary-600 text-white rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 font-medium"
             >
-              {loading ? 'Processing...' : 'Upgrade to Premium'}
+              {loading ? 'Processing...' : 'Get Premium'}
             </button>
           </div>
         </div>
