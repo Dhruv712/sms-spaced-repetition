@@ -183,13 +183,6 @@ PDF content:
                 detail="GPT returned invalid format. Expected a JSON array."
             )
         
-        # Enforce 100 card limit
-        if len(flashcards_data) > 100:
-            raise HTTPException(
-                status_code=400,
-                detail=f"This import contains {len(flashcards_data)} cards, which exceeds the limit of 100 cards per import. Please split your PDF into smaller sections or adjust your instructions to create fewer cards."
-            )
-        
         # Create flashcards from structured data
         created_count = 0
         skipped_count = 0
