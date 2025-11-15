@@ -91,6 +91,16 @@ const DeckReviewPage: React.FC = () => {
     }
   };
 
+  const handleSkip = () => {
+    // Skip the current card without creating a review - just move to next
+    if (currentIndex < flashcards.length - 1) {
+      setCurrentIndex(currentIndex + 1);
+      setAnswer('');
+      setFeedback(null);
+      setError('');
+    }
+  };
+
   if (!token) return <div>Please log in.</div>;
   if (isLoading) return <div>Loading flashcards...</div>;
   if (error) return <div>{error}</div>;
@@ -118,7 +128,7 @@ const DeckReviewPage: React.FC = () => {
       </div>
       <div className="flex gap-2">
         <button
-          className="bg-primary-500 text-white px-4 py-2 rounded flex items-center"
+          className="bg-primary-500 text-white px-4 py-2 rounded flex items-center flex-1"
           onClick={handleSubmit}
           disabled={isSubmitting || !!feedback || !answer.trim()}
         >
@@ -134,6 +144,15 @@ const DeckReviewPage: React.FC = () => {
             'Submit Answer'
           )}
         </button>
+        {!feedback && (
+          <button
+            className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
+            onClick={handleSkip}
+            disabled={isSubmitting}
+          >
+            Skip
+          </button>
+        )}
         
         {feedback && (
           <>
