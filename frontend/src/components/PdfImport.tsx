@@ -94,22 +94,7 @@ const PdfImport: React.FC<PdfImportProps> = ({ onSuccess }) => {
     }
   };
 
-  if (!user?.is_premium) {
-    return (
-      <div className="bg-white dark:bg-darksurface rounded-lg border border-gray-200 dark:border-gray-800 p-6 mb-8">
-        <h2 className="text-lg font-light text-gray-900 dark:text-darktext mb-4">Create Flashcards from PDF</h2>
-        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-          PDF import is a premium feature. Upgrade to Premium to create flashcards from PDF documents.
-        </p>
-        <a
-          href="/premium"
-          className="inline-block px-4 py-2 bg-primary-500 text-white rounded hover:bg-primary-600 transition-colors duration-200 text-sm"
-        >
-          Upgrade to Premium
-        </a>
-      </div>
-    );
-  }
+  const isPremium = user?.is_premium;
 
   return (
     <div className="bg-white dark:bg-darksurface rounded-lg border border-gray-200 dark:border-gray-800 p-6 mb-8">
@@ -117,6 +102,19 @@ const PdfImport: React.FC<PdfImportProps> = ({ onSuccess }) => {
       <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
         Upload a paper, book chapter, notes, etc. and GPT will generate flashcards for you.
       </p>
+      
+      {!isPremium && (
+        <div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded text-sm text-yellow-800 dark:text-yellow-300">
+          <p className="font-medium">Premium Feature</p>
+          <p className="text-xs mt-1 mb-2">Upgrade to Premium to create flashcards from PDF documents.</p>
+          <a
+            href="/premium"
+            className="inline-block px-3 py-1.5 bg-primary-500 text-white rounded hover:bg-primary-600 transition-colors duration-200 text-xs font-medium"
+          >
+            Upgrade to Premium
+          </a>
+        </div>
+      )}
       
       {error && (
         <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-sm text-red-800 dark:text-red-300">
@@ -130,7 +128,7 @@ const PdfImport: React.FC<PdfImportProps> = ({ onSuccess }) => {
         </div>
       )}
 
-      <div className="space-y-4">
+      <div className={`space-y-4 ${!isPremium ? 'opacity-50' : ''}`}>
         <div>
           <label className="block text-sm text-gray-700 dark:text-gray-300 mb-2">
             Select PDF file
@@ -139,13 +137,15 @@ const PdfImport: React.FC<PdfImportProps> = ({ onSuccess }) => {
             type="file"
             accept=".pdf"
             onChange={handleFileChange}
+            disabled={!isPremium}
             className="block w-full text-sm text-gray-500 dark:text-gray-400
               file:mr-4 file:py-2 file:px-4
               file:rounded file:border-0
               file:text-sm file:font-medium
               file:bg-primary-50 file:text-primary-700
               hover:file:bg-primary-100
-              dark:file:bg-primary-900 dark:file:text-primary-300"
+              dark:file:bg-primary-900 dark:file:text-primary-300
+              disabled:opacity-50 disabled:cursor-not-allowed"
           />
         </div>
 
@@ -158,7 +158,8 @@ const PdfImport: React.FC<PdfImportProps> = ({ onSuccess }) => {
             onChange={(e) => setInstructions(e.target.value)}
             placeholder="e.g., 'Focus on key concepts from chapters 1-3', 'Create cards for definitions only', 'Make 20-30 cards'"
             rows={3}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-darktext text-sm"
+            disabled={!isPremium}
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-darktext text-sm disabled:opacity-50 disabled:cursor-not-allowed"
           />
           <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
             Provide specific instructions for how to create flashcards from the PDF. Leave empty for default behavior.
@@ -172,7 +173,8 @@ const PdfImport: React.FC<PdfImportProps> = ({ onSuccess }) => {
           <select
             value={deckId || ''}
             onChange={(e) => setDeckId(e.target.value ? parseInt(e.target.value) : null)}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-darktext text-sm"
+            disabled={!isPremium}
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-darktext text-sm disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <option value="">Create new deck</option>
             {decks.map((deck) => (
@@ -185,7 +187,7 @@ const PdfImport: React.FC<PdfImportProps> = ({ onSuccess }) => {
 
         <button
           onClick={handleImport}
-          disabled={loading || !file}
+          disabled={loading || !file || !isPremium}
           className="w-full px-4 py-2 bg-primary-500 text-white rounded hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 text-sm"
         >
           {loading ? 'Processing... this could take a couple minutes' : 'Create Flashcards'}

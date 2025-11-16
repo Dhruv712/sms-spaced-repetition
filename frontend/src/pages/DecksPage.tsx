@@ -259,29 +259,40 @@ const DecksPage: React.FC = () => {
           </p>
         </div>
 
-        {/* PDF Import for Premium Users */}
-        {user?.is_premium && (
-          <div className="mb-8">
-            <PdfImport onSuccess={fetchDecks} />
-          </div>
-        )}
+        {/* PDF Import - Always shown, greyed out for non-premium */}
+        <div className="mb-8">
+          <PdfImport onSuccess={fetchDecks} />
+        </div>
 
-        {/* Anki Import for Premium Users */}
-        {user?.is_premium && (
-          <div className="mb-8">
-            <AnkiImport onSuccess={fetchDecks} />
-          </div>
-        )}
+        {/* Anki Import - Always shown, greyed out for non-premium */}
+        <div className="mb-8">
+          <AnkiImport onSuccess={fetchDecks} />
+        </div>
 
         <div className="bg-white dark:bg-secondary-800 rounded-lg shadow-soft p-6 mb-8">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold text-secondary-900 dark:text-white">Create New Deck</h2>
             {limits && !user?.is_premium && (
-              <span className="text-sm text-secondary-600 dark:text-secondary-400">
-                {limits.decks.count} / {limits.decks.limit} decks
-              </span>
+              <div className="text-right">
+                <span className={`text-sm font-medium ${limits.decks.count >= limits.decks.limit ? 'text-red-600 dark:text-red-400' : 'text-secondary-600 dark:text-secondary-400'}`}>
+                  {limits.decks.count} / {limits.decks.limit} decks
+                </span>
+                {limits.decks.count >= limits.decks.limit && (
+                  <p className="text-xs text-red-600 dark:text-red-400 mt-1">Free tier limit reached</p>
+                )}
+              </div>
             )}
           </div>
+          {!user?.is_premium && (
+            <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded text-sm text-blue-800 dark:text-blue-300">
+              <p className="font-medium mb-1">Free Plan Limits:</p>
+              <ul className="list-disc list-inside space-y-1 text-xs">
+                <li>Maximum 3 decks</li>
+                <li>Maximum 20 flashcards per deck</li>
+                <li>Upgrade to Premium for unlimited decks and flashcards</li>
+              </ul>
+            </div>
+          )}
           <form onSubmit={handleCreateDeck} className="flex space-x-4">
             <input
               type="text"
@@ -342,8 +353,19 @@ const DecksPage: React.FC = () => {
                       />
                     </div>
                     <div>
-                      <h3 className="text-lg font-medium text-secondary-900 dark:text-white">{deck.name} ({deck.flashcards_count || 0} cards)</h3>
+                      <h3 className="text-lg font-medium text-secondary-900 dark:text-white">
+                        {deck.name} ({deck.flashcards_count || 0} cards
+                        {!user?.is_premium && (
+                          <span className="text-sm font-normal text-secondary-500 dark:text-secondary-400">
+                            {' '}/ 20 max
+                          </span>
+                        )}
+                        )
+                      </h3>
                       <p className="text-sm text-secondary-500 dark:text-secondary-400">Created: {new Date(deck.created_at).toLocaleDateString()}</p>
+                      {!user?.is_premium && deck.flashcards_count >= 20 && (
+                        <p className="text-xs text-red-600 dark:text-red-400 mt-1">Free tier limit reached - upgrade for unlimited</p>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center space-x-4">
