@@ -110,20 +110,6 @@ const MasteryGraph: React.FC = () => {
           <h1 className="text-3xl font-bold text-secondary-900 dark:text-white">
             Mastery Graph: {masteryData.deck_name}
           </h1>
-          <div className="mt-4 flex space-x-6">
-            <div className="bg-white dark:bg-secondary-800 rounded-lg shadow-soft p-4">
-              <div className="text-sm text-secondary-600 dark:text-secondary-400">Current Streak</div>
-              <div className="text-2xl font-bold text-primary-600 dark:text-primary-400">
-                🔥 {masteryData.current_streak} days
-              </div>
-            </div>
-            <div className="bg-white dark:bg-secondary-800 rounded-lg shadow-soft p-4">
-              <div className="text-sm text-secondary-600 dark:text-secondary-400">Longest Streak</div>
-              <div className="text-2xl font-bold text-primary-600 dark:text-primary-400">
-                🏆 {masteryData.longest_streak} days
-              </div>
-            </div>
-          </div>
         </div>
 
         {formattedData.length === 0 ? (
