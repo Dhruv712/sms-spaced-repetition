@@ -216,14 +216,17 @@ async def process_user_message(user: User, body: str, passthrough: str, db: Sess
         if body and body.strip() and body.strip().lower() == "skip":
             print(f"⏭️ User wants to skip current flashcard")
             if state and state.state == "waiting_for_answer" and state.current_flashcard_id:
+                skipped_card_id = state.current_flashcard_id
                 # Mark the card as skipped (don't create a review, just move to next)
+                # Set last_sent_flashcard_id to the skipped card to prevent immediate resend
                 state.state = "idle"
                 state.current_flashcard_id = None
+                state.last_sent_flashcard_id = skipped_card_id  # Track skipped card to prevent resend
                 db.commit()
                 
-                # Get next due flashcard
+                # Get next due flashcard (will exclude the skipped card via last_sent_flashcard_id)
                 next_card = get_next_due_flashcard(user.id, db)
-                if next_card:
+                if next_card and next_card.id != skipped_card_id:
                     set_conversation_state(user.id, next_card.id, db)
                     if service:
                         state_after = db.query(ConversationState).filter_by(user_id=user.id).first()
@@ -233,6 +236,11 @@ async def process_user_message(user: User, body: str, passthrough: str, db: Sess
                             return "Card skipped. Next flashcard sent."
                     return "Card skipped. Next flashcard sent."
                 else:
+                    # No other cards available, or same card would be sent again
+                    # Clear the last_sent_flashcard_id so it can be sent later
+                    if state:
+                        state.last_sent_flashcard_id = None
+                        db.commit()
                     # Send completion message with stats
                     completion_message = generate_session_completion_message(user.id, db, user)
                     if service:
@@ -242,6 +250,40 @@ async def process_user_message(user: User, body: str, passthrough: str, db: Sess
                 if service:
                     service.send_feedback(user.phone_number, "No card to skip. I'll send you flashcards automatically at your preferred times.")
                 return "No card to skip."
+        
+        # Handle NEW flashcard creation BEFORE checking for flashcard responses
+        # This ensures "NEW" commands are never treated as answers to flashcards
+        if body and body.strip() and body.strip().upper().startswith("NEW"):
+            print(f"🎯 User wants to create a new flashcard")
+            # Clear any waiting_for_answer state when creating a new flashcard
+            if state and state.state == "waiting_for_answer":
+                print(f"🔄 Clearing waiting_for_answer state for NEW command")
+                state.state = "idle"
+                state.current_flashcard_id = None
+                db.commit()
+            natural_text = body.strip()[3:].strip()  # Remove "NEW" prefix
+            if natural_text:
+                return await handle_natural_flashcard_creation(user, natural_text, service, db)
+            else:
+                return "Please provide a description after 'NEW'. Example: 'NEW Create a flashcard about photosynthesis'"
+        
+        # Handle flashcard confirmation BEFORE checking for flashcard responses
+        if state and state.state == "waiting_for_flashcard_confirmation":
+            print(f"🎯 Found flashcard confirmation state for user {user.id}")
+            if "save" in body.lower():
+                print(f"✅ User confirmed flashcard creation")
+                return await handle_flashcard_confirmation(user, state, service, db)
+            elif "no" in body.lower() or "cancel" in body.lower():
+                print(f"❌ User rejected flashcard creation")
+                # Clear the state and ask for new input
+                state.state = "idle"
+                state.context = None
+                db.commit()
+                if service:
+                    service.send_feedback(user.phone_number, "Flashcard cancelled. Send 'NEW' followed by your flashcard request to try again.")
+                return "Flashcard cancelled. Send 'NEW' followed by your flashcard request to try again."
+            else:
+                return "Please reply 'SAVE' to save the flashcard or 'NO' to try again."
         
         # Check if this is a response to a flashcard
         if passthrough and passthrough.startswith("flashcard_id:"):
@@ -279,39 +321,10 @@ async def process_user_message(user: User, body: str, passthrough: str, db: Sess
                 print(f"   - State: {state.state}")
                 print(f"   - Flashcard ID: {state.current_flashcard_id}")
         
-        # Handle flashcard confirmation FIRST (before general commands)
-        if state and state.state == "waiting_for_flashcard_confirmation":
-            print(f"🎯 Found flashcard confirmation state for user {user.id}")
-            if "save" in body.lower():
-                print(f"✅ User confirmed flashcard creation")
-                return await handle_flashcard_confirmation(user, state, service, db)
-            elif "no" in body.lower() or "cancel" in body.lower():
-                print(f"❌ User rejected flashcard creation")
-                # Clear the state and ask for new input
-                state.state = "idle"
-                state.context = None
-                db.commit()
-                if service:
-                    service.send_feedback(user.phone_number, "Flashcard cancelled. Send 'NEW' followed by your flashcard request to try again.")
-                return "Flashcard cancelled. Send 'NEW' followed by your flashcard request to try again."
-            else:
-                return "Please reply 'SAVE' to save the flashcard or 'NO' to try again."
-        else:
-            print(f"❌ No flashcard confirmation state found. State: {state.state if state else 'None'}")
-        
         # Handle general commands
         if "yes" in body.lower():
             print(f"✅ User said 'yes', starting session")
             return await handle_start_session(user, service, db)
-        
-        # Handle NEW flashcard creation
-        if body.strip().upper().startswith("NEW"):
-            print(f"🎯 User wants to create a new flashcard")
-            natural_text = body.strip()[3:].strip()  # Remove "NEW" prefix
-            if natural_text:
-                return await handle_natural_flashcard_creation(user, natural_text, service, db)
-            else:
-                return "Please provide a description after 'NEW'. Example: 'NEW Create a flashcard about photosynthesis'"
         
         # If we have a conversation state but it's not waiting for answer or flashcard confirmation, clear it
         if state and state.state not in ["waiting_for_answer", "waiting_for_flashcard_confirmation"]:

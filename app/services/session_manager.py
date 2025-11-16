@@ -48,9 +48,16 @@ def get_next_due_flashcard(user_id: int, db: Session) -> Flashcard | None:
     state = db.query(ConversationState).filter_by(user_id=user_id).first()
     last_sent_id = state.last_sent_flashcard_id if state else None
     
-    # Exclude the last sent card if it hasn't been answered yet
-    if last_sent_id and state and state.state == "waiting_for_answer":
-        base_query = base_query.filter(Flashcard.id != last_sent_id)
+    # Exclude the last sent card if:
+    # 1. It's currently waiting for an answer, OR
+    # 2. State is idle but last_sent_id is set (likely a skipped card that shouldn't be resent immediately)
+    if last_sent_id and state:
+        if state.state == "waiting_for_answer":
+            # Card is waiting for answer - definitely exclude
+            base_query = base_query.filter(Flashcard.id != last_sent_id)
+        elif state.state == "idle" and last_sent_id:
+            # State is idle but last_sent_id is set - likely a skipped card, exclude it
+            base_query = base_query.filter(Flashcard.id != last_sent_id)
     
     # Get all due cards
     all_due_cards = base_query.all()
