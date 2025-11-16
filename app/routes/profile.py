@@ -20,6 +20,7 @@ class UserProfile(BaseModel):
     sms_opt_in: bool
     has_sms_conversation: bool
     is_premium: bool = False
+    is_admin: bool = False
 
 @router.get("/profile", response_model=UserProfile)
 def get_user_profile(
@@ -47,7 +48,8 @@ def get_user_profile(
         timezone=current_user.timezone,
         sms_opt_in=current_user.sms_opt_in,
         has_sms_conversation=has_sms_conversation,
-        is_premium=current_user.is_premium or False
+        is_premium=current_user.is_premium or False,
+        is_admin=current_user.is_admin or False
     )
 
 @router.put("/profile", response_model=UserProfile)
@@ -93,5 +95,6 @@ def update_user_profile(
         timezone=current_user.timezone,
         sms_opt_in=current_user.sms_opt_in,
         has_sms_conversation=has_sms_conversation,
-        is_premium=current_user.is_premium or False
+        is_premium=current_user.is_premium or False,
+        is_admin=current_user.is_admin or False
     )

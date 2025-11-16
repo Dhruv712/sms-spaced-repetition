@@ -14,6 +14,7 @@ interface User {
   sms_opt_in?: boolean;
   has_sms_conversation?: boolean;
   is_premium?: boolean;
+  is_admin?: boolean;
 }
 
 interface AuthContextType {

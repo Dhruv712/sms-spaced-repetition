@@ -17,6 +17,7 @@ import PremiumPage from './pages/PremiumPage';
 import SubscriptionSuccessPage from './pages/SubscriptionSuccessPage';
 import SubscriptionCancelPage from './pages/SubscriptionCancelPage';
 import DashboardPage from './pages/DashboardPage';
+import AdminDashboardPage from './pages/AdminDashboardPage';
 import PhoneNumberModal from './components/PhoneNumberModal';
 
 const AppContent: React.FC = () => {
@@ -130,6 +131,14 @@ const AppContent: React.FC = () => {
             element={
               <ProtectedRoute>
                 <DashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute>
+                <AdminDashboardPage />
               </ProtectedRoute>
             }
           />

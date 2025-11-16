@@ -76,6 +76,11 @@ const Navbar: React.FC = () => {
                 <li>
                   <Link to="/help" className="text-primary-600 dark:text-primary-300 hover:underline hover:text-primary-800 dark:hover:text-primary-100 transition-colors duration-200">Help</Link>
                 </li>
+                {user.is_admin && (
+                  <li>
+                    <Link to="/admin" className="text-primary-600 dark:text-primary-300 hover:underline hover:text-primary-800 dark:hover:text-primary-100 transition-colors duration-200">Admin</Link>
+                  </li>
+                )}
               </>
             ) : (
               <>
@@ -216,6 +221,15 @@ const Navbar: React.FC = () => {
                 >
                   Help
                 </Link>
+                {user.is_admin && (
+                  <Link 
+                    to="/admin" 
+                    onClick={closeMenu}
+                    className="block px-4 py-2 text-primary-600 dark:text-primary-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors duration-200"
+                  >
+                    Admin
+                  </Link>
+                )}
                 {!user.is_premium && (
                   <Link 
                     to="/premium" 

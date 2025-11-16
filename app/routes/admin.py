@@ -1,12 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
-from sqlalchemy import text
+from sqlalchemy import text, func
+from datetime import datetime, timedelta, timezone
 from app.database import get_db, engine
-from app.models import User
+from app.models import User, Flashcard, CardReview, Deck, ConversationState
 from app.services.auth import get_current_active_user, require_admin_access
 from app.services.scheduler_service import send_due_flashcards_to_all_users, send_due_flashcards_to_user, get_user_flashcard_stats, cleanup_old_conversation_states
 from app.services.summary_service import send_daily_summary_to_user, get_daily_review_summary
-from typing import Dict, Any
+from typing import Dict, Any, List
 
 router = APIRouter(tags=["Admin"])
 
@@ -985,3 +986,137 @@ async def migrate_admin_field_public(
             "success": False,
             "error": str(e)
         }
+
+@router.get("/dashboard")
+async def get_admin_dashboard(
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+) -> Dict[str, Any]:
+    """
+    Get admin dashboard statistics and user list
+    (Admin access required)
+    """
+    # Check admin access
+    await require_admin_access(request, db)
+    
+    # Verify user is admin
+    if not current_user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required"
+        )
+    
+    try:
+        now = datetime.now(timezone.utc)
+        last_7_days = now - timedelta(days=7)
+        last_30_days = now - timedelta(days=30)
+        
+        # Overall statistics
+        total_users = db.query(func.count(User.id)).scalar() or 0
+        premium_users = db.query(func.count(User.id)).filter(User.is_premium == True).scalar() or 0
+        sms_opt_in_users = db.query(func.count(User.id)).filter(User.sms_opt_in == True).scalar() or 0
+        active_users = db.query(func.count(func.distinct(User.id))).join(
+            CardReview, User.id == CardReview.user_id
+        ).filter(CardReview.review_date >= last_30_days).scalar() or 0
+        
+        # Recent signups
+        new_users_7d = db.query(func.count(User.id)).filter(
+            User.created_at >= last_7_days
+        ).scalar() or 0
+        new_users_30d = db.query(func.count(User.id)).filter(
+            User.created_at >= last_30_days
+        ).scalar() or 0
+        
+        # Content statistics
+        total_flashcards = db.query(func.count(Flashcard.id)).scalar() or 0
+        total_reviews = db.query(func.count(CardReview.id)).scalar() or 0
+        total_decks = db.query(func.count(Deck.id)).scalar() or 0
+        
+        # Recent activity
+        reviews_last_7d = db.query(func.count(CardReview.id)).filter(
+            CardReview.review_date >= last_7_days
+        ).scalar() or 0
+        reviews_last_30d = db.query(func.count(CardReview.id)).filter(
+            CardReview.review_date >= last_30_days
+        ).scalar() or 0
+        
+        # Users with SMS conversation state
+        users_with_sms_conversation = db.query(func.count(func.distinct(ConversationState.user_id))).scalar() or 0
+        
+        # Get user list with details
+        users = db.query(User).order_by(User.created_at.desc()).all()
+        
+        user_list = []
+        for user in users:
+            # Get user stats
+            user_flashcards = db.query(func.count(Flashcard.id)).filter(
+                Flashcard.user_id == user.id
+            ).scalar() or 0
+            
+            user_reviews = db.query(func.count(CardReview.id)).filter(
+                CardReview.user_id == user.id
+            ).scalar() or 0
+            
+            user_decks = db.query(func.count(Deck.id)).filter(
+                Deck.user_id == user.id
+            ).scalar() or 0
+            
+            # Check if user has SMS conversation
+            has_sms_conversation = db.query(ConversationState).filter(
+                ConversationState.user_id == user.id
+            ).first() is not None
+            
+            # Get last review date
+            last_review = db.query(CardReview).filter(
+                CardReview.user_id == user.id
+            ).order_by(CardReview.review_date.desc()).first()
+            
+            last_review_date = last_review.review_date.isoformat() if last_review else None
+            
+            user_list.append({
+                "id": user.id,
+                "email": user.email,
+                "name": user.name,
+                "is_premium": user.is_premium or False,
+                "is_admin": user.is_admin or False,
+                "sms_opt_in": user.sms_opt_in or False,
+                "has_sms_conversation": has_sms_conversation,
+                "phone_number": user.phone_number,
+                "timezone": user.timezone,
+                "current_streak_days": user.current_streak_days or 0,
+                "longest_streak_days": user.longest_streak_days or 0,
+                "flashcards_count": user_flashcards,
+                "reviews_count": user_reviews,
+                "decks_count": user_decks,
+                "last_review_date": last_review_date,
+                "created_at": user.created_at.isoformat() if user.created_at else None,
+                "subscription_status": user.stripe_subscription_status,
+                "subscription_end_date": user.subscription_end_date.isoformat() if user.subscription_end_date else None,
+            })
+        
+        return {
+            "success": True,
+            "stats": {
+                "total_users": total_users,
+                "premium_users": premium_users,
+                "sms_opt_in_users": sms_opt_in_users,
+                "active_users": active_users,
+                "users_with_sms_conversation": users_with_sms_conversation,
+                "new_users_7d": new_users_7d,
+                "new_users_30d": new_users_30d,
+                "total_flashcards": total_flashcards,
+                "total_reviews": total_reviews,
+                "total_decks": total_decks,
+                "reviews_last_7d": reviews_last_7d,
+                "reviews_last_30d": reviews_last_30d,
+            },
+            "users": user_list
+        }
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error fetching admin dashboard: {str(e)}"
+        )
