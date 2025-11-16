@@ -263,6 +263,35 @@ const FlashcardsPage: React.FC = () => {
     setSelectedTag(tag);
   };
 
+  const handleDeleteTag = async (tag: string) => {
+    if (!token) return;
+    
+    if (!window.confirm(`Are you sure you want to delete the tag "${tag}"? This will remove it from all flashcards, but the flashcards themselves will not be deleted.`)) {
+      return;
+    }
+
+    try {
+      await axios.delete(
+        buildApiUrl(`/flashcards/tags/${encodeURIComponent(tag)}`),
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        }
+      );
+      
+      // Remove tag from uniqueTags and reload flashcards
+      setUniqueTags(uniqueTags.filter(t => t !== tag));
+      if (selectedTag === tag) {
+        setSelectedTag(null);
+      }
+      loadFlashcards();
+    } catch (err: any) {
+      console.error('Error deleting tag:', err);
+      alert(err.response?.data?.detail || 'Failed to delete tag. Please try again.');
+    }
+  };
+
   const handleDeckFilterClick = (id: number | null) => {
     if (id === null) {
       navigate('/flashcards'); // Navigate to base flashcards page
@@ -389,22 +418,35 @@ const FlashcardsPage: React.FC = () => {
       </div>
       {/* Tag Filters */}
       <div className="mb-8 p-4 bg-white dark:bg-secondary-800 rounded-lg shadow-md">
-        <h2 className="text-xl font-semibold mb-3 text-gray-800">Filter by Tag</h2>
+        <h2 className="text-xl font-semibold mb-3 text-gray-800 dark:text-gray-200">Filter by Tag</h2>
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => handleTagFilterClick(null)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium ${selectedTag === null ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'} transition-colors duration-200`}
+            className={`px-4 py-2 rounded-lg text-sm font-medium ${selectedTag === null ? 'bg-primary-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600'} transition-colors duration-200`}
           >
             All Tags
           </button>
           {uniqueTags.map(tag => (
-            <button
-              key={tag}
-              onClick={() => handleTagFilterClick(tag)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium ${selectedTag === tag ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'} transition-colors duration-200`}
-            >
-              {tag}
-            </button>
+            <div key={tag} className="flex items-center gap-1">
+              <button
+                onClick={() => handleTagFilterClick(tag)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium ${selectedTag === tag ? 'bg-primary-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600'} transition-colors duration-200`}
+              >
+                {tag}
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDeleteTag(tag);
+                }}
+                className="p-1.5 rounded hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 transition-colors duration-200"
+                title="Delete this tag from all flashcards"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
           ))}
         </div>
       </div>

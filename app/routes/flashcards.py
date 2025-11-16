@@ -190,3 +190,44 @@ def assign_flashcard_to_deck(
     db.refresh(card)
     return {"detail": "Flashcard assigned to deck successfully"}
 
+@router.delete("/tags/{tag}")
+def delete_tag(
+    tag: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Delete a tag from all flashcards belonging to the current user.
+    This removes the tag from the tags field but does not delete the flashcards themselves.
+    """
+    # Get all flashcards for this user that have this tag
+    flashcards = db.query(Flashcard).filter(
+        Flashcard.user_id == current_user.id,
+        Flashcard.tags.ilike(f"%{tag}%")
+    ).all()
+    
+    if not flashcards:
+        raise HTTPException(status_code=404, detail=f"Tag '{tag}' not found in any of your flashcards")
+    
+    # Remove the tag from each flashcard
+    updated_count = 0
+    for card in flashcards:
+        if card.tags:
+            # Parse tags, remove the target tag, and reconstruct
+            tag_list = [t.strip() for t in card.tags.split(',') if t.strip()]
+            # Remove the tag (case-insensitive)
+            tag_list = [t for t in tag_list if t.lower() != tag.lower()]
+            
+            if tag_list:
+                card.tags = ', '.join(tag_list)
+            else:
+                card.tags = None
+            updated_count += 1
+    
+    db.commit()
+    
+    return {
+        "detail": f"Tag '{tag}' removed from {updated_count} flashcard(s)",
+        "flashcards_updated": updated_count
+    }
+
