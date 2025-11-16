@@ -111,7 +111,7 @@ const PremiumPage: React.FC = () => {
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-8">
             <h1 className="text-4xl font-bold text-secondary-900 dark:text-white mb-4">
-              ⭐ Premium Membership
+              Premium Membership
             </h1>
             <p className="text-lg text-secondary-600 dark:text-secondary-400">
               Thank you for your support. Enjoy unlimited access to all features.
