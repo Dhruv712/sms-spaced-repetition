@@ -878,6 +878,60 @@ async def reset_premium_status_public(
     except Exception as e:
         return {"success": False, "error": str(e)}
 
+@router.post("/set-premium-status-public")
+async def set_premium_status_public(
+    email: str,
+    request: Request,
+    db: Session = Depends(get_db)
+) -> Dict[str, Any]:
+    """
+    Set premium status for a user (for testing)
+    (Admin access required)
+    """
+    await require_admin_access(request, db)
+    try:
+        from datetime import datetime, timezone, timedelta
+        
+        # Set premium to TRUE and add some test subscription data
+        sql_command = """
+            UPDATE users 
+            SET is_premium = TRUE,
+                stripe_subscription_status = 'active',
+                subscription_start_date = :start_date,
+                subscription_end_date = :end_date
+            WHERE email = :email;
+        """
+        
+        # Set dates: start now, end in 30 days
+        start_date = datetime.now(timezone.utc)
+        end_date = start_date + timedelta(days=30)
+        
+        with engine.connect() as conn:
+            result = conn.execute(
+                text(sql_command), 
+                {
+                    "email": email,
+                    "start_date": start_date,
+                    "end_date": end_date
+                }
+            )
+            conn.commit()
+            rows_updated = result.rowcount
+        
+        if rows_updated == 0:
+            return {
+                "success": False,
+                "message": f"No user found with email: {email}"
+            }
+        
+        return {
+            "success": True,
+            "message": f"Set premium status for {email}",
+            "email": email
+        }
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
 @router.post("/migrate-admin-field-public")
 async def migrate_admin_field_public(
     request: Request,
