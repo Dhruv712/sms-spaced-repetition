@@ -6,6 +6,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
+import SmsSetupBanner from '../components/SmsSetupBanner';
 
 interface Review {
   id: number;
@@ -85,6 +86,9 @@ const ReviewHistoryPage: React.FC = () => {
   return (
     <div className="container mx-auto px-4 py-8 bg-gray-50 dark:bg-darkbg min-h-screen">
       <h1 className="text-3xl font-bold mb-6 text-gray-900 dark:text-darktext">Review History</h1>
+      
+      {/* SMS Setup Banner */}
+      <SmsSetupBanner />
 
       <div className="space-y-6">
         {reviews.map((review) => (

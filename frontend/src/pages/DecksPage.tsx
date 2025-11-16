@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { buildApiUrl } from '../config';
 import AnkiImport from '../components/AnkiImport';
 import PdfImport from '../components/PdfImport';
+import SmsSetupBanner from '../components/SmsSetupBanner';
 
 interface Deck {
   id: number;
@@ -246,6 +247,9 @@ const DecksPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-secondary-50 dark:bg-secondary-900 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto">
+        {/* SMS Setup Banner */}
+        <SmsSetupBanner />
+        
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-secondary-900 dark:text-white">
             Your Flashcard Decks

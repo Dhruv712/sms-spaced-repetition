@@ -9,6 +9,7 @@ import ComparisonCards from '../components/ComparisonCards';
 import WeakestAreas from '../components/WeakestAreas';
 import ReviewStats from '../components/ReviewStats';
 import DailySummary from '../components/DailySummary';
+import SmsSetupBanner from '../components/SmsSetupBanner';
 
 const DashboardPage: React.FC = () => {
   const { token } = useAuth();
@@ -48,6 +49,9 @@ const DashboardPage: React.FC = () => {
     <div className="min-h-screen bg-white dark:bg-darkbg py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         <h1 className="text-3xl font-light text-gray-900 dark:text-darktext mb-8">Dashboard</h1>
+        
+        {/* SMS Setup Banner */}
+        <SmsSetupBanner />
         
         {/* Comparison Cards */}
         <ComparisonCards stats={stats} />

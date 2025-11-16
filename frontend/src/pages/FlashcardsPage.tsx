@@ -9,6 +9,7 @@ import 'katex/dist/katex.min.css';
 import { useAuth } from '../contexts/AuthContext';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { buildApiUrl } from '../config';
+import SmsSetupBanner from '../components/SmsSetupBanner';
 
 interface Flashcard {
   id: number;
@@ -364,37 +365,8 @@ const FlashcardsPage: React.FC = () => {
         </div>
       )}
 
-      {/* SMS Banner for users without conversation state */}
-      {user && user.phone_number && user.phone_number !== null && !user.has_sms_conversation && (
-        <div className="mb-8 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
-          <div className="flex items-start space-x-3">
-            <div className="flex-shrink-0">
-              <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-                <span className="text-white text-sm font-bold">📱</span>
-              </div>
-            </div>
-            <div className="flex-1">
-              <h3 className="text-lg font-medium text-blue-900 dark:text-blue-100 mb-2">
-                Get Started with SMS Flashcards!
-              </h3>
-              <p className="text-blue-700 dark:text-blue-300 mb-4">
-                You have a phone number set up, but haven't started using SMS yet. Text "START" to this link to begin receiving flashcard reminders and create cards via text:
-              </p>
-              <div className="flex items-center gap-2 mb-3">
-                <a
-                  href="imessage://cue@a.imsg.co"
-                  className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 text-sm font-mono bg-white dark:bg-gray-800 px-3 py-2 rounded border border-blue-300 dark:border-blue-600 break-all"
-                >
-                  imessage://cue@a.imsg.co
-                </a>
-              </div>
-              <p className="text-sm text-blue-600 dark:text-blue-400">
-                💡 On mobile, tap the link above to open Messages and send "START"
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* SMS Setup Banner */}
+      <SmsSetupBanner />
       
       {/* Centered FlashcardForm */}
       <div className="flex flex-col items-center justify-center min-h-[40vh] mb-12">

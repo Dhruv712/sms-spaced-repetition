@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
 import { buildApiUrl } from '../config';
+import SmsSetupBanner from '../components/SmsSetupBanner';
 
 interface Flashcard {
   id: number;
@@ -109,8 +110,12 @@ const DeckReviewPage: React.FC = () => {
   const currentCard = flashcards[currentIndex];
 
   return (
-    <div className="max-w-xl mx-auto p-6 bg-white dark:bg-gray-900 rounded shadow">
-      <h2 className="text-xl font-bold mb-4">Review Deck</h2>
+    <div className="max-w-xl mx-auto p-6">
+      {/* SMS Setup Banner */}
+      <SmsSetupBanner />
+      
+      <div className="bg-white dark:bg-gray-900 rounded shadow p-6">
+        <h2 className="text-xl font-bold mb-4">Review Deck</h2>
       <div className="mb-2 text-sm text-gray-500 dark:text-gray-300">Card {currentIndex + 1} of {flashcards.length}</div>
       <div className="mb-4">
         <div className="font-semibold">Concept:</div>
@@ -190,6 +195,7 @@ const DeckReviewPage: React.FC = () => {
           <div><strong>LLM Feedback:</strong> {feedback}</div>
         </div>
       )}
+      </div>
     </div>
   );
 };
