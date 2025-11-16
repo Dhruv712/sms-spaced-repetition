@@ -259,14 +259,14 @@ const DecksPage: React.FC = () => {
           </p>
         </div>
 
-        {/* PDF Import - Always shown, greyed out for non-premium */}
-        <div className="mb-8">
-          <PdfImport onSuccess={fetchDecks} />
-        </div>
-
-        {/* Anki Import - Always shown, greyed out for non-premium */}
-        <div className="mb-8">
-          <AnkiImport onSuccess={fetchDecks} />
+        {/* PDF and Anki Import - Side by side for space efficiency */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <div>
+            <PdfImport onSuccess={fetchDecks} />
+          </div>
+          <div>
+            <AnkiImport onSuccess={fetchDecks} />
+          </div>
         </div>
 
         <div className="bg-white dark:bg-secondary-800 rounded-lg shadow-soft p-6 mb-8">
