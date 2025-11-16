@@ -1,10 +1,11 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useEffect } from 'react';
 
 interface ActivityHeatmapProps {
   stats: any;
 }
 
 const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({ stats }) => {
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const activityData = useMemo(() => {
     return stats?.activity_heatmap || {};
   }, [stats?.activity_heatmap]);
@@ -70,6 +71,19 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({ stats }) => {
   
   const weekDays = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
   
+  // Scroll to the end (current month) on mount and when data changes
+  useEffect(() => {
+    // Use setTimeout to ensure DOM is fully rendered
+    const timer = setTimeout(() => {
+      if (scrollContainerRef.current) {
+        // Scroll to the rightmost position to show current month
+        scrollContainerRef.current.scrollLeft = scrollContainerRef.current.scrollWidth;
+      }
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, [calendarData]);
+  
   // Generate month labels for horizontal scale
   const monthLabels = useMemo(() => {
     const today = new Date();
@@ -108,7 +122,7 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({ stats }) => {
   return (
     <div className="bg-white dark:bg-darksurface rounded-lg border border-gray-200 dark:border-gray-800 p-6">
       <h2 className="text-lg font-light text-gray-900 dark:text-darktext mb-4">Activity</h2>
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto" ref={scrollContainerRef}>
         <div className="flex gap-1">
           {/* Day labels - show all days */}
           <div className="flex flex-col gap-1 mr-2">
