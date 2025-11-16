@@ -5,14 +5,19 @@ interface StreakVisualizationProps {
 }
 
 const StreakVisualization: React.FC<StreakVisualizationProps> = ({ stats }) => {
+  const hasReviewedToday = stats?.streak?.has_reviewed_today ?? false;
+  const potentialStreak = stats?.streak?.potential || 0;
   const currentStreak = stats?.streak?.current || 0;
   const longestStreak = stats?.streak?.longest || 0;
   const streakHistory = stats?.streak?.history || [];
   
+  // Display the potential streak if they haven't reviewed today, otherwise show actual streak
+  const displayStreak = hasReviewedToday ? currentStreak : potentialStreak;
+  
   // Milestones
   const milestones = [7, 14, 30, 60, 100, 365];
-  const nextMilestone = milestones.find(m => m > currentStreak) || null;
-  const progressToNext = nextMilestone ? (currentStreak / nextMilestone * 100) : 100;
+  const nextMilestone = milestones.find(m => m > displayStreak) || null;
+  const progressToNext = nextMilestone ? (displayStreak / nextMilestone * 100) : 100;
   
   // Show last 30 days of streak history
   const recentHistory = streakHistory.slice(-30);
@@ -28,9 +33,14 @@ const StreakVisualization: React.FC<StreakVisualizationProps> = ({ stats }) => {
           <div className="text-xs text-gray-500 dark:text-gray-500">Longest: {longestStreak} days</div>
         </div>
         <div className="text-5xl font-light text-primary-600 dark:text-primary-400 mb-2">
-          {currentStreak}
+          {displayStreak}
         </div>
-        <div className="text-sm text-gray-600 dark:text-gray-400">days</div>
+        <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">days</div>
+        {!hasReviewedToday && potentialStreak > 0 && (
+          <div className="text-xs text-primary-600 dark:text-primary-400 font-medium mt-2 p-2 bg-primary-50 dark:bg-primary-900/20 rounded">
+            💡 Review today to extend your streak to {potentialStreak} days!
+          </div>
+        )}
       </div>
       
       {/* Progress to Next Milestone */}
@@ -38,7 +48,7 @@ const StreakVisualization: React.FC<StreakVisualizationProps> = ({ stats }) => {
         <div className="mb-6">
           <div className="flex items-center justify-between mb-2">
             <div className="text-xs text-gray-600 dark:text-gray-400">
-              {nextMilestone - currentStreak} days until {nextMilestone} day milestone
+              {nextMilestone - displayStreak} days until {nextMilestone} day milestone
             </div>
             <div className="text-xs text-gray-500 dark:text-gray-500">
               {Math.round(progressToNext)}%
@@ -85,7 +95,7 @@ const StreakVisualization: React.FC<StreakVisualizationProps> = ({ stats }) => {
         <div className="text-xs text-gray-600 dark:text-gray-400 mb-3">Milestones</div>
         <div className="flex flex-wrap gap-2">
           {milestones.map((milestone) => {
-            const achieved = currentStreak >= milestone;
+            const achieved = displayStreak >= milestone;
             const isLongest = longestStreak >= milestone;
             
             return (

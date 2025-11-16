@@ -139,6 +139,66 @@ def calculate_streak_days(user_id: int, db: Session) -> int:
     
     return streak
 
+def calculate_potential_streak(user_id: int, db: Session) -> tuple[int, bool]:
+    """
+    Calculate the potential streak if user reviews today.
+    Returns (potential_streak, has_reviewed_today)
+    """
+    today = datetime.now(timezone.utc).date()
+    start_of_today = datetime.combine(today, datetime.min.time(), tzinfo=timezone.utc)
+    end_of_today = datetime.combine(today, datetime.max.time(), tzinfo=timezone.utc)
+    
+    # Check if user has reviewed today
+    reviews_today = db.query(CardReview).filter(
+        and_(
+            CardReview.user_id == user_id,
+            CardReview.review_date >= start_of_today,
+            CardReview.review_date <= end_of_today
+        )
+    ).count()
+    
+    has_reviewed_today = reviews_today > 0
+    
+    if has_reviewed_today:
+        # Already reviewed today, return actual streak
+        actual_streak = calculate_streak_days(user_id, db)
+        return (actual_streak, True)
+    
+    # Haven't reviewed today - calculate streak starting from yesterday
+    streak = 0
+    
+    for days_back in range(1, 31):  # Start from yesterday (skip today)
+        check_date = today - timedelta(days=days_back)
+        start_of_day = datetime.combine(check_date, datetime.min.time(), tzinfo=timezone.utc)
+        end_of_day = datetime.combine(check_date, datetime.max.time(), tzinfo=timezone.utc)
+        
+        # Check if user reviewed cards on this day
+        reviews = db.query(CardReview).filter(
+            and_(
+                CardReview.user_id == user_id,
+                CardReview.review_date >= start_of_day,
+                CardReview.review_date <= end_of_day
+            )
+        ).count()
+        
+        if reviews > 0:
+            # User reviewed cards - streak continues
+            streak += 1
+        else:
+            # No reviews on this day - check if there were cards due
+            cards_due_that_day = count_cards_due_on_date(user_id, db, check_date)
+            
+            if cards_due_that_day == 0:
+                # No cards due - streak continues (user couldn't review)
+                streak += 1
+            else:
+                # Cards were due but user didn't review - streak breaks
+                break
+    
+    # Potential streak = current streak (from yesterday) + 1 if they review today
+    potential_streak = streak + 1
+    return (potential_streak, False)
+
 def count_cards_due_on_date(user_id: int, db: Session, date: datetime.date) -> int:
     """Count how many cards were due on a specific date"""
     # This is a simplified version - in reality, we'd need to check the scheduling logic

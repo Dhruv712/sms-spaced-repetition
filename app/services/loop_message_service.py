@@ -20,6 +20,11 @@ class LoopMessageService:
         self.secret_key = os.getenv("LOOPMESSAGE_SECRET_KEY")
         self.sender_name = os.getenv("LOOPMESSAGE_SENDER_NAME")
         
+        # Debug logging
+        print(f"🔧 LoopMessage Service initialized with sender_name: {self.sender_name}")
+        if self.sender_name and "sandbox" in self.sender_name.lower():
+            print(f"⚠️ WARNING: Using sandbox sender name! Expected: cue@a.imsg.co")
+        
         if not all([self.auth_key, self.secret_key, self.sender_name]):
             raise ValueError("Missing required LoopMessage environment variables")
     
@@ -114,7 +119,8 @@ class LoopMessageService:
             payload["passthrough"] = passthrough
             print(f"🔧 Adding passthrough to payload: {passthrough}")
         
-        print(f"📤 Sending message payload: {json.dumps(payload, indent=2)}")
+        print(f"📤 Sending message with sender_name: {self.sender_name}")
+        print(f"📤 Full message payload: {json.dumps(payload, indent=2)}")
         
         try:
             response = requests.post(self.base_url, headers=headers, json=payload)

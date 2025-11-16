@@ -33,12 +33,13 @@ def get_dashboard_stats(
     flashcard_ids = [card.id for card in all_flashcards]
     
     # Always calculate streak first, even if no flashcards
-    from app.services.summary_service import calculate_streak_days
+    from app.services.summary_service import calculate_streak_days, calculate_potential_streak
+    potential_streak, has_reviewed_today = calculate_potential_streak(current_user.id, db)
     streak_days = calculate_streak_days(current_user.id, db)
     longest_streak = current_user.longest_streak_days or 0
     
-    # Update user's current streak if it changed
-    if streak_days != (current_user.current_streak_days or 0):
+    # Update user's current streak if it changed (only if they've reviewed today)
+    if has_reviewed_today and streak_days != (current_user.current_streak_days or 0):
         current_user.current_streak_days = streak_days
         if streak_days > longest_streak:
             current_user.longest_streak_days = streak_days
@@ -52,6 +53,8 @@ def get_dashboard_stats(
             'deck_accuracy': [],
             'streak': {
                 'current': streak_days,
+                'potential': potential_streak,
+                'has_reviewed_today': has_reviewed_today,
                 'longest': longest_streak
             },
             'weakest_areas': {
@@ -276,6 +279,8 @@ def get_dashboard_stats(
         'deck_accuracy': list(deck_accuracy_map.values()),
         'streak': {
             'current': streak_days,
+            'potential': potential_streak,
+            'has_reviewed_today': has_reviewed_today,
             'longest': longest_streak,
             'history': streak_history
         },
