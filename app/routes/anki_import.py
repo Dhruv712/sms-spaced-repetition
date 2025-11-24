@@ -14,7 +14,6 @@ from typing import List, Dict, Any, Tuple, Optional
 from app.database import get_db
 from app.models import User, Flashcard, Deck
 from app.services.auth import get_current_active_user
-from app.services.premium_service import check_premium_status
 
 router = APIRouter()
 
