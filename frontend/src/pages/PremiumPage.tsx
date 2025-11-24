@@ -184,10 +184,6 @@ const PremiumPage: React.FC = () => {
               </li>
               <li className="flex items-center">
                 <span className="text-green-500 mr-2">✓</span>
-                Import Anki decks
-              </li>
-              <li className="flex items-center">
-                <span className="text-green-500 mr-2">✓</span>
                 All premium features unlocked
               </li>
             </ul>
@@ -238,6 +234,9 @@ const PremiumPage: React.FC = () => {
                 <span className="text-gray-400 mr-2">•</span>
                 Up to 20 flashcards per deck
               </li>
+              <li className="flex items-center">
+                <span className="text-gray-400 mr-2">•</span>
+              </li>
             </ul>
           </div>
 
@@ -268,10 +267,6 @@ const PremiumPage: React.FC = () => {
               <li className="flex items-center">
                 <span className="text-green-500 mr-2">✓</span>
                 Create flashcards from PDF documents
-              </li>
-              <li className="flex items-center">
-                <span className="text-green-500 mr-2">✓</span>
-                Import Anki decks
               </li>
               <li className="flex items-center">
                 <span className="text-green-500 mr-2">✓</span>

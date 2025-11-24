@@ -1,5 +1,5 @@
 """
-Anki deck import routes (Premium feature)
+Anki deck import routes
 """
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
@@ -321,14 +321,8 @@ async def import_anki_deck(
 ):
     """
     Import an Anki deck (.apkg file) and create flashcards
-    Premium feature only
+    Available for all users (free and premium)
     """
-    # Check premium status
-    if not current_user.is_premium:
-        raise HTTPException(
-            status_code=403,
-            detail="Anki import is a premium feature. Please upgrade to Premium to use this feature."
-        )
     
     # Validate file type - support .apkg, .colpkg, and .txt (plain text export)
     if not (file.filename.endswith('.apkg') or file.filename.endswith('.colpkg') or file.filename.endswith('.txt')):

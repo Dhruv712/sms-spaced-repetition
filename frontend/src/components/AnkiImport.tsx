@@ -67,11 +67,6 @@ const AnkiImport: React.FC<AnkiImportProps> = ({ onSuccess }) => {
       return;
     }
 
-    if (!user?.is_premium) {
-      setError('Anki import is a premium feature. Please upgrade to Premium.');
-      return;
-    }
-
     setLoading(true);
     setError(null);
     setSuccess(null);
@@ -106,24 +101,9 @@ const AnkiImport: React.FC<AnkiImportProps> = ({ onSuccess }) => {
     }
   };
 
-  const isPremium = user?.is_premium;
-
   return (
     <div className="bg-white dark:bg-darksurface rounded-lg border border-gray-200 dark:border-gray-800 p-6">
       <h2 className="text-lg font-light text-gray-900 dark:text-darktext mb-4">Import Anki Deck</h2>
-      
-      {!isPremium && (
-        <div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded text-sm text-yellow-800 dark:text-yellow-300">
-          <p className="font-medium">Premium Feature</p>
-          <p className="text-xs mt-1 mb-2">Upgrade to Premium to import your Anki decks.</p>
-          <a
-            href="/premium"
-            className="inline-block px-3 py-1.5 bg-primary-500 text-white rounded hover:bg-primary-600 transition-colors duration-200 text-xs font-medium"
-          >
-            Upgrade to Premium
-          </a>
-        </div>
-      )}
       
       {error && (
         <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-sm text-red-800 dark:text-red-300">
@@ -137,7 +117,7 @@ const AnkiImport: React.FC<AnkiImportProps> = ({ onSuccess }) => {
         </div>
       )}
 
-      <div className={`space-y-4 ${!isPremium ? 'opacity-50' : ''}`}>
+      <div className="space-y-4">
         <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded text-sm text-blue-800 dark:text-blue-300">
           <p className="font-medium mb-1">Export Options:</p>
           <ul className="list-disc list-inside space-y-1 text-xs">
@@ -156,15 +136,13 @@ const AnkiImport: React.FC<AnkiImportProps> = ({ onSuccess }) => {
             type="file"
             accept=".apkg,.txt"
             onChange={handleFileChange}
-            disabled={!isPremium}
             className="block w-full text-sm text-gray-500 dark:text-gray-400
               file:mr-4 file:py-2 file:px-4
               file:rounded file:border-0
               file:text-sm file:font-medium
               file:bg-primary-50 file:text-primary-700
               hover:file:bg-primary-100
-              dark:file:bg-primary-900 dark:file:text-primary-300
-              disabled:opacity-50 disabled:cursor-not-allowed"
+              dark:file:bg-primary-900 dark:file:text-primary-300"
           />
         </div>
 
@@ -175,8 +153,7 @@ const AnkiImport: React.FC<AnkiImportProps> = ({ onSuccess }) => {
           <select
             value={deckId || ''}
             onChange={(e) => setDeckId(e.target.value ? parseInt(e.target.value) : null)}
-            disabled={!isPremium}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-darktext text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-darktext text-sm"
           >
             <option value="">Create new deck</option>
             {decks.map((deck) => (
@@ -189,7 +166,7 @@ const AnkiImport: React.FC<AnkiImportProps> = ({ onSuccess }) => {
 
         <button
           onClick={handleImport}
-          disabled={loading || !file || !isPremium}
+          disabled={loading || !file}
           className="w-full px-4 py-2 bg-primary-500 text-white rounded hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 text-sm"
         >
           {loading ? 'Processing... this could take a couple minutes' : 'Import Deck'}
