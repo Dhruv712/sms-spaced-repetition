@@ -50,6 +50,7 @@ const AdminDashboardPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterPremium, setFilterPremium] = useState<boolean | null>(null);
   const [filterSms, setFilterSms] = useState<boolean | null>(null);
+  const [updatingUsers, setUpdatingUsers] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     if (!token || !user) {
@@ -98,6 +99,49 @@ const AdminDashboardPage: React.FC = () => {
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  const handleTogglePremium = async (userEmail: string, userId: number, currentPremiumStatus: boolean) => {
+    if (!token) return;
+
+    const newPremiumStatus = !currentPremiumStatus;
+    const confirmMessage = newPremiumStatus 
+      ? `Are you sure you want to upgrade ${userEmail} to premium?`
+      : `Are you sure you want to remove premium status from ${userEmail}?`;
+    
+    if (!window.confirm(confirmMessage)) {
+      return;
+    }
+
+    setUpdatingUsers(prev => new Set(prev).add(userId));
+
+    try {
+      const response = await axios.post(
+        buildApiUrl(`/admin/set-premium-status-public?email=${encodeURIComponent(userEmail)}&is_premium=${newPremiumStatus}`),
+        {},
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.data.success) {
+        // Refresh the dashboard data
+        await fetchDashboardData();
+      } else {
+        alert(response.data.message || 'Failed to update premium status');
+      }
+    } catch (err: any) {
+      console.error('Error updating premium status:', err);
+      alert(err.response?.data?.detail || 'Failed to update premium status. Please try again.');
+    } finally {
+      setUpdatingUsers(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(userId);
+        return newSet;
+      });
+    }
   };
 
   const filteredUsers = users.filter(user => {
@@ -244,6 +288,7 @@ const AdminDashboardPage: React.FC = () => {
                   <th className="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300">Streak</th>
                   <th className="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300">Last Review</th>
                   <th className="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300">Joined</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -284,6 +329,20 @@ const AdminDashboardPage: React.FC = () => {
                     </td>
                     <td className="py-3 px-4 text-gray-700 dark:text-gray-300 text-xs">{formatDate(user.last_review_date)}</td>
                     <td className="py-3 px-4 text-gray-700 dark:text-gray-300 text-xs">{formatDate(user.created_at)}</td>
+                    <td className="py-3 px-4">
+                      <button
+                        onClick={() => handleTogglePremium(user.email, user.id, user.is_premium)}
+                        disabled={updatingUsers.has(user.id)}
+                        className={`px-3 py-1.5 text-xs rounded transition-colors duration-200 ${
+                          user.is_premium
+                            ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50'
+                            : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50'
+                        } disabled:opacity-50 disabled:cursor-not-allowed`}
+                        title={user.is_premium ? 'Remove premium status' : 'Upgrade to premium'}
+                      >
+                        {updatingUsers.has(user.id) ? 'Updating...' : user.is_premium ? 'Remove Premium' : 'Make Premium'}
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>

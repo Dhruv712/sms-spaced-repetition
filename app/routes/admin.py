@@ -881,40 +881,56 @@ async def reset_premium_status_public(
 
 @router.post("/set-premium-status-public")
 async def set_premium_status_public(
-    email: str,
     request: Request,
+    email: str,
+    is_premium: bool = True,
     db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
     """
-    Set premium status for a user (for testing)
+    Set premium status for a user (for testing/admin use)
     (Admin access required)
     """
     await require_admin_access(request, db)
     try:
         from datetime import datetime, timezone, timedelta
         
-        # Set premium to TRUE and add some test subscription data
-        sql_command = """
-            UPDATE users 
-            SET is_premium = TRUE,
-                stripe_subscription_status = 'active',
-                subscription_start_date = :start_date,
-                subscription_end_date = :end_date
-            WHERE email = :email;
-        """
-        
-        # Set dates: start now, end in 30 days
-        start_date = datetime.now(timezone.utc)
-        end_date = start_date + timedelta(days=30)
+        if is_premium:
+            # Set premium to TRUE and add some test subscription data
+            sql_command = """
+                UPDATE users 
+                SET is_premium = TRUE,
+                    stripe_subscription_status = 'active',
+                    subscription_start_date = :start_date,
+                    subscription_end_date = :end_date
+                WHERE email = :email;
+            """
+            
+            # Set dates: start now, end in 30 days
+            start_date = datetime.now(timezone.utc)
+            end_date = start_date + timedelta(days=30)
+            
+            params = {
+                "email": email,
+                "start_date": start_date,
+                "end_date": end_date
+            }
+        else:
+            # Remove premium status
+            sql_command = """
+                UPDATE users 
+                SET is_premium = FALSE,
+                    stripe_subscription_status = NULL,
+                    subscription_start_date = NULL,
+                    subscription_end_date = NULL
+                WHERE email = :email;
+            """
+            
+            params = {"email": email}
         
         with engine.connect() as conn:
             result = conn.execute(
                 text(sql_command), 
-                {
-                    "email": email,
-                    "start_date": start_date,
-                    "end_date": end_date
-                }
+                params
             )
             conn.commit()
             rows_updated = result.rowcount
@@ -925,10 +941,12 @@ async def set_premium_status_public(
                 "message": f"No user found with email: {email}"
             }
         
+        action = "granted" if is_premium else "removed"
         return {
             "success": True,
-            "message": f"Set premium status for {email}",
-            "email": email
+            "message": f"Premium status {action} for {email}",
+            "email": email,
+            "is_premium": is_premium
         }
     except Exception as e:
         return {"success": False, "error": str(e)}
