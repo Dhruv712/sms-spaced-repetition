@@ -8,14 +8,15 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-  Line
+  Line,
+  ReferenceLine
 } from 'recharts';
 
 interface AccuracyGraphProps {
   stats: any;
 }
 
-// Better color palette - more distinct colors (moved outside component to avoid dependency issues)
+// Beautiful, distinct color palette with better contrast
 const DECK_COLORS = [
   '#3b82f6', // Blue
   '#ef4444', // Red
@@ -65,8 +66,8 @@ const AccuracyGraph: React.FC<AccuracyGraphProps> = ({ stats }) => {
     }));
   };
   
-  // Prepare scatter data with trend lines
-  const { scatterData, trendData } = useMemo(() => {
+  // Prepare data - flatten all series into a single array for better tooltip handling
+  const { chartData, seriesConfig } = useMemo(() => {
     if (viewMode === 'overall') {
       const points = overallData.map((point: any) => ({
         ...point,
@@ -75,13 +76,27 @@ const AccuracyGraph: React.FC<AccuracyGraphProps> = ({ stats }) => {
         dateLabel: new Date(point.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
       }));
       const withTrend = calculateTrend(points);
+      
+      // Create a flat data structure where each date has all series data
+      const flatData = withTrend.map((point: any) => ({
+        date: point.date,
+        dateLabel: point.dateLabel,
+        x: point.x,
+        'Overall Accuracy': point.y,
+        'Overall Trend': point.trend,
+      }));
+      
       return {
-        scatterData: [{ name: 'Overall Accuracy', data: points }],
-        trendData: [{ name: 'Overall Trend', data: withTrend }]
+        chartData: flatData,
+        seriesConfig: [
+          { key: 'Overall Accuracy', type: 'scatter', color: DECK_COLORS[0], name: 'Overall Accuracy' },
+          { key: 'Overall Trend', type: 'line', color: DECK_COLORS[0], name: 'Overall Trend' }
+        ]
       };
     } else {
-      const scatter: any[] = [];
-      const trend: any[] = [];
+      // For deck comparison, create a flat structure
+      const allDates = new Set<number>();
+      const deckPointsMap: Map<number, Map<number, any>> = new Map();
       
       selectedDecks.forEach((deckId, index) => {
         const deck = deckData.find((d: any) => d.deck_id === deckId);
@@ -95,63 +110,153 @@ const AccuracyGraph: React.FC<AccuracyGraphProps> = ({ stats }) => {
         }));
         
         const withTrend = calculateTrend(points);
-        scatter.push({
-          name: deck.deck_name,
-          data: points,
-          color: DECK_COLORS[index % DECK_COLORS.length]
+        const pointsMap = new Map<number, any>();
+        
+        withTrend.forEach((point: any) => {
+          allDates.add(point.x);
+          pointsMap.set(point.x, {
+            ...point,
+            deckName: deck.deck_name,
+            deckId: deck.deck_id,
+            color: DECK_COLORS[index % DECK_COLORS.length]
+          });
         });
-        trend.push({
-          name: `${deck.deck_name} Trend`,
-          data: withTrend,
-          color: DECK_COLORS[index % DECK_COLORS.length]
-        });
+        
+        deckPointsMap.set(deckId, pointsMap);
       });
       
-      return { scatterData: scatter, trendData: trend };
+      // Create flat data structure
+      const flatData: any[] = [];
+      Array.from(allDates).sort().forEach(x => {
+        const dateObj = new Date(x);
+        const entry: any = {
+          date: dateObj.toISOString(),
+          dateLabel: dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+          x: x
+        };
+        
+        selectedDecks.forEach((deckId) => {
+          const pointsMap = deckPointsMap.get(deckId);
+          if (pointsMap && pointsMap.has(x)) {
+            const point = pointsMap.get(x);
+            entry[`${point.deckName} Accuracy`] = point.y;
+            entry[`${point.deckName} Trend`] = point.trend;
+          }
+        });
+        
+        flatData.push(entry);
+      });
+      
+      const config: any[] = [];
+      selectedDecks.forEach((deckId, index) => {
+        const deck = deckData.find((d: any) => d.deck_id === deckId);
+        if (!deck) return;
+        const color = DECK_COLORS[index % DECK_COLORS.length];
+        config.push(
+          { key: `${deck.deck_name} Accuracy`, type: 'scatter', color, name: deck.deck_name },
+          { key: `${deck.deck_name} Trend`, type: 'line', color, name: `${deck.deck_name} Trend` }
+        );
+      });
+      
+      return { chartData: flatData, seriesConfig: config };
     }
   }, [viewMode, overallData, deckData, selectedDecks]);
   
-  // Combine all data points for X-axis range
-  const allDates = useMemo(() => {
-    const dates: number[] = [];
-    if (viewMode === 'overall') {
-      overallData.forEach((point: any) => {
-        dates.push(new Date(point.date).getTime());
-      });
-    } else {
-      selectedDecks.forEach(deckId => {
-        const deck = deckData.find((d: any) => d.deck_id === deckId);
-        if (deck) {
-          deck.data_points.forEach((point: any) => {
-            dates.push(new Date(point.date).getTime());
-          });
-        }
-      });
+  // Custom tooltip that correctly handles multiple series
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (!active || !payload || payload.length === 0) {
+      return null;
     }
-    return dates.length > 0 ? { min: Math.min(...dates), max: Math.max(...dates) } : null;
-  }, [viewMode, overallData, deckData, selectedDecks]);
+    
+    // Get date label from the first payload
+    const dateLabel = payload[0]?.payload?.dateLabel || label;
+    
+    // Filter out null/undefined values and group by series
+    const seriesMap = new Map<string, { accuracy: number | null; trend: number | null; color: string }>();
+    
+    payload.forEach((entry: any) => {
+      const name = entry.name || entry.dataKey;
+      if (!name) return;
+      
+      // Determine if this is a trend or accuracy entry
+      const isTrend = name.includes('Trend');
+      const baseName = name.replace(' Trend', '').replace(' Accuracy', '');
+      
+      if (!seriesMap.has(baseName)) {
+        seriesMap.set(baseName, { accuracy: null, trend: null, color: entry.color || DECK_COLORS[0] });
+      }
+      
+      const series = seriesMap.get(baseName)!;
+      const value = entry.value;
+      
+      if (isTrend) {
+        series.trend = value;
+      } else {
+        series.accuracy = value;
+      }
+      series.color = entry.color || series.color;
+    });
+    
+    return (
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl p-4 min-w-[200px]">
+        <p className="font-semibold text-gray-900 dark:text-gray-100 mb-3 text-sm border-b border-gray-200 dark:border-gray-700 pb-2">
+          {dateLabel}
+        </p>
+        <div className="space-y-2">
+          {Array.from(seriesMap.entries()).map(([name, data]) => (
+            <div key={name} className="space-y-1">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div 
+                    className="w-3 h-3 rounded-full" 
+                    style={{ backgroundColor: data.color }}
+                  />
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{name}</span>
+                </div>
+              </div>
+              {data.accuracy !== null && (
+                <div className="ml-5 text-xs text-gray-600 dark:text-gray-400">
+                  Accuracy: <span className="font-semibold text-gray-900 dark:text-gray-100">{data.accuracy.toFixed(1)}%</span>
+                </div>
+              )}
+              {data.trend !== null && (
+                <div className="ml-5 text-xs text-gray-500 dark:text-gray-500 italic">
+                  Trend: {data.trend.toFixed(1)}%
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
   
   return (
-    <div className="bg-white dark:bg-darksurface rounded-lg border border-gray-200 dark:border-gray-800 p-6">
+    <div className="bg-white dark:bg-darksurface rounded-lg border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-lg font-light text-gray-900 dark:text-darktext">Accuracy Over Time</h2>
+        <div>
+          <h2 className="text-xl font-light text-gray-900 dark:text-darktext">Accuracy Over Time</h2>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            Track your performance and identify improvement areas
+          </p>
+        </div>
         <div className="flex gap-2">
           <button
             onClick={() => setViewMode('overall')}
-            className={`px-3 py-1 text-sm rounded ${
+            className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
               viewMode === 'overall'
-                ? 'bg-primary-500 text-white dark:bg-primary-600'
-                : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
+                ? 'bg-primary-500 text-white dark:bg-primary-600 shadow-md'
+                : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
             }`}
           >
             Overall
           </button>
           <button
             onClick={() => setViewMode('decks')}
-            className={`px-3 py-1 text-sm rounded ${
+            className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
               viewMode === 'decks'
-                ? 'bg-primary-500 text-white dark:bg-primary-600'
-                : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
+                ? 'bg-primary-500 text-white dark:bg-primary-600 shadow-md'
+                : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
             }`}
           >
             By Deck
@@ -160,161 +265,165 @@ const AccuracyGraph: React.FC<AccuracyGraphProps> = ({ stats }) => {
       </div>
       
       {viewMode === 'decks' && (
-        <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-900 rounded">
-          <div className="text-sm text-gray-700 dark:text-gray-300 mb-2">Select decks to compare:</div>
+        <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700">
+          <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Select decks to compare:</div>
           <div className="flex flex-wrap gap-2">
-            {deckData.map((deck: any, index: number) => (
-              <button
-                key={deck.deck_id}
-                onClick={() => handleDeckToggle(deck.deck_id)}
-                className={`px-3 py-1 text-xs rounded ${
-                  selectedDecks.includes(deck.deck_id)
-                    ? 'bg-primary-500 text-white dark:bg-primary-600'
-                    : 'bg-white text-gray-700 border border-gray-300 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700'
-                }`}
-                style={selectedDecks.includes(deck.deck_id) ? {
-                  backgroundColor: DECK_COLORS[selectedDecks.indexOf(deck.deck_id) % DECK_COLORS.length]
-                } : {}}
-              >
-                {deck.deck_name}
-              </button>
-            ))}
+            {deckData.map((deck: any, index: number) => {
+              const isSelected = selectedDecks.includes(deck.deck_id);
+              const deckIndex = selectedDecks.indexOf(deck.deck_id);
+              const color = isSelected ? DECK_COLORS[deckIndex % DECK_COLORS.length] : undefined;
+              
+              return (
+                <button
+                  key={deck.deck_id}
+                  onClick={() => handleDeckToggle(deck.deck_id)}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 ${
+                    isSelected
+                      ? 'text-white shadow-md'
+                      : 'bg-white text-gray-700 border border-gray-300 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 hover:border-primary-400 dark:hover:border-primary-500'
+                  }`}
+                  style={isSelected ? { backgroundColor: color } : {}}
+                >
+                  {deck.deck_name}
+                </button>
+              );
+            })}
           </div>
+          {selectedDecks.length === 0 && (
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-3 italic">
+              Select at least one deck to view comparison
+            </p>
+          )}
         </div>
       )}
       
-      {scatterData.length > 0 && scatterData[0].data.length > 0 ? (
-        <ResponsiveContainer width="100%" height={300}>
-          <ComposedChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-            <XAxis
-              type="number"
-              dataKey="x"
-              domain={allDates ? ['dataMin', 'dataMax'] : undefined}
-              tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-              stroke="#6b7280"
-              style={{ fontSize: '12px' }}
-            />
-            <YAxis
-              type="number"
-              dataKey="y"
-              domain={[0, 100]}
-              label={{ value: 'Accuracy (%)', angle: -90, position: 'insideLeft' }}
-              stroke="#6b7280"
-              style={{ fontSize: '12px' }}
-            />
-            <Tooltip
-              cursor={{ strokeDasharray: '3 3' }}
-              contentStyle={{
-                backgroundColor: '#ffffff',
-                border: '1px solid #e5e7eb',
-                borderRadius: '4px',
-              }}
-              formatter={(value: any, name: string, props: any) => {
-                // Check if this is a trend line (name contains "Trend")
-                if (name && name.includes('Trend')) {
-                  // For trend lines, use the trend value from the payload
-                  const trendValue = props.payload?.trend ?? value;
-                  return [`${trendValue.toFixed(1)}%`, name];
-                } else {
-                  // For scatter points, use the y coordinate (accuracy)
-                  const accuracy = props.payload?.y ?? value;
-                  return [`${accuracy.toFixed(1)}%`, name];
-                }
-              }}
-              labelFormatter={(label: any, payload: any[]) => {
-                // Show the date label from the first payload item
-                if (payload && payload.length > 0) {
-                  // Find the first non-trend payload for date label
-                  const dataPayload = payload.find((p: any) => p.payload && !p.name?.includes('Trend')) || payload[0];
-                  if (dataPayload?.payload?.dateLabel) {
-                    return dataPayload.payload.dateLabel;
-                  }
-                  if (dataPayload?.payload?.date) {
-                    return new Date(dataPayload.payload.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                  }
-                }
-                return label;
-              }}
-              content={({ active, payload, label }) => {
-                if (!active || !payload || payload.length === 0) {
-                  return null;
-                }
-                
-                // Get date label from first data payload (not trend)
-                const dataPayload = payload.find((p: any) => p.payload && !p.name?.includes('Trend')) || payload[0];
-                const dateLabel = dataPayload?.payload?.dateLabel || 
-                                 (dataPayload?.payload?.date ? new Date(dataPayload.payload.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : label);
-                
-                return (
-                  <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-3">
-                    <p className="font-medium text-gray-900 dark:text-gray-100 mb-2">{dateLabel}</p>
-                    <div className="space-y-1">
-                      {payload.map((entry: any, index: number) => {
-                        // Determine the value to display
-                        let displayValue: number;
-                        if (entry.name && entry.name.includes('Trend')) {
-                          // For trend lines, use the trend value
-                          displayValue = entry.payload?.trend ?? entry.value;
-                        } else {
-                          // For scatter points, use the y coordinate
-                          displayValue = entry.payload?.y ?? entry.value;
-                        }
-                        
-                        // Get color from entry or use default
-                        const color = entry.color || DECK_COLORS[index % DECK_COLORS.length];
-                        
-                        return (
-                          <div key={index} className="flex items-center justify-between text-sm">
-                            <div className="flex items-center gap-2">
-                              <div 
-                                className="w-3 h-3 rounded-full" 
-                                style={{ backgroundColor: color }}
-                              />
-                              <span className="text-gray-700 dark:text-gray-300">{entry.name}</span>
-                            </div>
-                            <span className="font-medium text-gray-900 dark:text-gray-100">
-                              {displayValue.toFixed(1)}%
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
+      {chartData.length > 0 && (viewMode === 'overall' || selectedDecks.length > 0) ? (
+        <div>
+          <ResponsiveContainer width="100%" height={400}>
+            <ComposedChart 
+              data={chartData}
+              margin={{ top: 20, right: 30, bottom: 20, left: 20 }}
+            >
+              <CartesianGrid 
+                strokeDasharray="3 3" 
+                stroke="#e5e7eb" 
+                strokeOpacity={0.5}
+                vertical={false}
+              />
+              <XAxis
+                type="number"
+                dataKey="x"
+                domain={['dataMin', 'dataMax']}
+                tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                stroke="#6b7280"
+                style={{ fontSize: '11px' }}
+                tick={{ fill: '#6b7280' }}
+              />
+              <YAxis
+                type="number"
+                domain={[0, 100]}
+                label={{ value: 'Accuracy (%)', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fontSize: '12px', fill: '#6b7280' } }}
+                stroke="#6b7280"
+                style={{ fontSize: '11px' }}
+                tick={{ fill: '#6b7280' }}
+              />
+              <Tooltip content={<CustomTooltip />} />
+              <Legend 
+                wrapperStyle={{ paddingTop: '20px' }}
+                iconType="circle"
+                formatter={(value) => value.replace(' Accuracy', '').replace(' Trend', '')}
+              />
+              
+              {/* Reference line at 50% for context */}
+              <ReferenceLine 
+                y={50} 
+                stroke="#9ca3af" 
+                strokeDasharray="2 2" 
+                strokeOpacity={0.5}
+                label={{ value: '50%', position: 'right', fill: '#9ca3af', fontSize: '10px' }}
+              />
+              
+              {/* Render trend lines first (behind scatter points) */}
+              {seriesConfig
+                .filter(s => s.type === 'line')
+                .map((series, index) => (
+                  <Line
+                    key={series.key}
+                    type="linear"
+                    dataKey={series.key}
+                    stroke={series.color}
+                    strokeWidth={2.5}
+                    strokeDasharray="6 4"
+                    dot={false}
+                    activeDot={{ r: 4, fill: series.color }}
+                    connectNulls
+                    strokeOpacity={0.7}
+                  />
+                ))}
+              
+              {/* Render scatter points */}
+              {seriesConfig
+                .filter(s => s.type === 'scatter')
+                .map((series, index) => (
+                  <Scatter
+                    key={series.key}
+                    name={series.name}
+                    dataKey={series.key}
+                    fill={series.color}
+                    fillOpacity={0.7}
+                    stroke={series.color}
+                    strokeWidth={1.5}
+                  />
+                ))}
+            </ComposedChart>
+          </ResponsiveContainer>
+          
+          {/* Summary stats */}
+          <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+            {viewMode === 'overall' && overallData.length > 0 && (
+              <>
+                <div className="text-center">
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Average Accuracy</div>
+                  <div className="text-lg font-semibold text-gray-900 dark:text-darktext">
+                    {(
+                      overallData.reduce((sum: number, p: any) => sum + p.accuracy, 0) / overallData.length
+                    ).toFixed(1)}%
                   </div>
-                );
-              }}
-            />
-            <Legend />
-            {/* Trend lines first (so they're behind scatter points) */}
-            {trendData.map((series, index) => (
-              <Line
-                key={series.name}
-                type="linear"
-                dataKey="trend"
-                data={series.data}
-                stroke={series.color || DECK_COLORS[index % DECK_COLORS.length]}
-                strokeWidth={2}
-                strokeDasharray="5 5"
-                dot={false}
-                name={series.name}
-                connectNulls
-              />
-            ))}
-            {/* Scatter points */}
-            {scatterData.map((series, index) => (
-              <Scatter
-                key={series.name}
-                name={series.name}
-                data={series.data}
-                fill={series.color || DECK_COLORS[index % DECK_COLORS.length]}
-                fillOpacity={0.6}
-              />
-            ))}
-          </ComposedChart>
-        </ResponsiveContainer>
+                </div>
+                <div className="text-center">
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Data Points</div>
+                  <div className="text-lg font-semibold text-gray-900 dark:text-darktext">
+                    {overallData.length}
+                  </div>
+                </div>
+                <div className="text-center">
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Highest</div>
+                  <div className="text-lg font-semibold text-green-600 dark:text-green-400">
+                    {Math.max(...overallData.map((p: any) => p.accuracy)).toFixed(1)}%
+                  </div>
+                </div>
+                <div className="text-center">
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Lowest</div>
+                  <div className="text-lg font-semibold text-red-600 dark:text-red-400">
+                    {Math.min(...overallData.map((p: any) => p.accuracy)).toFixed(1)}%
+                  </div>
+                </div>
+              </>
+            )}
+            {viewMode === 'decks' && selectedDecks.length > 0 && (
+              <div className="col-span-2 md:col-span-4 text-center text-sm text-gray-600 dark:text-gray-400">
+                Comparing {selectedDecks.length} deck{selectedDecks.length !== 1 ? 's' : ''}
+              </div>
+            )}
+          </div>
+        </div>
       ) : (
-        <div className="text-center py-8 text-gray-500 dark:text-gray-400 text-sm">
-          No accuracy data yet. Start reviewing cards to see your progress!
+        <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+          <div className="text-sm mb-2">
+            {viewMode === 'decks' && selectedDecks.length === 0
+              ? 'Select at least one deck to view comparison'
+              : 'No accuracy data yet. Start reviewing cards to see your progress!'}
+          </div>
         </div>
       )}
     </div>
@@ -322,4 +431,3 @@ const AccuracyGraph: React.FC<AccuracyGraphProps> = ({ stats }) => {
 };
 
 export default AccuracyGraph;
-
