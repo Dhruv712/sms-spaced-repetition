@@ -13,7 +13,7 @@ interface Deck {
 }
 
 const AnkiImport: React.FC<AnkiImportProps> = ({ onSuccess }) => {
-  const { token, user } = useAuth();
+  const { token } = useAuth();
   const [file, setFile] = useState<File | null>(null);
   const [deckId, setDeckId] = useState<number | null>(null);
   const [decks, setDecks] = useState<Deck[]>([]);

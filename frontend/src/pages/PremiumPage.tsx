@@ -234,9 +234,6 @@ const PremiumPage: React.FC = () => {
                 <span className="text-gray-400 mr-2">•</span>
                 Up to 20 flashcards per deck
               </li>
-              <li className="flex items-center">
-                <span className="text-gray-400 mr-2">•</span>
-              </li>
             </ul>
           </div>
 
