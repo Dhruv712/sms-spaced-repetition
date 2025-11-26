@@ -7,6 +7,7 @@ from app.models import User, Flashcard, CardReview, Deck, ConversationState
 from app.services.auth import get_current_active_user, require_admin_access
 from app.services.scheduler_service import send_due_flashcards_to_all_users, send_due_flashcards_to_user, get_user_flashcard_stats, cleanup_old_conversation_states
 from app.services.summary_service import send_daily_summary_to_user, get_daily_review_summary
+from app.services.streak_reminder_service import check_and_send_streak_reminders_for_all_users
 from typing import Dict, Any, List
 
 router = APIRouter(tags=["Admin"])
@@ -376,6 +377,34 @@ async def cron_daily_summary(
     except Exception as e:
         print(f"❌ Error during daily summary: {e}")
         return {"success": False, "error": str(e)}
+
+@router.post("/cron/streak-reminders")
+async def cron_streak_reminders(
+    request: Request,
+    db: Session = Depends(get_db)
+) -> Dict[str, Any]:
+    """
+    Railway cron endpoint for sending streak reminders to users at risk
+    This should be called hourly. It will only send reminders to users
+    when it's 6-8 PM in their timezone and they're at risk of losing their streak.
+    (Requires admin secret key in X-Admin-Secret header)
+    """
+    await require_admin_access(request, db)
+    try:
+        print("🔥 Starting streak reminder check...")
+        
+        results = check_and_send_streak_reminders_for_all_users(db)
+        
+        print(f"✅ Streak reminder cron completed: {results['reminders_sent']} sent, {results['skipped']} skipped, {results['errors']} errors")
+        
+        return {
+            "success": True,
+            "message": "Streak reminder cron completed",
+            "results": results
+        }
+    except Exception as e:
+        print(f"❌ Error in streak reminder cron: {e}")
+        raise HTTPException(status_code=500, detail=f"Error in cron task: {str(e)}")
 
 @router.get("/daily-summary/{user_id}")
 async def get_user_daily_summary(
