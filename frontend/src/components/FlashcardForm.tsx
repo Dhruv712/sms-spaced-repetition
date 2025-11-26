@@ -102,7 +102,7 @@ const FlashcardForm: React.FC<Props> = ({ onSuccess }) => {
       );
       setConcept('');
       setDefinition('');
-      setTags('');
+      setTags([]);
       setSourceUrl('');
       onSuccess();
     } catch (err: any) {
@@ -145,7 +145,7 @@ const FlashcardForm: React.FC<Props> = ({ onSuccess }) => {
       setConcept(concept);
       setDefinition(definition);
       setSourceUrl(source_url || '');
-      setTags(typeof receivedTags === 'string' ? receivedTags : (receivedTags || []).join(', '));
+      setTags(Array.isArray(receivedTags) ? receivedTags : (typeof receivedTags === 'string' ? receivedTags.split(',').map(t => t.trim()).filter(t => t) : []));
       scrollToBottom();
     } catch (err) {
       console.error('Error generating flashcard:', err);
