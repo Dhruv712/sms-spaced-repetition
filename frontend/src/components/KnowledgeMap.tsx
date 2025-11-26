@@ -253,17 +253,6 @@ const KnowledgeMap: React.FC = () => {
             node.fx = null;
             node.fy = null;
           }}
-          linkDistance={(link: any) => {
-            // Adjust link distance based on tag attraction
-            // Higher tag attraction = shorter links
-            const baseDistance = 50;
-            const similarity = link.value || 0;
-            return baseDistance - (tagAttraction * similarity * 30);
-          }}
-          linkStrength={(link: any) => {
-            // Adjust link strength based on tag attraction
-            return tagAttraction * (link.value || 0.5);
-          }}
           d3Force="charge"
           d3ForceStrength={-30 * deckAttraction}
           cooldownTicks={100}
