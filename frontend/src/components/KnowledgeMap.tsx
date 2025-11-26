@@ -142,6 +142,40 @@ const KnowledgeMap: React.FC = () => {
         )}
       </div>
       
+      {/* Force controls */}
+      <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Deck Clustering: {deckAttraction.toFixed(1)}
+            </label>
+            <input
+              type="range"
+              min="0"
+              max="3"
+              step="0.1"
+              value={deckAttraction}
+              onChange={(e) => setDeckAttraction(parseFloat(e.target.value))}
+              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Tag Attraction: {tagAttraction.toFixed(1)}
+            </label>
+            <input
+              type="range"
+              min="0"
+              max="2"
+              step="0.1"
+              value={tagAttraction}
+              onChange={(e) => setTagAttraction(parseFloat(e.target.value))}
+              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+            />
+          </div>
+        </div>
+      </div>
+      
       <div className="relative bg-gray-50 dark:bg-gray-950 rounded border border-gray-200 dark:border-gray-700 overflow-hidden" style={{ height: '600px', width: '100%' }}>
         <ForceGraph2D
           ref={fgRef}
