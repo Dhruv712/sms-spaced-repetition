@@ -11,6 +11,7 @@ import ReviewStats from '../components/ReviewStats';
 import DailySummary from '../components/DailySummary';
 import SmsSetupBanner from '../components/SmsSetupBanner';
 import DifficultCards from '../components/DifficultCards';
+import ConfusionBreakdown from '../components/ConfusionBreakdown';
 
 const DashboardPage: React.FC = () => {
   const { token } = useAuth();
@@ -88,6 +89,11 @@ const DashboardPage: React.FC = () => {
         {/* Most Difficult Cards */}
         <div className="mb-8">
           <DifficultCards />
+        </div>
+
+        {/* Confusion Breakdown */}
+        <div className="mb-8">
+          <ConfusionBreakdown />
         </div>
       </div>
     </div>

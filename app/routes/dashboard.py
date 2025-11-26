@@ -359,3 +359,84 @@ def get_difficult_cards(
     
     return {"difficult_cards": difficult_cards}
 
+@router.get("/confusion-breakdown")
+def get_confusion_breakdown(
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get confusion breakdown - most common incorrect answers per flashcard
+    Returns cards with their most frequently typed wrong answers
+    """
+    # Get all flashcards for the user
+    all_flashcards = db.query(Flashcard).filter(Flashcard.user_id == current_user.id).all()
+    flashcard_ids = [card.id for card in all_flashcards]
+    
+    if not flashcard_ids:
+        return {"confusion_breakdown": []}
+    
+    # Get all incorrect reviews
+    incorrect_reviews = db.query(CardReview).filter(
+        CardReview.user_id == current_user.id,
+        CardReview.flashcard_id.in_(flashcard_ids),
+        CardReview.was_correct == False,
+        CardReview.user_response.isnot(None)
+    ).all()
+    
+    # Group incorrect answers by flashcard
+    confusion_map: Dict[int, Dict[str, int]] = {}
+    
+    for review in incorrect_reviews:
+        flashcard_id = review.flashcard_id
+        # Normalize the response (lowercase, strip whitespace)
+        normalized_response = review.user_response.strip().lower() if review.user_response else ""
+        
+        if not normalized_response:
+            continue
+        
+        if flashcard_id not in confusion_map:
+            confusion_map[flashcard_id] = {}
+        
+        if normalized_response not in confusion_map[flashcard_id]:
+            confusion_map[flashcard_id][normalized_response] = 0
+        
+        confusion_map[flashcard_id][normalized_response] += 1
+    
+    # Build result with top incorrect answers per card
+    confusion_breakdown = []
+    for flashcard_id, wrong_answers in confusion_map.items():
+        # Find the flashcard
+        flashcard = next((f for f in all_flashcards if f.id == flashcard_id), None)
+        if not flashcard:
+            continue
+        
+        # Sort wrong answers by frequency and take top 5
+        sorted_answers = sorted(
+            wrong_answers.items(),
+            key=lambda x: x[1],
+            reverse=True
+        )[:5]
+        
+        if sorted_answers:
+            confusion_breakdown.append({
+                'flashcard_id': flashcard_id,
+                'concept': flashcard.concept,
+                'definition': flashcard.definition,
+                'deck_id': flashcard.deck_id,
+                'deck_name': flashcard.deck.name if flashcard.deck else None,
+                'incorrect_answers': [
+                    {
+                        'answer': answer,
+                        'count': count
+                    }
+                    for answer, count in sorted_answers
+                ],
+                'total_incorrect': sum(wrong_answers.values())
+            })
+    
+    # Sort by total incorrect count (most confused cards first)
+    confusion_breakdown.sort(key=lambda x: x['total_incorrect'], reverse=True)
+    confusion_breakdown = confusion_breakdown[:10]  # Top 10 most confused cards
+    
+    return {"confusion_breakdown": confusion_breakdown}
+
