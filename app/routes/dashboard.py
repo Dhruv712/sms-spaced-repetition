@@ -529,14 +529,31 @@ def get_knowledge_map(
                     forces[card1_id]['x'] += force * dx / dist
                     forces[card1_id]['y'] += force * dy / dist
         
-        # Stronger attraction based on similarity
+        # Deck-based clustering: strong attraction for cards in the same deck
+        for card1 in all_flashcards:
+            for card2 in all_flashcards:
+                if card1.id < card2.id:  # Only calculate once per pair
+                    if card1.deck_id and card2.deck_id and card1.deck_id == card2.deck_id:
+                        # Same deck - strong attraction to cluster together
+                        dx = positions[card1.id]['x'] - positions[card2.id]['x']
+                        dy = positions[card1.id]['y'] - positions[card2.id]['y']
+                        dist = math.sqrt(dx*dx + dy*dy) or 0.1
+                        
+                        # Strong deck-based attraction
+                        force = -1.0  # Strong force to cluster same deck
+                        forces[card1.id]['x'] += force * dx / dist
+                        forces[card1.id]['y'] += force * dy / dist
+                        forces[card2.id]['x'] -= force * dx / dist
+                        forces[card2.id]['y'] -= force * dy / dist
+        
+        # Tag-based attraction (weaker than deck-based)
         for (card1_id, card2_id), sim in similarities.items():
             dx = positions[card1_id]['x'] - positions[card2_id]['x']
             dy = positions[card1_id]['y'] - positions[card2_id]['y']
             dist = math.sqrt(dx*dx + dy*dy) or 0.1
             
-            # Stronger attraction force proportional to similarity
-            force = -0.5 * sim  # Increased from -0.1
+            # Tag similarity attraction (weaker than deck clustering)
+            force = -0.3 * sim
             forces[card1_id]['x'] += force * dx / dist
             forces[card1_id]['y'] += force * dy / dist
             forces[card2_id]['x'] -= force * dx / dist
