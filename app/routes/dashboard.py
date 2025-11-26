@@ -440,3 +440,169 @@ def get_confusion_breakdown(
     
     return {"confusion_breakdown": confusion_breakdown}
 
+@router.get("/knowledge-map")
+def get_knowledge_map(
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get knowledge map data - 3D coordinates for flashcards based on tag similarity
+    Uses tag-based clustering to position similar cards closer together
+    """
+    import math
+    from collections import defaultdict
+    
+    # Get all flashcards for the user
+    all_flashcards = db.query(Flashcard).filter(Flashcard.user_id == current_user.id).all()
+    
+    if not all_flashcards:
+        return {"nodes": [], "links": []}
+    
+    # Parse tags for each flashcard
+    flashcard_tags = {}
+    all_tags = set()
+    
+    for card in all_flashcards:
+        if card.tags:
+            tags = [tag.strip().lower() for tag in card.tags.split(',') if tag.strip()]
+        else:
+            tags = []
+        flashcard_tags[card.id] = tags
+        all_tags.update(tags)
+    
+    # Convert tags to vectors (one-hot encoding)
+    tag_list = sorted(list(all_tags))
+    tag_index = {tag: i for i, tag in enumerate(tag_list)}
+    
+    # Calculate tag vectors for each flashcard
+    card_vectors = {}
+    for card_id, tags in flashcard_tags.items():
+        vector = [0] * len(tag_list)
+        for tag in tags:
+            if tag in tag_index:
+                vector[tag_index[tag]] = 1
+        card_vectors[card_id] = vector
+    
+    # Calculate similarity matrix (Jaccard similarity)
+    def jaccard_similarity(vec1, vec2):
+        """Calculate Jaccard similarity between two binary vectors"""
+        intersection = sum(a and b for a, b in zip(vec1, vec2))
+        union = sum(a or b for a, b in zip(vec1, vec2))
+        return intersection / union if union > 0 else 0
+    
+    # Build similarity graph
+    similarities = {}
+    for card1_id in card_vectors:
+        for card2_id in card_vectors:
+            if card1_id < card2_id:  # Only calculate once per pair
+                sim = jaccard_similarity(card_vectors[card1_id], card_vectors[card2_id])
+                if sim > 0:  # Only store non-zero similarities
+                    similarities[(card1_id, card2_id)] = sim
+    
+    # Simple force-directed layout (2D projection, then add z based on deck)
+    # Use a simple spring-embedder approach
+    import random
+    random.seed(42)  # For reproducibility
+    
+    # Initialize positions randomly
+    positions = {}
+    for card in all_flashcards:
+        positions[card.id] = {
+            'x': random.uniform(-1, 1),
+            'y': random.uniform(-1, 1),
+            'z': random.uniform(-1, 1) if card.deck_id else 0
+        }
+    
+    # Simple force-directed iteration
+    for iteration in range(50):  # 50 iterations
+        forces = {card_id: {'x': 0, 'y': 0, 'z': 0} for card_id in positions}
+        
+        # Repulsion between all nodes
+        for card1_id in positions:
+            for card2_id in positions:
+                if card1_id != card2_id:
+                    dx = positions[card1_id]['x'] - positions[card2_id]['x']
+                    dy = positions[card1_id]['y'] - positions[card2_id]['y']
+                    dz = positions[card1_id]['z'] - positions[card2_id]['z']
+                    dist = math.sqrt(dx*dx + dy*dy + dz*dz) or 0.1
+                    
+                    # Repulsion force
+                    force = 0.01 / (dist * dist)
+                    forces[card1_id]['x'] += force * dx / dist
+                    forces[card1_id]['y'] += force * dy / dist
+                    forces[card1_id]['z'] += force * dz / dist
+        
+        # Attraction based on similarity
+        for (card1_id, card2_id), sim in similarities.items():
+            dx = positions[card1_id]['x'] - positions[card2_id]['x']
+            dy = positions[card1_id]['y'] - positions[card2_id]['y']
+            dz = positions[card1_id]['z'] - positions[card2_id]['z']
+            dist = math.sqrt(dx*dx + dy*dy + dz*dz) or 0.1
+            
+            # Attraction force proportional to similarity
+            force = -0.1 * sim
+            forces[card1_id]['x'] += force * dx / dist
+            forces[card1_id]['y'] += force * dy / dist
+            forces[card1_id]['z'] += force * dz / dist
+            forces[card2_id]['x'] -= force * dx / dist
+            forces[card2_id]['y'] -= force * dy / dist
+            forces[card2_id]['z'] -= force * dz / dist
+        
+        # Update positions
+        for card_id in positions:
+            positions[card_id]['x'] += forces[card_id]['x']
+            positions[card_id]['y'] += forces[card_id]['y']
+            positions[card_id]['z'] += forces[card_id]['z']
+    
+    # Normalize positions to fit in a reasonable range
+    all_x = [p['x'] for p in positions.values()]
+    all_y = [p['y'] for p in positions.values()]
+    all_z = [p['z'] for p in positions.values()]
+    
+    min_x, max_x = min(all_x), max(all_x)
+    min_y, max_y = min(all_y), max(all_y)
+    min_z, max_z = min(all_z), max(all_z)
+    
+    range_x = max_x - min_x or 1
+    range_y = max_y - min_y or 1
+    range_z = max_z - min_z or 1
+    
+    # Build nodes and links
+    nodes = []
+    for card in all_flashcards:
+        pos = positions[card.id]
+        # Normalize to -5 to 5 range
+        nodes.append({
+            'id': card.id,
+            'concept': card.concept,
+            'definition': card.definition,
+            'tags': flashcard_tags[card.id],
+            'deck_id': card.deck_id,
+            'deck_name': card.deck.name if card.deck else None,
+            'x': (pos['x'] - min_x) / range_x * 10 - 5,
+            'y': (pos['y'] - min_y) / range_y * 10 - 5,
+            'z': (pos['z'] - min_z) / range_z * 10 - 5
+        })
+    
+    # Create links for similar cards (top 3 most similar per card)
+    links = []
+    for card in all_flashcards:
+        card_similarities = []
+        for other_card in all_flashcards:
+            if card.id != other_card.id:
+                key = (min(card.id, other_card.id), max(card.id, other_card.id))
+                if key in similarities:
+                    card_similarities.append((other_card.id, similarities[key]))
+        
+        # Get top 3 most similar
+        card_similarities.sort(key=lambda x: x[1], reverse=True)
+        for other_id, sim in card_similarities[:3]:
+            if sim > 0.1:  # Only show meaningful similarities
+                links.append({
+                    'source': card.id,
+                    'target': other_id,
+                    'value': sim
+                })
+    
+    return {"nodes": nodes, "links": links}
+

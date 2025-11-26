@@ -12,6 +12,7 @@ import DailySummary from '../components/DailySummary';
 import SmsSetupBanner from '../components/SmsSetupBanner';
 import DifficultCards from '../components/DifficultCards';
 import ConfusionBreakdown from '../components/ConfusionBreakdown';
+import KnowledgeMap from '../components/KnowledgeMap';
 
 const DashboardPage: React.FC = () => {
   const { token } = useAuth();
@@ -94,6 +95,11 @@ const DashboardPage: React.FC = () => {
         {/* Confusion Breakdown */}
         <div className="mb-8">
           <ConfusionBreakdown />
+        </div>
+
+        {/* Knowledge Map */}
+        <div className="mb-8">
+          <KnowledgeMap />
         </div>
       </div>
     </div>
