@@ -504,18 +504,17 @@ def get_knowledge_map(
     import random
     random.seed(42)  # For reproducibility
     
-    # Initialize positions randomly
+    # Initialize positions randomly (2D only)
     positions = {}
     for card in all_flashcards:
         positions[card.id] = {
             'x': random.uniform(-1, 1),
-            'y': random.uniform(-1, 1),
-            'z': random.uniform(-1, 1) if card.deck_id else 0
+            'y': random.uniform(-1, 1)
         }
     
-    # Simple force-directed iteration with tighter clustering
+    # Simple force-directed iteration with tighter clustering (2D only)
     for iteration in range(100):  # More iterations for better convergence
-        forces = {card_id: {'x': 0, 'y': 0, 'z': 0} for card_id in positions}
+        forces = {card_id: {'x': 0, 'y': 0} for card_id in positions}
         
         # Weaker repulsion to allow tighter clustering
         for card1_id in positions:
@@ -523,50 +522,41 @@ def get_knowledge_map(
                 if card1_id != card2_id:
                     dx = positions[card1_id]['x'] - positions[card2_id]['x']
                     dy = positions[card1_id]['y'] - positions[card2_id]['y']
-                    dz = positions[card1_id]['z'] - positions[card2_id]['z']
-                    dist = math.sqrt(dx*dx + dy*dy + dz*dz) or 0.1
+                    dist = math.sqrt(dx*dx + dy*dy) or 0.1
                     
                     # Reduced repulsion force
                     force = 0.001 / (dist * dist)
                     forces[card1_id]['x'] += force * dx / dist
                     forces[card1_id]['y'] += force * dy / dist
-                    forces[card1_id]['z'] += force * dz / dist
         
         # Stronger attraction based on similarity
         for (card1_id, card2_id), sim in similarities.items():
             dx = positions[card1_id]['x'] - positions[card2_id]['x']
             dy = positions[card1_id]['y'] - positions[card2_id]['y']
-            dz = positions[card1_id]['z'] - positions[card2_id]['z']
-            dist = math.sqrt(dx*dx + dy*dy + dz*dz) or 0.1
+            dist = math.sqrt(dx*dx + dy*dy) or 0.1
             
             # Stronger attraction force proportional to similarity
             force = -0.5 * sim  # Increased from -0.1
             forces[card1_id]['x'] += force * dx / dist
             forces[card1_id]['y'] += force * dy / dist
-            forces[card1_id]['z'] += force * dz / dist
             forces[card2_id]['x'] -= force * dx / dist
             forces[card2_id]['y'] -= force * dy / dist
-            forces[card2_id]['z'] -= force * dz / dist
         
         # Update positions with damping
         damping = 0.8  # Add damping to prevent oscillation
         for card_id in positions:
             positions[card_id]['x'] += forces[card_id]['x'] * damping
             positions[card_id]['y'] += forces[card_id]['y'] * damping
-            positions[card_id]['z'] += forces[card_id]['z'] * damping
     
-    # Normalize positions to fit in a smaller, tighter range
+    # Normalize positions to fit in a smaller, tighter range (2D only)
     all_x = [p['x'] for p in positions.values()]
     all_y = [p['y'] for p in positions.values()]
-    all_z = [p['z'] for p in positions.values()]
     
     min_x, max_x = min(all_x), max(all_x)
     min_y, max_y = min(all_y), max(all_y)
-    min_z, max_z = min(all_z), max(all_z)
     
     range_x = max_x - min_x or 1
     range_y = max_y - min_y or 1
-    range_z = max_z - min_z or 1
     
     # Build nodes and links - normalize to smaller range (-2 to 2) for tighter clustering
     nodes = []
@@ -581,8 +571,7 @@ def get_knowledge_map(
             'deck_id': card.deck_id,
             'deck_name': card.deck.name if card.deck else None,
             'x': (pos['x'] - min_x) / range_x * 4 - 2,
-            'y': (pos['y'] - min_y) / range_y * 4 - 2,
-            'z': (pos['z'] - min_z) / range_z * 4 - 2
+            'y': (pos['y'] - min_y) / range_y * 4 - 2
         })
     
     # Create links for similar cards (top 3 most similar per card)

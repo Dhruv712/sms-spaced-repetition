@@ -2,8 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { buildApiUrl } from '../config';
 import axios from 'axios';
-import ForceGraph3D from 'react-force-graph-3d';
-import * as THREE from 'three';
+import ForceGraph2D from 'react-force-graph-2d';
 
 interface KnowledgeNode {
   id: number;
@@ -14,7 +13,6 @@ interface KnowledgeNode {
   deck_name: string | null;
   x: number;
   y: number;
-  z: number;
 }
 
 interface KnowledgeLink {
@@ -87,20 +85,22 @@ const KnowledgeMap: React.FC = () => {
     <div className="bg-white dark:bg-darksurface rounded-lg border border-gray-200 dark:border-gray-800 p-6">
       <h2 className="text-lg font-light text-gray-900 dark:text-darktext mb-4">Knowledge Map</h2>
       <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-        3D visualization of your flashcards. Cards with similar tags are positioned closer together.
-        Click and drag to rotate, scroll to zoom.
+        2D visualization of your flashcards. Cards with similar tags are positioned closer together.
+        Click and drag nodes, scroll to zoom.
       </p>
       
-      <div className="relative bg-gray-900 rounded" style={{ height: '600px', width: '100%' }}>
-        <ForceGraph3D
+      <div className="relative bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-700" style={{ height: '600px', width: '100%' }}>
+        <ForceGraph2D
           ref={fgRef}
           graphData={data}
           nodeLabel={(node: any) => `${node.concept}`}
           nodeColor={(node: any) => getNodeColor(node)}
-          nodeOpacity={1}
+          nodeVal={(node: any) => 8}
+          nodeRelSize={6}
           linkColor={() => 'rgba(150, 150, 150, 0.4)'}
-          linkWidth={(link: any) => link.value * 3}
-          linkOpacity={0.4}
+          linkWidth={(link: any) => link.value * 2}
+          linkDirectionalArrowLength={3}
+          linkDirectionalArrowRelPos={1}
           onNodeClick={(node: any) => {
             setSelectedNode(node);
           }}
@@ -115,28 +115,11 @@ const KnowledgeMap: React.FC = () => {
               fgRef.current?.nodeColor((n: any) => getNodeColor(n));
             }
           }}
-          nodeThreeObject={(node: any) => {
-            // Larger, more visible spheres
-            const sphereGeometry = new THREE.SphereGeometry(0.15, 12, 12);
-            const sphereMaterial = new THREE.MeshPhongMaterial({
-              color: getNodeColor(node),
-              shininess: 30,
-            });
-            const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
-            return sphere;
-          }}
-          showNavInfo={true}
-          backgroundColor="rgba(17, 24, 39, 1)" // Dark gray background
-          controlType="orbit"
-          enableNodeDrag={false}
+          cooldownTicks={100}
           onEngineStop={() => {
-            // Auto-fit the graph when simulation stops
+            // Center the graph when simulation stops
             if (fgRef.current && data.nodes.length > 0) {
-              fgRef.current.cameraPosition({
-                x: 0,
-                y: 0,
-                z: 5
-              });
+              fgRef.current.zoomToFit(400, 20);
             }
           }}
         />
