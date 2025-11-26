@@ -65,6 +65,37 @@ const KnowledgeMap: React.FC = () => {
     fetchKnowledgeMap();
   }, [token, deckAttraction, tagAttraction]);
 
+  // Restart simulation when forces change
+  useEffect(() => {
+    if (fgRef.current && data.nodes.length > 0) {
+      // Access the d3 simulation and update force parameters
+      const simulation = fgRef.current.d3Force();
+      if (simulation) {
+        // Update charge force strength (repulsion - higher = more spread out)
+        const charge = simulation.force('charge');
+        if (charge) {
+          charge.strength(-30 * deckAttraction);
+        }
+        
+        // Update link force distance and strength
+        const link = simulation.force('link');
+        if (link) {
+          link.distance((linkData: any) => {
+            const baseDistance = 50;
+            const similarity = linkData.value || 0;
+            return baseDistance - (tagAttraction * similarity * 30);
+          });
+          link.strength((linkData: any) => {
+            return tagAttraction * (linkData.value || 0.5);
+          });
+        }
+        
+        // Restart simulation with new parameters
+        simulation.alpha(1).restart();
+      }
+    }
+  }, [deckAttraction, tagAttraction, data]);
+
   if (loading) {
     return (
       <div className="bg-white dark:bg-darksurface rounded-lg border border-gray-200 dark:border-gray-800 p-6">
@@ -222,6 +253,19 @@ const KnowledgeMap: React.FC = () => {
             node.fx = null;
             node.fy = null;
           }}
+          linkDistance={(link: any) => {
+            // Adjust link distance based on tag attraction
+            // Higher tag attraction = shorter links
+            const baseDistance = 50;
+            const similarity = link.value || 0;
+            return baseDistance - (tagAttraction * similarity * 30);
+          }}
+          linkStrength={(link: any) => {
+            // Adjust link strength based on tag attraction
+            return tagAttraction * (link.value || 0.5);
+          }}
+          d3Force="charge"
+          d3ForceStrength={-30 * deckAttraction}
           cooldownTicks={100}
           onEngineStop={() => {
             // Center the graph when simulation stops
@@ -231,6 +275,7 @@ const KnowledgeMap: React.FC = () => {
               }, 100);
             }
           }}
+          key={`${deckAttraction}-${tagAttraction}`}
         />
         
         {/* Node details overlay in top-right */}
