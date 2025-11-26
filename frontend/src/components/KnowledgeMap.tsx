@@ -142,7 +142,7 @@ const KnowledgeMap: React.FC = () => {
         )}
       </div>
       
-      <div className="relative bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-700 overflow-hidden" style={{ height: '600px', width: '100%' }}>
+      <div className="relative bg-gray-50 dark:bg-gray-950 rounded border border-gray-200 dark:border-gray-700 overflow-hidden" style={{ height: '600px', width: '100%' }}>
         <ForceGraph2D
           ref={fgRef}
           graphData={data}
