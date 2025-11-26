@@ -26,6 +26,7 @@ const KnowledgeMap: React.FC = () => {
   const [data, setData] = useState<{ nodes: KnowledgeNode[]; links: KnowledgeLink[] }>({ nodes: [], links: [] });
   const [loading, setLoading] = useState(true);
   const [selectedNode, setSelectedNode] = useState<KnowledgeNode | null>(null);
+  const [nodePosition, setNodePosition] = useState<{ x: number; y: number } | null>(null);
   const fgRef = useRef<any>(null);
 
   useEffect(() => {
@@ -106,6 +107,8 @@ const KnowledgeMap: React.FC = () => {
           nodeLabel={(node: any) => `${node.concept || 'Unknown'}`}
           nodeColor={(node: any) => getNodeColor(node)}
           nodeVal={(node: any) => 10}
+          linkDistance={30}
+          linkStrength={0.5}
           nodeCanvasObject={(node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
             const label = node.concept || '';
             const fontSize = 12 / globalScale;
@@ -126,8 +129,17 @@ const KnowledgeMap: React.FC = () => {
           linkDirectionalArrowLength={4}
           linkDirectionalArrowRelPos={1}
           linkDirectionalArrowColor={() => 'rgba(150, 150, 150, 0.3)'}
-          onNodeClick={(node: any) => {
+          onNodeClick={(node: any, event: MouseEvent) => {
             setSelectedNode(node);
+            // Get click position relative to the graph container
+            const container = (event.target as HTMLElement).closest('[style*="height"]') as HTMLElement;
+            if (container) {
+              const rect = container.getBoundingClientRect();
+              setNodePosition({
+                x: event.clientX - rect.left,
+                y: event.clientY - rect.top
+              });
+            }
           }}
           onNodeHover={(node: any) => {
             // Change cursor on hover
@@ -155,42 +167,56 @@ const KnowledgeMap: React.FC = () => {
             }
           }}
         />
+        
+        {/* Node details overlay in top-right */}
+        {selectedNode && (
+          <div 
+            className="absolute top-4 right-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-lg p-4 max-w-sm z-10"
+            style={{ maxHeight: '400px', overflowY: 'auto' }}
+          >
+            <div className="flex items-start justify-between mb-2">
+              <div className="flex-1">
+                {selectedNode.deck_name && (
+                  <span className="inline-block px-2 py-0.5 text-xs font-medium bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-300 rounded mb-2">
+                    {selectedNode.deck_name}
+                  </span>
+                )}
+                <h3 className="text-sm font-medium text-gray-900 dark:text-darktext mb-2">
+                  {selectedNode.concept}
+                </h3>
+                <div className="text-xs text-gray-700 dark:text-gray-300 mb-2">
+                  <strong>Definition:</strong>
+                </div>
+                <div className="text-xs text-gray-600 dark:text-gray-400 mb-3 whitespace-pre-wrap">
+                  {selectedNode.definition}
+                </div>
+                {selectedNode.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {selectedNode.tags.map((tag, index) => (
+                      <span
+                        key={index}
+                        className="px-2 py-0.5 text-xs bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <button
+                onClick={() => {
+                  setSelectedNode(null);
+                  setNodePosition(null);
+                }}
+                className="ml-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-sm"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
-      {selectedNode && (
-        <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-          <div className="flex items-start justify-between mb-2">
-            <div className="flex-1">
-              {selectedNode.deck_name && (
-                <span className="inline-block px-2 py-0.5 text-xs font-medium bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-300 rounded mb-2">
-                  {selectedNode.deck_name}
-                </span>
-              )}
-              <h3 className="text-base font-medium text-gray-900 dark:text-darktext mb-1">
-                {selectedNode.concept}
-              </h3>
-              {selectedNode.tags.length > 0 && (
-                <div className="flex flex-wrap gap-1 mt-2">
-                  {selectedNode.tags.map((tag, index) => (
-                    <span
-                      key={index}
-                      className="px-2 py-0.5 text-xs bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-            <button
-              onClick={() => setSelectedNode(null)}
-              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-            >
-              ✕
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

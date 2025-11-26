@@ -584,10 +584,10 @@ def get_knowledge_map(
                 if key in similarities:
                     card_similarities.append((other_card.id, similarities[key]))
         
-        # Get top 3 most similar
+        # Get top 5 most similar (increased from 3) and lower threshold
         card_similarities.sort(key=lambda x: x[1], reverse=True)
-        for other_id, sim in card_similarities[:3]:
-            if sim > 0.1:  # Only show meaningful similarities
+        for other_id, sim in card_similarities[:5]:
+            if sim > 0.05:  # Lower threshold to show more connections (was 0.1)
                 links.append({
                     'source': card.id,
                     'target': other_id,
