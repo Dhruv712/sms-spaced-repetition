@@ -78,49 +78,48 @@ const DifficultCards: React.FC = () => {
         Cards with the lowest accuracy (minimum 3 reviews)
       </p>
       
-      <div className="space-y-4">
+      <div className="space-y-2">
         {difficultCards.map((card, index) => (
           <div
             key={card.flashcard_id}
-            className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:border-primary-300 dark:hover:border-primary-600 transition-colors duration-200"
+            className="border border-gray-200 dark:border-gray-700 rounded p-3 hover:border-primary-300 dark:hover:border-primary-600 transition-colors duration-200"
           >
-            <div className="flex items-start justify-between mb-2">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1 flex-wrap">
                   <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
                     #{index + 1}
                   </span>
                   {card.deck_name && (
-                    <span className="inline-block px-2 py-0.5 text-xs font-medium bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-300 rounded">
+                    <span className="inline-block px-1.5 py-0.5 text-xs font-medium bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-300 rounded">
                       {card.deck_name}
                     </span>
                   )}
                 </div>
-                <h3 className="text-base font-medium text-gray-900 dark:text-darktext mb-2">
+                <h3 className="text-sm font-medium text-gray-900 dark:text-darktext mb-1 truncate">
                   {card.concept}
                 </h3>
-              </div>
-              <div className="text-right ml-4">
-                <div className="text-2xl font-light text-red-600 dark:text-red-400">
-                  {card.accuracy.toFixed(1)}%
-                </div>
                 <div className="text-xs text-gray-500 dark:text-gray-400">
                   {card.correct_reviews}/{card.total_reviews} correct
                 </div>
               </div>
+              <div className="flex flex-col items-end gap-1">
+                <div className="text-xl font-light text-red-600 dark:text-red-400">
+                  {card.accuracy.toFixed(1)}%
+                </div>
+                <button
+                  onClick={() => setExpandedCard(expandedCard === card.flashcard_id ? null : card.flashcard_id)}
+                  className="text-xs text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors duration-200 whitespace-nowrap"
+                >
+                  {expandedCard === card.flashcard_id ? 'Hide' : 'Show'}
+                </button>
+              </div>
             </div>
             
-            <button
-              onClick={() => setExpandedCard(expandedCard === card.flashcard_id ? null : card.flashcard_id)}
-              className="text-xs text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors duration-200"
-            >
-              {expandedCard === card.flashcard_id ? 'Hide answer' : 'Show answer'}
-            </button>
-            
             {expandedCard === card.flashcard_id && (
-              <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-                <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">Correct Answer:</div>
-                <div className="prose prose-sm max-w-none text-gray-700 dark:text-gray-300">
+              <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+                <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">Correct:</div>
+                <div className="prose prose-xs max-w-none text-gray-700 dark:text-gray-300 text-xs">
                   <ReactMarkdown
                     remarkPlugins={[remarkMath]}
                     rehypePlugins={[rehypeKatex]}

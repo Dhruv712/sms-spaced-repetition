@@ -436,7 +436,7 @@ def get_confusion_breakdown(
     
     # Sort by total incorrect count (most confused cards first)
     confusion_breakdown.sort(key=lambda x: x['total_incorrect'], reverse=True)
-    confusion_breakdown = confusion_breakdown[:10]  # Top 10 most confused cards
+    confusion_breakdown = confusion_breakdown[:3]  # Top 3 most confused cards
     
     return {"confusion_breakdown": confusion_breakdown}
 

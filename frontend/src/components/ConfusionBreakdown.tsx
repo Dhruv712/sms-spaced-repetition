@@ -82,60 +82,55 @@ const ConfusionBreakdown: React.FC = () => {
         Cards where you frequently type the same incorrect answer
       </p>
       
-      <div className="space-y-4">
+      <div className="space-y-2">
         {confusionData.map((card) => (
           <div
             key={card.flashcard_id}
-            className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:border-primary-300 dark:hover:border-primary-600 transition-colors duration-200"
+            className="border border-gray-200 dark:border-gray-700 rounded p-3 hover:border-primary-300 dark:hover:border-primary-600 transition-colors duration-200"
           >
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1 flex-wrap">
                   {card.deck_name && (
-                    <span className="inline-block px-2 py-0.5 text-xs font-medium bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-300 rounded">
+                    <span className="inline-block px-1.5 py-0.5 text-xs font-medium bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-300 rounded">
                       {card.deck_name}
                     </span>
                   )}
                   <span className="text-xs text-gray-500 dark:text-gray-400">
-                    {card.total_incorrect} incorrect attempt{card.total_incorrect !== 1 ? 's' : ''}
+                    {card.total_incorrect}×
                   </span>
                 </div>
-                <h3 className="text-base font-medium text-gray-900 dark:text-darktext mb-1">
+                <h3 className="text-sm font-medium text-gray-900 dark:text-darktext mb-1.5 truncate">
                   {card.concept}
                 </h3>
-              </div>
-            </div>
-            
-            <div className="space-y-2 mb-3">
-              <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Most common incorrect answers:
-              </div>
-              {card.incorrect_answers.map((item, index) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded text-sm"
-                >
-                  <span className="text-gray-700 dark:text-gray-300 flex-1">
-                    "{item.answer}"
-                  </span>
-                  <span className="text-gray-500 dark:text-gray-400 ml-2 font-medium">
-                    {item.count}x
-                  </span>
+                <div className="space-y-1">
+                  {card.incorrect_answers.slice(0, 2).map((item, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between text-xs"
+                    >
+                      <span className="text-gray-600 dark:text-gray-400 truncate flex-1 mr-2">
+                        "{item.answer}"
+                      </span>
+                      <span className="text-gray-500 dark:text-gray-500 font-medium whitespace-nowrap">
+                        {item.count}×
+                      </span>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </div>
+              <button
+                onClick={() => setExpandedCard(expandedCard === card.flashcard_id ? null : card.flashcard_id)}
+                className="text-xs text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors duration-200 whitespace-nowrap"
+              >
+                {expandedCard === card.flashcard_id ? 'Hide' : 'Show'}
+              </button>
             </div>
-            
-            <button
-              onClick={() => setExpandedCard(expandedCard === card.flashcard_id ? null : card.flashcard_id)}
-              className="text-xs text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors duration-200"
-            >
-              {expandedCard === card.flashcard_id ? 'Hide correct answer' : 'Show correct answer'}
-            </button>
             
             {expandedCard === card.flashcard_id && (
-              <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-                <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">Correct Answer:</div>
-                <div className="prose prose-sm max-w-none text-gray-700 dark:text-gray-300">
+              <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+                <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">Correct:</div>
+                <div className="prose prose-xs max-w-none text-gray-700 dark:text-gray-300 text-xs">
                   <ReactMarkdown
                     remarkPlugins={[remarkMath]}
                     rehypePlugins={[rehypeKatex]}

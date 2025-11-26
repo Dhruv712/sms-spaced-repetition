@@ -116,27 +116,11 @@ const KnowledgeMap: React.FC = () => {
             }
           }}
           nodeThreeObject={(node: any) => {
-            const sprite = new THREE.Sprite(
-              new THREE.SpriteMaterial({
-                color: getNodeColor(node),
-                sizeAttenuation: false,
-              })
-            );
-            sprite.scale.set(8, 8, 1);
-            return sprite;
-          }}
-          linkThreeObjectExtend={true}
-          linkThreeObject={(link: any) => {
-            const material = new THREE.LineBasicMaterial({
-              color: 'rgba(100, 100, 100, 0.3)',
-              opacity: 0.3,
-              transparent: true,
+            const sphereGeometry = new THREE.SphereGeometry(0.5, 8, 8);
+            const sphereMaterial = new THREE.MeshBasicMaterial({
+              color: getNodeColor(node),
             });
-            const geometry = new THREE.BufferGeometry().setFromPoints([
-              new THREE.Vector3(link.source.x, link.source.y, link.source.z),
-              new THREE.Vector3(link.target.x, link.target.y, link.target.z),
-            ]);
-            return new THREE.Line(geometry, material);
+            return new THREE.Mesh(sphereGeometry, sphereMaterial);
           }}
           showNavInfo={false}
         />
