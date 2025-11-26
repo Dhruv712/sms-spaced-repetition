@@ -199,14 +199,7 @@ const FlashcardEditModal: React.FC<Props> = ({ flashcard, isOpen, onClose, onSuc
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tags (comma separated)</label>
-              <input
-                type="text"
-                value={tags.join(', ')}
-                onChange={(e) => setTags(e.target.value.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0))}
-                className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-800 dark:text-darktext dark:border-gray-600 transition-colors duration-200"
-                placeholder="Enter tags"
-              />
+              <TagSelector selectedTags={tags} onChange={setTags} />
             </div>
 
             <div>

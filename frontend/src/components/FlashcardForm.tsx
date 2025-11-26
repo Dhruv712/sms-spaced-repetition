@@ -6,6 +6,7 @@ import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 import { useAuth } from '../contexts/AuthContext';
 import { buildApiUrl } from '../config';
+import TagSelector from './TagSelector';
 
 interface Props {
   onSuccess: () => void;
@@ -20,7 +21,7 @@ interface Deck {
 const FlashcardForm: React.FC<Props> = ({ onSuccess }) => {
   const [concept, setConcept] = useState('');
   const [definition, setDefinition] = useState('');
-  const [tags, setTags] = useState<string>('');
+  const [tags, setTags] = useState<string[]>([]);
   const [nlInput, setNlInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -93,7 +94,7 @@ const FlashcardForm: React.FC<Props> = ({ onSuccess }) => {
         {
           concept,
           definition,
-          tags: tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0),
+          tags: tags,
           deck_id: selectedDeckId,
           source_url: sourceUrl
         },
@@ -261,13 +262,7 @@ const FlashcardForm: React.FC<Props> = ({ onSuccess }) => {
           />
         </div>
         <div>
-          <input
-            type="text"
-            placeholder="Tags (comma separated)"
-            value={tags}
-            onChange={(e) => setTags(e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-800 dark:text-darktext dark:border-gray-600 transition-colors duration-200"
-          />
+          <TagSelector selectedTags={tags} onChange={setTags} />
         </div>
         <button
           type="submit"
