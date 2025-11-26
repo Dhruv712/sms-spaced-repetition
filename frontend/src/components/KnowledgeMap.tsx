@@ -38,7 +38,17 @@ const KnowledgeMap: React.FC = () => {
             'Authorization': `Bearer ${token}`,
           },
         });
-        setData(response.data);
+        
+        // Ensure links reference node objects, not just IDs
+        const nodes = response.data.nodes || [];
+        const nodeMap = new Map(nodes.map((node: any) => [node.id, node]));
+        const links = (response.data.links || []).map((link: any) => ({
+          ...link,
+          source: typeof link.source === 'number' ? nodeMap.get(link.source) : link.source,
+          target: typeof link.target === 'number' ? nodeMap.get(link.target) : link.target,
+        }));
+        
+        setData({ nodes, links });
       } catch (err) {
         console.error('Error fetching knowledge map:', err);
       } finally {
@@ -93,33 +103,57 @@ const KnowledgeMap: React.FC = () => {
         <ForceGraph2D
           ref={fgRef}
           graphData={data}
-          nodeLabel={(node: any) => `${node.concept}`}
+          nodeLabel={(node: any) => `${node.concept || 'Unknown'}`}
           nodeColor={(node: any) => getNodeColor(node)}
-          nodeVal={(node: any) => 8}
-          nodeRelSize={6}
-          linkColor={() => 'rgba(150, 150, 150, 0.4)'}
-          linkWidth={(link: any) => link.value * 2}
-          linkDirectionalArrowLength={3}
+          nodeVal={(node: any) => 10}
+          nodeCanvasObject={(node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
+            const label = node.concept || '';
+            const fontSize = 12 / globalScale;
+            ctx.font = `${fontSize}px Sans-Serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = node.id === selectedNode?.id ? '#3b82f6' : getNodeColor(node);
+            ctx.beginPath();
+            ctx.arc(node.x, node.y, 8, 0, 2 * Math.PI, false);
+            ctx.fill();
+            
+            // Draw label
+            ctx.fillStyle = '#333';
+            ctx.fillText(label, node.x, node.y + 15);
+          }}
+          linkColor={() => 'rgba(150, 150, 150, 0.3)'}
+          linkWidth={(link: any) => (link.value || 0.5) * 2}
+          linkDirectionalArrowLength={4}
           linkDirectionalArrowRelPos={1}
+          linkDirectionalArrowColor={() => 'rgba(150, 150, 150, 0.3)'}
           onNodeClick={(node: any) => {
             setSelectedNode(node);
           }}
           onNodeHover={(node: any) => {
+            // Change cursor on hover
             if (node) {
-              // Highlight node
-              fgRef.current?.nodeColor((n: any) => 
-                n.id === node.id ? '#3b82f6' : getNodeColor(n)
-              );
+              document.body.style.cursor = 'pointer';
             } else {
-              // Reset colors
-              fgRef.current?.nodeColor((n: any) => getNodeColor(n));
+              document.body.style.cursor = 'default';
             }
           }}
+          onNodeDrag={(node: any) => {
+            node.fx = node.x;
+            node.fy = node.y;
+          }}
+          onNodeDragEnd={(node: any) => {
+            node.fx = null;
+            node.fy = null;
+          }}
+          d3Force="charge"
+          d3ForceStrength={-300}
           cooldownTicks={100}
           onEngineStop={() => {
             // Center the graph when simulation stops
             if (fgRef.current && data.nodes.length > 0) {
-              fgRef.current.zoomToFit(400, 20);
+              setTimeout(() => {
+                fgRef.current?.zoomToFit(400, 20);
+              }, 100);
             }
           }}
         />
