@@ -26,7 +26,6 @@ const KnowledgeMap: React.FC = () => {
   const [data, setData] = useState<{ nodes: KnowledgeNode[]; links: KnowledgeLink[] }>({ nodes: [], links: [] });
   const [loading, setLoading] = useState(true);
   const [selectedNode, setSelectedNode] = useState<KnowledgeNode | null>(null);
-  const [nodePosition, setNodePosition] = useState<{ x: number; y: number } | null>(null);
   const fgRef = useRef<any>(null);
 
   useEffect(() => {
@@ -164,17 +163,8 @@ const KnowledgeMap: React.FC = () => {
           linkDirectionalArrowLength={4}
           linkDirectionalArrowRelPos={1}
           linkDirectionalArrowColor={() => 'rgba(150, 150, 150, 0.3)'}
-          onNodeClick={(node: any, event: MouseEvent) => {
+          onNodeClick={(node: any) => {
             setSelectedNode(node);
-            // Get click position relative to the graph container
-            const container = (event.target as HTMLElement).closest('[style*="height"]') as HTMLElement;
-            if (container) {
-              const rect = container.getBoundingClientRect();
-              setNodePosition({
-                x: event.clientX - rect.left,
-                y: event.clientY - rect.top
-              });
-            }
           }}
           onNodeHover={(node: any) => {
             // Change cursor on hover
@@ -239,10 +229,7 @@ const KnowledgeMap: React.FC = () => {
                 )}
               </div>
               <button
-                onClick={() => {
-                  setSelectedNode(null);
-                  setNodePosition(null);
-                }}
+                onClick={() => setSelectedNode(null)}
                 className="ml-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-sm"
               >
                 ✕
