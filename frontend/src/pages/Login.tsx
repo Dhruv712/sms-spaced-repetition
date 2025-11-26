@@ -219,7 +219,11 @@ export const Login: React.FC = () => {
               </div>
 
               <div>
-                <GoogleSignInButton onClick={handleGoogleSignIn} />
+                <GoogleSignInButton 
+                  onClick={handleGoogleSignIn} 
+                  disabled={googleLoading}
+                  text={googleLoading ? "Connecting..." : "Sign in with Google"}
+                />
               </div>
 
               <div className="text-sm text-center">
