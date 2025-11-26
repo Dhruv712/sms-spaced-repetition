@@ -1,5 +1,5 @@
-from sqlalchemy.orm import Session
-from app.models import ConversationState, Flashcard, CardReview, UserDeckSmsSettings
+from sqlalchemy.orm import Session, joinedload
+from app.models import ConversationState, Flashcard, CardReview, UserDeckSmsSettings, Deck
 from datetime import datetime, timezone
 from sqlalchemy import and_, or_
 
@@ -26,8 +26,8 @@ def get_next_due_flashcard(user_id: int, db: Session) -> Flashcard | None:
         CardReview.next_review_date > now
     ).subquery()
 
-    # Base query: cards that are due
-    base_query = db.query(Flashcard).filter(
+    # Base query: cards that are due, eager load deck relationship
+    base_query = db.query(Flashcard).options(joinedload(Flashcard.deck)).filter(
         Flashcard.user_id == user_id,
         ~Flashcard.id.in_(subquery)
     )

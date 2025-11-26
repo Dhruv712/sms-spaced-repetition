@@ -13,6 +13,8 @@ interface Flashcard {
   concept: string;
   definition: string;
   tags: string | string[];
+  deck_id?: number | null;
+  deck_name?: string | null;
 }
 
 const ManualReviewPage: React.FC = () => {
@@ -149,6 +151,13 @@ const ManualReviewPage: React.FC = () => {
           <div className="text-sm text-gray-500 dark:text-gray-400 mb-2">
             Card {currentIndex + 1} of {flashcards.length}
           </div>
+          {currentFlashcard.deck_name && (
+            <div className="mb-2">
+              <span className="inline-block px-2 py-1 text-xs font-medium bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-300 rounded">
+                {currentFlashcard.deck_name}
+              </span>
+            </div>
+          )}
           <div className="text-2xl font-semibold mb-4 text-gray-900 dark:text-darktext">
             {currentFlashcard.concept}
           </div>

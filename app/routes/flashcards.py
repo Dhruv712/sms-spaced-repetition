@@ -43,9 +43,12 @@ def create_flashcard(flashcard: FlashcardCreate, db: Session = Depends(get_db), 
 
 @router.get("/due", response_model=list[FlashcardOut])
 def get_due_flashcards(db: Session = Depends(get_db), current_user: User = Depends(get_current_active_user), deck_id: Optional[int] = None):
+    from sqlalchemy.orm import joinedload
+    from app.models import Deck
+    
     now = datetime.utcnow()
     
-    query = db.query(Flashcard).filter(Flashcard.user_id == current_user.id)
+    query = db.query(Flashcard).options(joinedload(Flashcard.deck)).filter(Flashcard.user_id == current_user.id)
     if deck_id is not None:
         query = query.filter(Flashcard.deck_id == deck_id)
 
@@ -57,7 +60,25 @@ def get_due_flashcards(db: Session = Depends(get_db), current_user: User = Depen
     due_cards = query.filter(
         ~Flashcard.id.in_(subquery)
     ).all()
-    return due_cards
+    
+    # Convert to dict format with deck_name
+    result = []
+    for card in due_cards:
+        card_dict = {
+            "id": card.id,
+            "user_id": card.user_id,
+            "concept": card.concept,
+            "definition": card.definition,
+            "tags": card.tags,
+            "source_url": card.source_url,
+            "created_at": card.created_at,
+            "updated_at": card.updated_at,
+            "deck_id": card.deck_id,
+            "deck_name": card.deck.name if card.deck else None
+        }
+        result.append(card_dict)
+    
+    return result
 
 @router.get("/with-reviews", response_model=list[FlashcardWithNextReviewOut])
 def get_flashcards_with_next_review(db: Session = Depends(get_db), current_user: User = Depends(get_current_active_user), deck_id: Optional[int] = None, tags: Optional[str] = None):

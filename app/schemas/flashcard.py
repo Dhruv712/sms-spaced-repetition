@@ -19,6 +19,7 @@ class FlashcardOut(BaseModel):
     created_at: datetime
     updated_at: datetime
     deck_id: Optional[int] = None
+    deck_name: Optional[str] = None
 
     @validator('tags', pre=True, always=True)
     def parse_tags(cls, v):

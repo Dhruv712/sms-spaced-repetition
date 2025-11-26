@@ -34,13 +34,18 @@ class LoopMessageService:
         
         Args:
             phone_number: Recipient's phone number
-            flashcard: Flashcard object to send
+            flashcard: Flashcard object to send (should have deck relationship loaded)
             message_count: Number of messages sent so far (for skip reminders)
             
         Returns:
             Dict containing API response
         """
-        message_text = f"{flashcard.concept}?\n\n(Reply with your answer)"
+        # Build message with optional deck name
+        deck_prefix = ""
+        if flashcard.deck and flashcard.deck.name:
+            deck_prefix = f"[{flashcard.deck.name}] "
+        
+        message_text = f"{deck_prefix}{flashcard.concept}?\n\n(Reply with your answer)"
         
         # Add skip reminder every 5 messages
         if message_count > 0 and message_count % 5 == 0:
