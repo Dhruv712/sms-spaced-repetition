@@ -296,3 +296,66 @@ def get_dashboard_stats(
         }
     }
 
+@router.get("/difficult-cards")
+def get_difficult_cards(
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get top 5 most difficult cards based on user's accuracy
+    Returns cards with lowest accuracy (at least 3 reviews to avoid noise)
+    """
+    # Get all flashcards for the user
+    all_flashcards = db.query(Flashcard).filter(Flashcard.user_id == current_user.id).all()
+    flashcard_ids = [card.id for card in all_flashcards]
+    
+    if not flashcard_ids:
+        return {"difficult_cards": []}
+    
+    # Get all reviews for user's flashcards
+    reviews = db.query(CardReview).filter(
+        CardReview.user_id == current_user.id,
+        CardReview.flashcard_id.in_(flashcard_ids)
+    ).all()
+    
+    # Calculate accuracy per flashcard
+    card_stats: Dict[int, Dict[str, Any]] = {}
+    
+    for review in reviews:
+        flashcard_id = review.flashcard_id
+        if flashcard_id not in card_stats:
+            card_stats[flashcard_id] = {
+                'total_reviews': 0,
+                'correct_reviews': 0
+            }
+        
+        card_stats[flashcard_id]['total_reviews'] += 1
+        if review.was_correct:
+            card_stats[flashcard_id]['correct_reviews'] += 1
+    
+    # Calculate accuracy and filter cards with at least 3 reviews
+    difficult_cards = []
+    for flashcard_id, stats in card_stats.items():
+        if stats['total_reviews'] >= 3:  # Minimum 3 reviews to avoid noise
+            accuracy = (stats['correct_reviews'] / stats['total_reviews'] * 100) if stats['total_reviews'] > 0 else 0
+            
+            # Find the flashcard
+            flashcard = next((f for f in all_flashcards if f.id == flashcard_id), None)
+            if flashcard:
+                difficult_cards.append({
+                    'flashcard_id': flashcard_id,
+                    'concept': flashcard.concept,
+                    'definition': flashcard.definition,
+                    'accuracy': round(accuracy, 1),
+                    'total_reviews': stats['total_reviews'],
+                    'correct_reviews': stats['correct_reviews'],
+                    'deck_id': flashcard.deck_id,
+                    'deck_name': flashcard.deck.name if flashcard.deck else None
+                })
+    
+    # Sort by accuracy (lowest first) and take top 5
+    difficult_cards.sort(key=lambda x: x['accuracy'])
+    difficult_cards = difficult_cards[:5]
+    
+    return {"difficult_cards": difficult_cards}
+

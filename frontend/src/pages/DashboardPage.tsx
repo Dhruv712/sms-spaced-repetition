@@ -10,6 +10,7 @@ import WeakestAreas from '../components/WeakestAreas';
 import ReviewStats from '../components/ReviewStats';
 import DailySummary from '../components/DailySummary';
 import SmsSetupBanner from '../components/SmsSetupBanner';
+import DifficultCards from '../components/DifficultCards';
 
 const DashboardPage: React.FC = () => {
   const { token } = useAuth();
@@ -82,6 +83,11 @@ const DashboardPage: React.FC = () => {
         {/* Weakest Areas */}
         <div className="mb-8">
           <WeakestAreas stats={stats} />
+        </div>
+
+        {/* Most Difficult Cards */}
+        <div className="mb-8">
+          <DifficultCards />
         </div>
       </div>
     </div>
