@@ -513,11 +513,11 @@ def get_knowledge_map(
             'z': random.uniform(-1, 1) if card.deck_id else 0
         }
     
-    # Simple force-directed iteration
-    for iteration in range(50):  # 50 iterations
+    # Simple force-directed iteration with tighter clustering
+    for iteration in range(100):  # More iterations for better convergence
         forces = {card_id: {'x': 0, 'y': 0, 'z': 0} for card_id in positions}
         
-        # Repulsion between all nodes
+        # Weaker repulsion to allow tighter clustering
         for card1_id in positions:
             for card2_id in positions:
                 if card1_id != card2_id:
@@ -526,21 +526,21 @@ def get_knowledge_map(
                     dz = positions[card1_id]['z'] - positions[card2_id]['z']
                     dist = math.sqrt(dx*dx + dy*dy + dz*dz) or 0.1
                     
-                    # Repulsion force
-                    force = 0.01 / (dist * dist)
+                    # Reduced repulsion force
+                    force = 0.001 / (dist * dist)
                     forces[card1_id]['x'] += force * dx / dist
                     forces[card1_id]['y'] += force * dy / dist
                     forces[card1_id]['z'] += force * dz / dist
         
-        # Attraction based on similarity
+        # Stronger attraction based on similarity
         for (card1_id, card2_id), sim in similarities.items():
             dx = positions[card1_id]['x'] - positions[card2_id]['x']
             dy = positions[card1_id]['y'] - positions[card2_id]['y']
             dz = positions[card1_id]['z'] - positions[card2_id]['z']
             dist = math.sqrt(dx*dx + dy*dy + dz*dz) or 0.1
             
-            # Attraction force proportional to similarity
-            force = -0.1 * sim
+            # Stronger attraction force proportional to similarity
+            force = -0.5 * sim  # Increased from -0.1
             forces[card1_id]['x'] += force * dx / dist
             forces[card1_id]['y'] += force * dy / dist
             forces[card1_id]['z'] += force * dz / dist
@@ -548,13 +548,14 @@ def get_knowledge_map(
             forces[card2_id]['y'] -= force * dy / dist
             forces[card2_id]['z'] -= force * dz / dist
         
-        # Update positions
+        # Update positions with damping
+        damping = 0.8  # Add damping to prevent oscillation
         for card_id in positions:
-            positions[card_id]['x'] += forces[card_id]['x']
-            positions[card_id]['y'] += forces[card_id]['y']
-            positions[card_id]['z'] += forces[card_id]['z']
+            positions[card_id]['x'] += forces[card_id]['x'] * damping
+            positions[card_id]['y'] += forces[card_id]['y'] * damping
+            positions[card_id]['z'] += forces[card_id]['z'] * damping
     
-    # Normalize positions to fit in a reasonable range
+    # Normalize positions to fit in a smaller, tighter range
     all_x = [p['x'] for p in positions.values()]
     all_y = [p['y'] for p in positions.values()]
     all_z = [p['z'] for p in positions.values()]
@@ -567,11 +568,11 @@ def get_knowledge_map(
     range_y = max_y - min_y or 1
     range_z = max_z - min_z or 1
     
-    # Build nodes and links
+    # Build nodes and links - normalize to smaller range (-2 to 2) for tighter clustering
     nodes = []
     for card in all_flashcards:
         pos = positions[card.id]
-        # Normalize to -5 to 5 range
+        # Normalize to -2 to 2 range for tighter clustering
         nodes.append({
             'id': card.id,
             'concept': card.concept,
@@ -579,9 +580,9 @@ def get_knowledge_map(
             'tags': flashcard_tags[card.id],
             'deck_id': card.deck_id,
             'deck_name': card.deck.name if card.deck else None,
-            'x': (pos['x'] - min_x) / range_x * 10 - 5,
-            'y': (pos['y'] - min_y) / range_y * 10 - 5,
-            'z': (pos['z'] - min_z) / range_z * 10 - 5
+            'x': (pos['x'] - min_x) / range_x * 4 - 2,
+            'y': (pos['y'] - min_y) / range_y * 4 - 2,
+            'z': (pos['z'] - min_z) / range_z * 4 - 2
         })
     
     # Create links for similar cards (top 3 most similar per card)

@@ -91,16 +91,16 @@ const KnowledgeMap: React.FC = () => {
         Click and drag to rotate, scroll to zoom.
       </p>
       
-      <div className="relative" style={{ height: '600px', width: '100%' }}>
+      <div className="relative bg-gray-900 rounded" style={{ height: '600px', width: '100%' }}>
         <ForceGraph3D
           ref={fgRef}
           graphData={data}
           nodeLabel={(node: any) => `${node.concept}`}
           nodeColor={(node: any) => getNodeColor(node)}
-          nodeOpacity={0.9}
-          linkColor={() => 'rgba(100, 100, 100, 0.3)'}
-          linkWidth={(link: any) => link.value * 2}
-          linkOpacity={0.3}
+          nodeOpacity={1}
+          linkColor={() => 'rgba(150, 150, 150, 0.4)'}
+          linkWidth={(link: any) => link.value * 3}
+          linkOpacity={0.4}
           onNodeClick={(node: any) => {
             setSelectedNode(node);
           }}
@@ -116,13 +116,29 @@ const KnowledgeMap: React.FC = () => {
             }
           }}
           nodeThreeObject={(node: any) => {
-            const sphereGeometry = new THREE.SphereGeometry(0.5, 8, 8);
-            const sphereMaterial = new THREE.MeshBasicMaterial({
+            // Larger, more visible spheres
+            const sphereGeometry = new THREE.SphereGeometry(0.15, 12, 12);
+            const sphereMaterial = new THREE.MeshPhongMaterial({
               color: getNodeColor(node),
+              shininess: 30,
             });
-            return new THREE.Mesh(sphereGeometry, sphereMaterial);
+            const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+            return sphere;
           }}
-          showNavInfo={false}
+          showNavInfo={true}
+          backgroundColor="rgba(17, 24, 39, 1)" // Dark gray background
+          controlType="orbit"
+          enableNodeDrag={false}
+          onEngineStop={() => {
+            // Auto-fit the graph when simulation stops
+            if (fgRef.current && data.nodes.length > 0) {
+              fgRef.current.cameraPosition({
+                x: 0,
+                y: 0,
+                z: 5
+              });
+            }
+          }}
         />
       </div>
 
