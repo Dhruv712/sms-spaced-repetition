@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import {
   ComposedChart,
-  Scatter,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -44,13 +43,45 @@ const AccuracyGraph: React.FC<AccuracyGraphProps> = ({ stats }) => {
     );
   };
   
+  // Calculate 7-day rolling average
+  const calculateRollingAverage = (points: any[], windowDays: number = 7) => {
+    if (points.length === 0) return [];
+    
+    // Sort points by date
+    const sortedPoints = [...points].sort((a, b) => a.x - b.x);
+    const result: any[] = [];
+    
+    for (let i = 0; i < sortedPoints.length; i++) {
+      const currentDate = sortedPoints[i].x;
+      const windowStart = currentDate - (windowDays * 24 * 60 * 60 * 1000); // 7 days in milliseconds
+      
+      // Find all points within the window
+      const windowPoints = sortedPoints.filter(p => p.x >= windowStart && p.x <= currentDate);
+      
+      if (windowPoints.length > 0) {
+        const avgAccuracy = windowPoints.reduce((sum, p) => sum + p.y, 0) / windowPoints.length;
+        result.push({
+          ...sortedPoints[i],
+          rollingAverage: avgAccuracy
+        });
+      } else {
+        result.push({
+          ...sortedPoints[i],
+          rollingAverage: sortedPoints[i].y
+        });
+      }
+    }
+    
+    return result;
+  };
+  
   // Calculate linear regression for trend line
   const calculateTrend = (points: any[]) => {
     if (points.length === 0) return [];
     
     const n = points.length;
     const xValues = points.map((_, i) => i);
-    const yValues = points.map((p: any) => p.accuracy);
+    const yValues = points.map((p: any) => p.rollingAverage ?? p.accuracy ?? p.y);
     
     const sumX = xValues.reduce((a, b) => a + b, 0);
     const sumY = yValues.reduce((a, b) => a + b, 0);
@@ -75,21 +106,22 @@ const AccuracyGraph: React.FC<AccuracyGraphProps> = ({ stats }) => {
         y: point.accuracy,
         dateLabel: new Date(point.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
       }));
-      const withTrend = calculateTrend(points);
+      const withRollingAvg = calculateRollingAverage(points, 7);
+      const withTrend = calculateTrend(withRollingAvg);
       
       // Create a flat data structure where each date has all series data
       const flatData = withTrend.map((point: any) => ({
         date: point.date,
         dateLabel: point.dateLabel,
         x: point.x,
-        'Overall Accuracy': point.y,
+        'Overall Accuracy (7-day avg)': point.rollingAverage,
         'Overall Trend': point.trend,
       }));
       
       return {
         chartData: flatData,
         seriesConfig: [
-          { key: 'Overall Accuracy', type: 'scatter', color: DECK_COLORS[0], name: 'Overall Accuracy' },
+          { key: 'Overall Accuracy (7-day avg)', type: 'line', color: DECK_COLORS[0], name: 'Overall Accuracy (7-day avg)' },
           { key: 'Overall Trend', type: 'line', color: DECK_COLORS[0], name: 'Overall Trend' }
         ]
       };
@@ -109,7 +141,8 @@ const AccuracyGraph: React.FC<AccuracyGraphProps> = ({ stats }) => {
           dateLabel: new Date(point.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
         }));
         
-        const withTrend = calculateTrend(points);
+        const withRollingAvg = calculateRollingAverage(points, 7);
+        const withTrend = calculateTrend(withRollingAvg);
         const pointsMap = new Map<number, any>();
         
         withTrend.forEach((point: any) => {
@@ -139,7 +172,7 @@ const AccuracyGraph: React.FC<AccuracyGraphProps> = ({ stats }) => {
           const pointsMap = deckPointsMap.get(deckId);
           if (pointsMap && pointsMap.has(x)) {
             const point = pointsMap.get(x);
-            entry[`${point.deckName} Accuracy`] = point.y;
+            entry[`${point.deckName} (7-day avg)`] = point.rollingAverage;
             entry[`${point.deckName} Trend`] = point.trend;
           }
         });
@@ -153,7 +186,7 @@ const AccuracyGraph: React.FC<AccuracyGraphProps> = ({ stats }) => {
         if (!deck) return;
         const color = DECK_COLORS[index % DECK_COLORS.length];
         config.push(
-          { key: `${deck.deck_name} Accuracy`, type: 'scatter', color, name: deck.deck_name },
+          { key: `${deck.deck_name} (7-day avg)`, type: 'line', color, name: deck.deck_name },
           { key: `${deck.deck_name} Trend`, type: 'line', color, name: `${deck.deck_name} Trend` }
         );
       });
@@ -180,7 +213,7 @@ const AccuracyGraph: React.FC<AccuracyGraphProps> = ({ stats }) => {
       
       // Determine if this is a trend or accuracy entry
       const isTrend = name.includes('Trend');
-      const baseName = name.replace(' Trend', '').replace(' Accuracy', '');
+      const baseName = name.replace(' Trend', '').replace(' (7-day avg)', '').replace(' Accuracy', '');
       
       if (!seriesMap.has(baseName)) {
         seriesMap.set(baseName, { accuracy: null, trend: null, color: entry.color || DECK_COLORS[0] });
@@ -216,7 +249,7 @@ const AccuracyGraph: React.FC<AccuracyGraphProps> = ({ stats }) => {
               </div>
               {data.accuracy !== null && (
                 <div className="ml-5 text-xs text-gray-600 dark:text-gray-400">
-                  Accuracy: <span className="font-semibold text-gray-900 dark:text-gray-100">{data.accuracy.toFixed(1)}%</span>
+                  7-day avg: <span className="font-semibold text-gray-900 dark:text-gray-100">{data.accuracy.toFixed(1)}%</span>
                 </div>
               )}
               {data.trend !== null && (
@@ -237,7 +270,7 @@ const AccuracyGraph: React.FC<AccuracyGraphProps> = ({ stats }) => {
         <div>
           <h2 className="text-xl font-light text-gray-900 dark:text-darktext">Accuracy Over Time</h2>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            Track your performance and identify improvement areas
+            7-day rolling average with trend line
           </p>
         </div>
         <div className="flex gap-2">
@@ -343,36 +376,38 @@ const AccuracyGraph: React.FC<AccuracyGraphProps> = ({ stats }) => {
                 label={{ value: '50%', position: 'right', fill: '#9ca3af', fontSize: '10px' }}
               />
               
-              {/* Render trend lines first (behind scatter points) */}
+              {/* Render rolling average lines (solid) */}
               {seriesConfig
-                .filter(s => s.type === 'line')
+                .filter(s => s.type === 'line' && !s.key.includes('Trend'))
+                .map((series, index) => (
+                  <Line
+                    key={series.key}
+                    type="monotone"
+                    dataKey={series.key}
+                    stroke={series.color}
+                    strokeWidth={2.5}
+                    dot={false}
+                    activeDot={{ r: 5, fill: series.color, strokeWidth: 2 }}
+                    connectNulls
+                    strokeOpacity={0.9}
+                  />
+                ))}
+              
+              {/* Render trend lines (dashed, behind rolling average) */}
+              {seriesConfig
+                .filter(s => s.type === 'line' && s.key.includes('Trend'))
                 .map((series, index) => (
                   <Line
                     key={series.key}
                     type="linear"
                     dataKey={series.key}
                     stroke={series.color}
-                    strokeWidth={2.5}
+                    strokeWidth={2}
                     strokeDasharray="6 4"
                     dot={false}
-                    activeDot={{ r: 4, fill: series.color }}
+                    activeDot={false}
                     connectNulls
-                    strokeOpacity={0.7}
-                  />
-                ))}
-              
-              {/* Render scatter points */}
-              {seriesConfig
-                .filter(s => s.type === 'scatter')
-                .map((series, index) => (
-                  <Scatter
-                    key={series.key}
-                    name={series.name}
-                    dataKey={series.key}
-                    fill={series.color}
-                    fillOpacity={0.7}
-                    stroke={series.color}
-                    strokeWidth={1.5}
+                    strokeOpacity={0.6}
                   />
                 ))}
             </ComposedChart>
