@@ -8,6 +8,7 @@ export const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [googleLoading, setGoogleLoading] = useState(false);
   const { login, loginWithGoogleToken, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -56,11 +57,31 @@ export const Login: React.FC = () => {
   const handleGoogleSignIn = async () => {
     try {
       setError('');
+      setGoogleLoading(true);
+      
+      // First, check if the backend is reachable
+      try {
+        const healthCheck = await fetch(buildApiUrl('/auth/google/debug'), {
+          method: 'GET',
+          signal: AbortSignal.timeout(5000) // 5 second timeout
+        });
+        
+        if (!healthCheck.ok) {
+          throw new Error('Backend is not responding');
+        }
+      } catch (err) {
+        console.error('Backend health check failed:', err);
+        setError('Unable to connect to the server. Please check if the service is running.');
+        setGoogleLoading(false);
+        return;
+      }
+      
       // Redirect to backend Google OAuth endpoint
       window.location.href = buildApiUrl('/auth/google');
     } catch (err) {
       console.error('Google sign-in error:', err);
       setError('Failed to initiate Google sign-in. Please try again.');
+      setGoogleLoading(false);
     }
   };
 
