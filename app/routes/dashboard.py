@@ -443,7 +443,9 @@ def get_confusion_breakdown(
 @router.get("/knowledge-map")
 def get_knowledge_map(
     current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    deck_attraction: float = 1.0,
+    tag_attraction: float = 0.5
 ):
     """
     Get knowledge map data - 3D coordinates for flashcards based on tag similarity
@@ -539,8 +541,8 @@ def get_knowledge_map(
                         dy = positions[card1.id]['y'] - positions[card2.id]['y']
                         dist = math.sqrt(dx*dx + dy*dy) or 0.1
                         
-                        # Strong deck-based attraction
-                        force = -1.0  # Strong force to cluster same deck
+                        # Strong deck-based attraction (configurable)
+                        force = -deck_attraction  # Strong force to cluster same deck
                         forces[card1.id]['x'] += force * dx / dist
                         forces[card1.id]['y'] += force * dy / dist
                         forces[card2.id]['x'] -= force * dx / dist
@@ -552,8 +554,8 @@ def get_knowledge_map(
             dy = positions[card1_id]['y'] - positions[card2_id]['y']
             dist = math.sqrt(dx*dx + dy*dy) or 0.1
             
-            # Tag similarity attraction (weaker than deck clustering)
-            force = -0.3 * sim
+            # Tag similarity attraction (configurable)
+            force = -tag_attraction * sim
             forces[card1_id]['x'] += force * dx / dist
             forces[card1_id]['y'] += force * dy / dist
             forces[card2_id]['x'] -= force * dx / dist

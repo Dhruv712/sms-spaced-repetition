@@ -26,6 +26,8 @@ const KnowledgeMap: React.FC = () => {
   const [data, setData] = useState<{ nodes: KnowledgeNode[]; links: KnowledgeLink[] }>({ nodes: [], links: [] });
   const [loading, setLoading] = useState(true);
   const [selectedNode, setSelectedNode] = useState<KnowledgeNode | null>(null);
+  const [deckAttraction, setDeckAttraction] = useState(1.0);
+  const [tagAttraction, setTagAttraction] = useState(0.5);
   const fgRef = useRef<any>(null);
 
   useEffect(() => {
@@ -37,6 +39,10 @@ const KnowledgeMap: React.FC = () => {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
+          params: {
+            deck_attraction: deckAttraction,
+            tag_attraction: tagAttraction
+          }
         });
         
         // Ensure links reference node objects, not just IDs
@@ -57,7 +63,7 @@ const KnowledgeMap: React.FC = () => {
     };
 
     fetchKnowledgeMap();
-  }, [token]);
+  }, [token, deckAttraction, tagAttraction]);
 
   if (loading) {
     return (
