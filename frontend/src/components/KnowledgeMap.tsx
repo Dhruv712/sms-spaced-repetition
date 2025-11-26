@@ -28,7 +28,7 @@ const KnowledgeMap: React.FC = () => {
   const [data, setData] = useState<{ nodes: KnowledgeNode[]; links: KnowledgeLink[] }>({ nodes: [], links: [] });
   const [loading, setLoading] = useState(true);
   const [selectedNode, setSelectedNode] = useState<KnowledgeNode | null>(null);
-  const fgRef = useRef<any>();
+  const fgRef = useRef<any>(null);
 
   useEffect(() => {
     if (!token) return;
