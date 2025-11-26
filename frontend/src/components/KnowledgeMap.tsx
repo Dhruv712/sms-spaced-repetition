@@ -92,13 +92,50 @@ const KnowledgeMap: React.FC = () => {
     return '#9ca3af'; // Gray for cards without decks
   };
 
+  // Get unique decks for legend
+  const deckMap = new Map<number, { name: string; color: string }>();
+  data.nodes.forEach((node) => {
+    if (node.deck_id && node.deck_name && !deckMap.has(node.deck_id)) {
+      deckMap.set(node.deck_id, {
+        name: node.deck_name,
+        color: getNodeColor(node)
+      });
+    }
+  });
+  const deckLegend = Array.from(deckMap.values());
+
   return (
     <div className="bg-white dark:bg-darksurface rounded-lg border border-gray-200 dark:border-gray-800 p-6">
       <h2 className="text-lg font-light text-gray-900 dark:text-darktext mb-4">Knowledge Map</h2>
-      <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-        2D visualization of your flashcards. Cards with similar tags are positioned closer together.
-        Click and drag nodes, scroll to zoom.
-      </p>
+      <div className="mb-4">
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+          2D visualization of your flashcards. Cards with similar tags (added when creating/editing flashcards) are positioned closer together.
+          Click and drag nodes, scroll to zoom.
+        </p>
+        {deckLegend.length > 0 && (
+          <div className="flex flex-wrap gap-3 items-center">
+            <span className="text-xs font-medium text-gray-700 dark:text-gray-300">Decks:</span>
+            {deckLegend.map((deck, index) => (
+              <div key={index} className="flex items-center gap-1.5">
+                <div 
+                  className="w-3 h-3 rounded-full border border-gray-300 dark:border-gray-600"
+                  style={{ backgroundColor: deck.color }}
+                />
+                <span className="text-xs text-gray-600 dark:text-gray-400">{deck.name}</span>
+              </div>
+            ))}
+            {data.nodes.some(n => !n.deck_id) && (
+              <div className="flex items-center gap-1.5">
+                <div 
+                  className="w-3 h-3 rounded-full border border-gray-300 dark:border-gray-600"
+                  style={{ backgroundColor: '#9ca3af' }}
+                />
+                <span className="text-xs text-gray-600 dark:text-gray-400">No deck</span>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
       
       <div className="relative bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-700" style={{ height: '600px', width: '100%' }}>
         <ForceGraph2D
@@ -107,8 +144,6 @@ const KnowledgeMap: React.FC = () => {
           nodeLabel={(node: any) => `${node.concept || 'Unknown'}`}
           nodeColor={(node: any) => getNodeColor(node)}
           nodeVal={(node: any) => 10}
-          linkDistance={30}
-          linkStrength={0.5}
           nodeCanvasObject={(node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
             const label = node.concept || '';
             const fontSize = 12 / globalScale;
