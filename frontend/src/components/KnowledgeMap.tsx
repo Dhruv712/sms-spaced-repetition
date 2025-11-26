@@ -145,8 +145,6 @@ const KnowledgeMap: React.FC = () => {
             node.fx = null;
             node.fy = null;
           }}
-          d3Force="charge"
-          d3ForceStrength={-300}
           cooldownTicks={100}
           onEngineStop={() => {
             // Center the graph when simulation stops
