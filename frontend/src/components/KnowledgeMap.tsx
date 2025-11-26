@@ -253,8 +253,6 @@ const KnowledgeMap: React.FC = () => {
             node.fx = null;
             node.fy = null;
           }}
-          d3Force="charge"
-          d3ForceStrength={-30 * deckAttraction}
           cooldownTicks={100}
           onEngineStop={() => {
             // Center the graph when simulation stops
