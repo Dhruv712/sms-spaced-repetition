@@ -6,6 +6,7 @@ import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 import { useAuth } from '../contexts/AuthContext';
 import { buildApiUrl } from '../config';
+import TagSelector from './TagSelector';
 
 interface Flashcard {
   id: number;
