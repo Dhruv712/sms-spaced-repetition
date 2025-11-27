@@ -51,6 +51,7 @@ const AdminDashboardPage: React.FC = () => {
   const [filterPremium, setFilterPremium] = useState<boolean | null>(null);
   const [filterSms, setFilterSms] = useState<boolean | null>(null);
   const [updatingUsers, setUpdatingUsers] = useState<Set<number>>(new Set());
+  const [deletingUsers, setDeletingUsers] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     if (!token || !user) {
@@ -99,6 +100,56 @@ const AdminDashboardPage: React.FC = () => {
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  const handleDeleteUser = async (userEmail: string, userId: number) => {
+    if (!token) return;
+
+    // Double confirmation for deletion
+    const confirmMessage = `⚠️ WARNING: This will permanently delete ${userEmail} and ALL their data (flashcards, reviews, decks, etc.).\n\nThis action cannot be undone.\n\nType "${userEmail}" to confirm deletion:`;
+    const userInput = window.prompt(confirmMessage);
+    
+    if (userInput !== userEmail) {
+      if (userInput !== null) { // User didn't cancel, but typed wrong
+        alert('Email did not match. Deletion cancelled.');
+      }
+      return;
+    }
+
+    // Final confirmation
+    if (!window.confirm(`Are you absolutely sure you want to delete ${userEmail}? This cannot be undone.`)) {
+      return;
+    }
+
+    setDeletingUsers(prev => new Set(prev).add(userId));
+
+    try {
+      const response = await axios.delete(
+        buildApiUrl(`/admin/delete-user/${userId}`),
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.data.success) {
+        alert(`User ${userEmail} and all their data have been deleted successfully.`);
+        // Refresh the dashboard data
+        await fetchDashboardData();
+      } else {
+        alert(response.data.message || 'Failed to delete user');
+      }
+    } catch (err: any) {
+      console.error('Error deleting user:', err);
+      alert(err.response?.data?.detail || 'Failed to delete user. Please try again.');
+    } finally {
+      setDeletingUsers(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(userId);
+        return newSet;
+      });
+    }
   };
 
   const handleTogglePremium = async (userEmail: string, userId: number, currentPremiumStatus: boolean) => {
@@ -289,6 +340,7 @@ const AdminDashboardPage: React.FC = () => {
                   <th className="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300">Last Review</th>
                   <th className="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300">Joined</th>
                   <th className="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300">Actions</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300">Delete</th>
                 </tr>
               </thead>
               <tbody>
@@ -341,6 +393,16 @@ const AdminDashboardPage: React.FC = () => {
                         title={user.is_premium ? 'Remove premium status' : 'Upgrade to premium'}
                       >
                         {updatingUsers.has(user.id) ? 'Updating...' : user.is_premium ? 'Remove Premium' : 'Make Premium'}
+                      </button>
+                    </td>
+                    <td className="py-3 px-4">
+                      <button
+                        onClick={() => handleDeleteUser(user.email, user.id)}
+                        disabled={deletingUsers.has(user.id) || user.is_admin}
+                        className="px-3 py-1.5 text-xs rounded bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                        title={user.is_admin ? 'Cannot delete admin users' : 'Delete user and all their data'}
+                      >
+                        {deletingUsers.has(user.id) ? 'Deleting...' : 'Delete'}
                       </button>
                     </td>
                   </tr>

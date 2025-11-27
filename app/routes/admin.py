@@ -441,22 +441,33 @@ async def delete_user_admin(
         raise HTTPException(status_code=403, detail="Admin access required")
     
     try:
-        from app.models import User, Flashcard, CardReview, ConversationState
+        from app.models import User, Flashcard, CardReview, ConversationState, Deck, StudySession, UserDeckSmsSettings
         
         # Find the user to delete
         user_to_delete = db.query(User).filter_by(id=user_id).first()
         if not user_to_delete:
             raise HTTPException(status_code=404, detail="User not found")
         
+        # Prevent deleting yourself
+        if user_to_delete.id == current_user.id:
+            raise HTTPException(status_code=400, detail="Cannot delete your own account")
+        
         # Count associated data
         flashcard_count = db.query(Flashcard).filter_by(user_id=user_id).count()
         review_count = db.query(CardReview).filter_by(user_id=user_id).count()
         conversation_count = db.query(ConversationState).filter_by(user_id=user_id).count()
+        deck_count = db.query(Deck).filter_by(user_id=user_id).count()
+        session_count = db.query(StudySession).filter_by(user_id=user_id).count()
         
         # Delete associated data first (foreign key constraints)
+        # Note: Due to cascade relationships, some of these may be automatically deleted
+        # but we'll delete them explicitly to be safe
+        db.query(UserDeckSmsSettings).filter_by(user_id=user_id).delete()
         db.query(ConversationState).filter_by(user_id=user_id).delete()
         db.query(CardReview).filter_by(user_id=user_id).delete()
         db.query(Flashcard).filter_by(user_id=user_id).delete()
+        db.query(Deck).filter_by(user_id=user_id).delete()
+        db.query(StudySession).filter_by(user_id=user_id).delete()
         
         # Delete the user
         db.delete(user_to_delete)
@@ -470,7 +481,9 @@ async def delete_user_admin(
                 "email": user_to_delete.email,
                 "flashcards_deleted": flashcard_count,
                 "reviews_deleted": review_count,
-                "conversations_deleted": conversation_count
+                "conversations_deleted": conversation_count,
+                "decks_deleted": deck_count,
+                "sessions_deleted": session_count
             }
         }
         
