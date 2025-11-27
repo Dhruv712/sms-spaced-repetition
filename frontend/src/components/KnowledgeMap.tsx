@@ -14,6 +14,8 @@ interface KnowledgeNode {
   accuracy: number | null;  // 0-100 or null if no reviews
   x: number;
   y: number;
+  vx?: number;  // Velocity x (added by D3 force simulation)
+  vy?: number;  // Velocity y (added by D3 force simulation)
 }
 
 interface KnowledgeLink {
