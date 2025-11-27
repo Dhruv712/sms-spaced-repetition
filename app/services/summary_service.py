@@ -66,18 +66,11 @@ def get_daily_review_summary(user_id: int, db: Session, date: datetime.date = No
             "message": "No reviews today. Time to start studying!"
         }
     
-    # Calculate basic stats - count unique flashcards reviewed
-    unique_flashcards_reviewed = set(review.flashcard_id for review in reviews)
-    total_reviews = len(unique_flashcards_reviewed)
+    # Calculate basic stats - count total reviews (not unique cards)
+    total_reviews = len(reviews)
     
-    # For correctness, count the most recent review for each flashcard
-    correct_reviews = 0
-    for flashcard_id in unique_flashcards_reviewed:
-        # Get the most recent review for this flashcard today
-        latest_review = max([r for r in reviews if r.flashcard_id == flashcard_id], 
-                           key=lambda r: r.review_date)
-        if latest_review.was_correct:
-            correct_reviews += 1
+    # Count correct reviews
+    correct_reviews = sum(1 for review in reviews if review.was_correct)
     
     percent_correct = (correct_reviews / total_reviews) * 100 if total_reviews > 0 else 0
     

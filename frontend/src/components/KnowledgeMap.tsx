@@ -32,6 +32,7 @@ const KnowledgeMap: React.FC = () => {
   const [invertAccuracy, setInvertAccuracy] = useState(false);
   const fgRef = useRef<any>(null);
 
+  // Fetch data only once (don't refetch when sliders change)
   useEffect(() => {
     if (!token) return;
 
@@ -41,10 +42,7 @@ const KnowledgeMap: React.FC = () => {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
-          params: {
-            deck_attraction: deckAttraction,
-            tag_attraction: tagAttraction
-          }
+          // Don't pass slider params to backend - we'll handle forces on frontend
         });
         
         // Ensure links reference node objects, not just IDs
@@ -65,7 +63,7 @@ const KnowledgeMap: React.FC = () => {
     };
 
     fetchKnowledgeMap();
-  }, [token, deckAttraction, tagAttraction]);
+  }, [token]); // Only fetch when token changes, not when sliders change
 
   // Restart simulation when forces change (but don't reset zoom)
   useEffect(() => {
@@ -74,27 +72,64 @@ const KnowledgeMap: React.FC = () => {
       const simulation = fgRef.current.d3Force();
       if (simulation) {
         // Update charge force strength (repulsion - higher = more spread out)
-        // Make it much stronger
+        // Make it much stronger - this controls general node spacing
         const charge = simulation.force('charge');
         if (charge) {
-          charge.strength(-150 * deckAttraction);  // Increased from -30 to -150
+          // Base repulsion, stronger when deck attraction is higher
+          charge.strength(-300 * (1 + deckAttraction));  // Much stronger base repulsion
         }
         
-        // Update link force distance and strength
+        // Add a custom force for deck-based clustering
+        // Remove old deck force if it exists
+        simulation.force('deck-cluster', null);
+        
+        // Create deck-based clustering force
+        const deckClusterForce = (alpha: number) => {
+          const nodes = data.nodes;
+          for (let i = 0; i < nodes.length; i++) {
+            for (let j = i + 1; j < nodes.length; j++) {
+              const node1 = nodes[i];
+              const node2 = nodes[j];
+              
+              // If same deck, apply strong attraction
+              if (node1.deck_id && node2.deck_id && node1.deck_id === node2.deck_id) {
+                const dx = (node2.x || 0) - (node1.x || 0);
+                const dy = (node2.y || 0) - (node1.y || 0);
+                const dist = Math.sqrt(dx * dx + dy * dy) || 0.1;
+                
+                // Strong attraction force based on slider
+                const force = deckAttraction * 50 * alpha;
+                const fx = (dx / dist) * force;
+                const fy = (dy / dist) * force;
+                
+                node1.vx = (node1.vx || 0) + fx;
+                node1.vy = (node1.vy || 0) + fy;
+                node2.vx = (node2.vx || 0) - fx;
+                node2.vy = (node2.vy || 0) - fy;
+              }
+            }
+          }
+        };
+        
+        simulation.force('deck-cluster', deckClusterForce);
+        
+        // Update link force distance and strength for tag-based attraction
         const link = simulation.force('link');
         if (link) {
           link.distance((linkData: any) => {
-            const baseDistance = 50;
+            const baseDistance = 100;
             const similarity = linkData.value || 0;
-            return baseDistance - (tagAttraction * similarity * 100);  // Increased from 30 to 100
+            // Higher tag attraction = shorter links = stronger clustering
+            return baseDistance - (tagAttraction * similarity * 80);
           });
           link.strength((linkData: any) => {
-            return tagAttraction * (linkData.value || 0.5) * 3;  // Multiply by 3 for stronger effect
+            // Higher tag attraction = stronger link force
+            return tagAttraction * (linkData.value || 0.5) * 2;
           });
         }
         
         // Restart simulation with new parameters (but don't zoom)
-        simulation.alpha(0.3).restart();  // Use lower alpha to avoid major repositioning
+        simulation.alpha(1).restart();  // Use full alpha for stronger effect
       }
     }
   }, [deckAttraction, tagAttraction, data]);
