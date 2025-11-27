@@ -11,6 +11,7 @@ interface KnowledgeNode {
   tags: string[];
   deck_id: number | null;
   deck_name: string | null;
+  accuracy: number | null;  // 0-100 or null if no reviews
   x: number;
   y: number;
 }
@@ -28,6 +29,7 @@ const KnowledgeMap: React.FC = () => {
   const [selectedNode, setSelectedNode] = useState<KnowledgeNode | null>(null);
   const [deckAttraction, setDeckAttraction] = useState(1.0);
   const [tagAttraction, setTagAttraction] = useState(0.5);
+  const [invertAccuracy, setInvertAccuracy] = useState(false);
   const fgRef = useRef<any>(null);
 
   useEffect(() => {
@@ -65,16 +67,17 @@ const KnowledgeMap: React.FC = () => {
     fetchKnowledgeMap();
   }, [token, deckAttraction, tagAttraction]);
 
-  // Restart simulation when forces change
+  // Restart simulation when forces change (but don't reset zoom)
   useEffect(() => {
     if (fgRef.current && data.nodes.length > 0) {
       // Access the d3 simulation and update force parameters
       const simulation = fgRef.current.d3Force();
       if (simulation) {
         // Update charge force strength (repulsion - higher = more spread out)
+        // Make it much stronger
         const charge = simulation.force('charge');
         if (charge) {
-          charge.strength(-30 * deckAttraction);
+          charge.strength(-150 * deckAttraction);  // Increased from -30 to -150
         }
         
         // Update link force distance and strength
@@ -83,15 +86,15 @@ const KnowledgeMap: React.FC = () => {
           link.distance((linkData: any) => {
             const baseDistance = 50;
             const similarity = linkData.value || 0;
-            return baseDistance - (tagAttraction * similarity * 30);
+            return baseDistance - (tagAttraction * similarity * 100);  // Increased from 30 to 100
           });
           link.strength((linkData: any) => {
-            return tagAttraction * (linkData.value || 0.5);
+            return tagAttraction * (linkData.value || 0.5) * 3;  // Multiply by 3 for stronger effect
           });
         }
         
-        // Restart simulation with new parameters
-        simulation.alpha(1).restart();
+        // Restart simulation with new parameters (but don't zoom)
+        simulation.alpha(0.3).restart();  // Use lower alpha to avoid major repositioning
       }
     }
   }, [deckAttraction, tagAttraction, data]);
@@ -175,7 +178,7 @@ const KnowledgeMap: React.FC = () => {
       
       {/* Force controls */}
       <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
               Deck Clustering: {deckAttraction.toFixed(1)}
@@ -204,6 +207,19 @@ const KnowledgeMap: React.FC = () => {
               className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
             />
           </div>
+          <div className="flex items-center">
+            <label className="flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={invertAccuracy}
+                onChange={(e) => setInvertAccuracy(e.target.checked)}
+                className="mr-2 w-4 h-4 text-primary-600 bg-gray-100 border-gray-300 rounded focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+              />
+              <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                Invert Size (lower accuracy = bigger)
+              </span>
+            </label>
+          </div>
         </div>
       </div>
       
@@ -213,21 +229,41 @@ const KnowledgeMap: React.FC = () => {
           graphData={data}
           nodeLabel={(node: any) => `${node.concept || 'Unknown'}`}
           nodeColor={(node: any) => getNodeColor(node)}
-          nodeVal={(node: any) => 10}
+          nodeVal={(node: any) => {
+            // Node size based on accuracy (if available)
+            if (node.accuracy !== null && node.accuracy !== undefined) {
+              // Map accuracy (0-100) to size (5-20)
+              const baseSize = 5;
+              const maxSize = 20;
+              const accuracyValue = invertAccuracy ? (100 - node.accuracy) : node.accuracy;
+              return baseSize + (accuracyValue / 100) * (maxSize - baseSize);
+            }
+            return 10; // Default size for cards without reviews
+          }}
           nodeCanvasObject={(node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
             const label = node.concept || '';
             const fontSize = 12 / globalScale;
             ctx.font = `${fontSize}px Sans-Serif`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
+            
+            // Calculate node size based on accuracy
+            let nodeSize = 8; // Default
+            if (node.accuracy !== null && node.accuracy !== undefined) {
+              const baseSize = 5;
+              const maxSize = 20;
+              const accuracyValue = invertAccuracy ? (100 - node.accuracy) : node.accuracy;
+              nodeSize = baseSize + (accuracyValue / 100) * (maxSize - baseSize);
+            }
+            
             ctx.fillStyle = node.id === selectedNode?.id ? '#3b82f6' : getNodeColor(node);
             ctx.beginPath();
-            ctx.arc(node.x, node.y, 8, 0, 2 * Math.PI, false);
+            ctx.arc(node.x, node.y, nodeSize, 0, 2 * Math.PI, false);
             ctx.fill();
             
             // Draw label
             ctx.fillStyle = '#333';
-            ctx.fillText(label, node.x, node.y + 15);
+            ctx.fillText(label, node.x, node.y + nodeSize + 5);
           }}
           linkColor={() => 'rgba(150, 150, 150, 0.3)'}
           linkWidth={(link: any) => (link.value || 0.5) * 2}
@@ -254,15 +290,6 @@ const KnowledgeMap: React.FC = () => {
             node.fy = null;
           }}
           cooldownTicks={100}
-          onEngineStop={() => {
-            // Center the graph when simulation stops
-            if (fgRef.current && data.nodes.length > 0) {
-              setTimeout(() => {
-                fgRef.current?.zoomToFit(400, 20);
-              }, 100);
-            }
-          }}
-          key={`${deckAttraction}-${tagAttraction}`}
         />
         
         {/* Node details overlay in top-right */}

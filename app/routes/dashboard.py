@@ -541,8 +541,8 @@ def get_knowledge_map(
                         dy = positions[card1.id]['y'] - positions[card2.id]['y']
                         dist = math.sqrt(dx*dx + dy*dy) or 0.1
                         
-                        # Strong deck-based attraction (configurable)
-                        force = -deck_attraction  # Strong force to cluster same deck
+                        # Strong deck-based attraction (configurable) - make it stronger
+                        force = -deck_attraction * 5  # Multiply by 5 for stronger effect
                         forces[card1.id]['x'] += force * dx / dist
                         forces[card1.id]['y'] += force * dy / dist
                         forces[card2.id]['x'] -= force * dx / dist
@@ -554,8 +554,8 @@ def get_knowledge_map(
             dy = positions[card1_id]['y'] - positions[card2_id]['y']
             dist = math.sqrt(dx*dx + dy*dy) or 0.1
             
-            # Tag similarity attraction (configurable)
-            force = -tag_attraction * sim
+            # Tag similarity attraction (configurable) - make it stronger
+            force = -tag_attraction * sim * 3  # Multiply by 3 for stronger effect
             forces[card1_id]['x'] += force * dx / dist
             forces[card1_id]['y'] += force * dy / dist
             forces[card2_id]['x'] -= force * dx / dist
@@ -577,6 +577,27 @@ def get_knowledge_map(
     range_x = max_x - min_x or 1
     range_y = max_y - min_y or 1
     
+    # Calculate accuracy for each card
+    card_accuracy = {}
+    reviews = db.query(CardReview).filter(
+        CardReview.user_id == current_user.id,
+        CardReview.flashcard_id.in_([card.id for card in all_flashcards])
+    ).all()
+    
+    # Group reviews by flashcard
+    card_review_stats = defaultdict(lambda: {'total': 0, 'correct': 0})
+    for review in reviews:
+        card_review_stats[review.flashcard_id]['total'] += 1
+        if review.was_correct:
+            card_review_stats[review.flashcard_id]['correct'] += 1
+    
+    # Calculate accuracy (0-100)
+    for card_id, stats in card_review_stats.items():
+        if stats['total'] > 0:
+            card_accuracy[card_id] = (stats['correct'] / stats['total']) * 100
+        else:
+            card_accuracy[card_id] = None  # No reviews yet
+    
     # Build nodes and links - normalize to smaller range (-2 to 2) for tighter clustering
     nodes = []
     for card in all_flashcards:
@@ -589,6 +610,7 @@ def get_knowledge_map(
             'tags': flashcard_tags[card.id],
             'deck_id': card.deck_id,
             'deck_name': card.deck.name if card.deck else None,
+            'accuracy': card_accuracy.get(card.id),  # None if no reviews
             'x': (pos['x'] - min_x) / range_x * 4 - 2,
             'y': (pos['y'] - min_y) / range_y * 4 - 2
         })
