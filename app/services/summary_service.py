@@ -100,6 +100,12 @@ def get_daily_review_summary(user_id: int, db: Session, date: datetime.date = No
 def calculate_streak_days(user_id: int, db: Session) -> int:
     """Calculate consecutive days with reviews or no cards due"""
     today = datetime.now(timezone.utc).date()
+    
+    # If user has never reviewed anything, streak should be 0
+    total_reviews = db.query(CardReview).filter(CardReview.user_id == user_id).count()
+    if total_reviews == 0:
+        return 0
+    
     streak = 0
     
     for days_back in range(30):  # Check last 30 days

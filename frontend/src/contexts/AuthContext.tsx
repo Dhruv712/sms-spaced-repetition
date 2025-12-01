@@ -10,6 +10,7 @@ interface User {
   study_mode?: string;
   preferred_start_hour?: number;
   preferred_end_hour?: number;
+  preferred_text_times?: number[] | null;
   timezone?: string;
   sms_opt_in?: boolean;
   has_sms_conversation?: boolean;
@@ -203,9 +204,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         study_mode: user.study_mode || 'batch',
         preferred_start_hour: user.preferred_start_hour || 9,
         preferred_end_hour: user.preferred_end_hour || 21,
+         // Preserve existing preferred_text_times if available, default to [12]
+        preferred_text_times: (user as any).preferred_text_times && (user as any).preferred_text_times!.length > 0 
+          ? (user as any).preferred_text_times 
+          : [12],
         timezone: user.timezone || 'UTC',
         sms_opt_in: smsOptIn,
-        has_sms_conversation: user.has_sms_conversation || false
+        has_sms_conversation: user.has_sms_conversation || false,
+        // These are required by the backend schema but ignored on update
+        is_premium: user.is_premium || false,
+        is_admin: user.is_admin || false
       };
       
       console.log('Sending profile data:', profileData);
