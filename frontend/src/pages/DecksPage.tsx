@@ -274,10 +274,10 @@ const DecksPage: React.FC = () => {
             <h2 className="text-xl font-semibold text-secondary-900 dark:text-white">Create New Deck</h2>
             {limits && !user?.is_premium && (
               <div className="text-right">
-                <span className={`text-sm font-medium ${limits.decks.count >= limits.decks.limit ? 'text-red-600 dark:text-red-400' : 'text-secondary-600 dark:text-secondary-400'}`}>
-                  {limits.decks.count} / {limits.decks.limit} decks
+                <span className={`text-sm font-medium ${decks.length >= limits.decks.limit ? 'text-red-600 dark:text-red-400' : 'text-secondary-600 dark:text-secondary-400'}`}>
+                  {decks.length} / {limits.decks.limit} decks
                 </span>
-                {limits.decks.count >= limits.decks.limit && (
+                {decks.length >= limits.decks.limit && (
                   <p className="text-xs text-red-600 dark:text-red-400 mt-1">Free tier limit reached</p>
                 )}
               </div>
