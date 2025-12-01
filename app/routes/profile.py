@@ -62,6 +62,18 @@ def update_user_profile(
     print(f"🔍 Profile data: {profile}")
     print(f"🔍 Current user data: name={current_user.name}, phone={current_user.phone_number}, google_id={current_user.google_id}")
     
+    # If phone number is being changed, ensure it's not already used by another user
+    if profile.phone_number and profile.phone_number != current_user.phone_number:
+        existing_user = db.query(User).filter(
+            User.phone_number == profile.phone_number,
+            User.id != current_user.id
+        ).first()
+        if existing_user:
+            raise HTTPException(
+                status_code=400,
+                detail="This phone number is already associated with another account. Please use a different number."
+            )
+    
     current_user.name = profile.name
     current_user.phone_number = profile.phone_number
     current_user.study_mode = profile.study_mode

@@ -10,13 +10,22 @@ router = APIRouter()
 
 @router.post("/register")
 def register_user(user: UserCreate, db: Session = Depends(get_db)):
-    # Check if user already exists
+    # Check if user already exists by email
     db_user = db.query(User).filter(User.email == user.email).first()
     if db_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email already registered"
         )
+    
+    # Check if phone number is already in use (if provided)
+    if user.phone_number:
+        existing_phone_user = db.query(User).filter(User.phone_number == user.phone_number).first()
+        if existing_phone_user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="This phone number is already associated with another account. Please use a different number or log in with the existing account."
+            )
     
     # Create new user with hashed password
     # Default: once per day at noon in UTC (user can change timezone and times in profile)
