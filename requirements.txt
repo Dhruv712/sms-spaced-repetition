@@ -81,6 +81,7 @@ websockets==15.0.1
 yarl==1.20.0
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
+bcrypt<4.0.0
 email-validator==2.1.0.post1
 schedule==1.2.0
 google-auth==2.23.4
