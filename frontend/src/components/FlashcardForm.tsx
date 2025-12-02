@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
@@ -34,26 +34,27 @@ const FlashcardForm: React.FC<Props> = ({ onSuccess }) => {
   const [limits, setLimits] = useState<any>(null);
   const [deckFlashcardCount, setDeckFlashcardCount] = useState<number>(0);
 
-  useEffect(() => {
+  const fetchDecks = useCallback(async () => {
     if (!token) return;
-    const fetchDecks = async () => {
-      try {
-        const response = await axios.get(buildApiUrl('/decks/'), {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-        setDecks(response.data);
-        // Optionally set a default deck if available
-        if (response.data.length > 0) {
-          setSelectedDeckId(response.data[0].id);
-        }
-      } catch (err) {
-        console.error('Error fetching decks:', err);
+    try {
+      const response = await axios.get(buildApiUrl('/decks/'), {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      setDecks(response.data);
+      // Optionally set a default deck if available
+      if (response.data.length > 0 && !selectedDeckId) {
+        setSelectedDeckId(response.data[0].id);
       }
-    };
+    } catch (err) {
+      console.error('Error fetching decks:', err);
+    }
+  }, [token, selectedDeckId]);
+
+  useEffect(() => {
     fetchDecks();
-  }, [token]);
+  }, [fetchDecks]);
 
   useEffect(() => {
     if (!token) return;
@@ -104,6 +105,8 @@ const FlashcardForm: React.FC<Props> = ({ onSuccess }) => {
       setDefinition('');
       setTags([]);
       setSourceUrl('');
+      // Refetch decks to update card counts
+      await fetchDecks();
       onSuccess();
     } catch (err: any) {
       console.error('Error creating flashcard:', err);
