@@ -16,11 +16,34 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 # OAuth2 scheme for token authentication
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="users/login/token")
 
+def _truncate_password_to_72_bytes(password: str) -> str:
+    """
+    Bcrypt has a 72-byte limit. Truncate password to 72 bytes if necessary.
+    This is a safety measure - validation should catch this earlier.
+    Safely handles UTF-8 multi-byte characters by truncating character by character.
+    """
+    password_bytes = password.encode('utf-8')
+    if len(password_bytes) <= 72:
+        return password
+    
+    # Truncate character by character to avoid breaking UTF-8 sequences
+    result = ""
+    for char in password:
+        test_result = result + char
+        if len(test_result.encode('utf-8')) > 72:
+            break
+        result = test_result
+    return result
+
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
+    # Truncate password to 72 bytes before verification to match how it was hashed
+    truncated_password = _truncate_password_to_72_bytes(plain_password)
+    return pwd_context.verify(truncated_password, hashed_password)
 
 def get_password_hash(password: str) -> str:
-    return pwd_context.hash(password)
+    # Truncate password to 72 bytes before hashing (bcrypt limitation)
+    truncated_password = _truncate_password_to_72_bytes(password)
+    return pwd_context.hash(truncated_password)
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     to_encode = data.copy()

@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field, field_validator
 from typing import Optional
 
 class UserBase(BaseModel):
@@ -7,8 +7,15 @@ class UserBase(BaseModel):
     name: Optional[str] = None
 
 class UserCreate(UserBase):
-    password: str
+    password: str = Field(..., min_length=8, max_length=72, description="Password must be between 8 and 72 characters")
     sms_opt_in: Optional[bool] = False
+    
+    @field_validator('password')
+    @classmethod
+    def validate_password_length(cls, v: str) -> str:
+        if len(v.encode('utf-8')) > 72:
+            raise ValueError("Password cannot exceed 72 bytes. Please use a shorter password.")
+        return v
 
 class UserLogin(BaseModel):
     email: EmailStr
