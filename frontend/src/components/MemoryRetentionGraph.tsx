@@ -1,5 +1,4 @@
 import React from "react";
-import { MemoryVisualization } from "./MemoryVisualization";
 import {
   CartesianGrid,
   ResponsiveContainer,
