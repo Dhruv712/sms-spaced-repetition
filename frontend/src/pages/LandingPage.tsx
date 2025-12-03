@@ -1,19 +1,21 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { MemoryRetentionGraph } from '../components/MemoryRetentionGraph';
+import { NeuralBackground } from '../components/NeuralBackground';
 
 const LandingPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-black text-white">
       {/* Hero Section with simple nav */}
-      <section className="relative min-h-screen px-6 py-10 flex flex-col">
+      <section className="relative min-h-screen px-6 py-10 flex flex-col overflow-hidden">
+        <NeuralBackground />
         {/* Top nav */}
-        <div className="max-w-6xl mx-auto w-full flex items-center justify-between mb-16">
+        <div className="max-w-6xl mx-auto w-full flex items-center justify-between mb-16 relative z-10">
           <div className="flex items-center gap-3">
             <img
               src="/logo-cue.png"
               alt="Cue logo"
-              className="h-8 w-auto"
+              className="h-10 md:h-12 w-auto"
             />
           </div>
           <div className="hidden md:flex items-center gap-8 text-sm">
@@ -39,7 +41,7 @@ const LandingPage: React.FC = () => {
         </div>
 
         {/* Hero content */}
-        <div className="flex-1 flex items-center justify-center">
+        <div className="flex-1 flex items-center justify-center relative z-10">
           <div className="text-center max-w-3xl mx-auto">
             <p className="text-lg md:text-xl text-gray-400 mb-4">
               LLM-powered flashcards that come to you.
@@ -102,36 +104,36 @@ const LandingPage: React.FC = () => {
 
           <div className="grid md:grid-cols-3 gap-8">
             {/* Feature 1: Upload & Generate */}
-            <div className="rounded-2xl p-8 border border-gray-200 bg-white shadow-sm">
-              <div className="w-12 h-12 rounded-xl bg-gray-900 text-white flex items-center justify-center mb-6">
+            <div className="rounded-2xl p-8 border border-gray-800 bg-[#020617] shadow-[0_18px_45px_rgba(0,0,0,0.6)]">
+              <div className="w-12 h-12 rounded-xl bg-accent text-white flex items-center justify-center mb-6">
                 <span className="text-xl">★</span>
               </div>
               <h3 className="text-xl font-semibold mb-3">Upload & Generate</h3>
-              <p className="text-gray-600">
+              <p className="text-gray-300">
                 Drop in a PDF—book chapters, papers, notes—and let Cue generate
                 flashcards for you instantly.
               </p>
             </div>
 
             {/* Feature 2: Review Anywhere */}
-            <div className="rounded-2xl p-8 border border-gray-200 bg-white shadow-sm">
-              <div className="w-12 h-12 rounded-xl bg-gray-900 text-white flex items-center justify-center mb-6">
+            <div className="rounded-2xl p-8 border border-gray-800 bg-[#020617] shadow-[0_18px_45px_rgba(0,0,0,0.6)]">
+              <div className="w-12 h-12 rounded-xl bg-accent text-white flex items-center justify-center mb-6">
                 <span className="text-xl">💬</span>
               </div>
               <h3 className="text-xl font-semibold mb-3">Review Anywhere</h3>
-              <p className="text-gray-600">
+              <p className="text-gray-300">
                 Flashcards arrive via text. Review in line, at the gym, between
                 meetings—no app required.
               </p>
             </div>
 
             {/* Feature 3: Track Your Progress */}
-            <div className="rounded-2xl p-8 border border-gray-200 bg-white shadow-sm">
-              <div className="w-12 h-12 rounded-xl bg-gray-900 text-white flex items-center justify-center mb-6">
+            <div className="rounded-2xl p-8 border border-gray-800 bg-[#020617] shadow-[0_18px_45px_rgba(0,0,0,0.6)]">
+              <div className="w-12 h-12 rounded-xl bg-accent text-white flex items-center justify-center mb-6">
                 <span className="text-xl">📈</span>
               </div>
               <h3 className="text-xl font-semibold mb-3">Track Your Progress</h3>
-              <p className="text-gray-600">
+              <p className="text-gray-300">
                 Retention graphs, automatically generated improvement reports,
                 and insights into what you're mastering.
               </p>
@@ -155,38 +157,34 @@ const LandingPage: React.FC = () => {
             </p>
           </div>
 
-          <div className="grid lg:grid-cols-2 gap-8 mb-10">
-            <div className="rounded-3xl overflow-hidden border border-gray-800 bg-black">
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="rounded-3xl overflow-hidden border border-gray-800 bg-black relative aspect-[16/9]">
               <img
                 src="/screenshots/dashboard.png"
                 alt="Cue dashboard overview"
-                className="w-full h-auto object-contain"
+                className="absolute inset-0 w-full h-full object-cover"
               />
             </div>
-            <div className="space-y-6">
-              <div className="rounded-2xl overflow-hidden border border-gray-800 bg-black">
-                <img
-                  src="/screenshots/progress_graph.png"
-                  alt="Learning progress and retention graphs in Cue"
-                  className="w-full h-auto object-contain"
-                />
-              </div>
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div className="rounded-2xl overflow-hidden border border-gray-800 bg-black">
-                  <img
-                    src="/screenshots/import_features.png"
-                    alt="Import features for PDFs and notes"
-                    className="w-full h-auto object-contain"
-                  />
-                </div>
-                <div className="rounded-2xl overflow-hidden border border-gray-800 bg-black">
-                  <img
-                    src="/screenshots/sms.png"
-                    alt="SMS-based review flow"
-                    className="w-full h-auto object-contain"
-                  />
-                </div>
-              </div>
+            <div className="rounded-3xl overflow-hidden border border-gray-800 bg-black relative aspect-[16/9]">
+              <img
+                src="/screenshots/progress_graph.png"
+                alt="Learning progress and retention graphs in Cue"
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+            </div>
+            <div className="rounded-3xl overflow-hidden border border-gray-800 bg-black relative aspect-[16/9]">
+              <img
+                src="/screenshots/import_features.png"
+                alt="Import features for PDFs and notes"
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+            </div>
+            <div className="rounded-3xl overflow-hidden border border-gray-800 bg-black relative aspect-[16/9]">
+              <img
+                src="/screenshots/sms.png"
+                alt="SMS-based review flow"
+                className="absolute inset-0 w-full h-full object-cover"
+              />
             </div>
           </div>
         </div>

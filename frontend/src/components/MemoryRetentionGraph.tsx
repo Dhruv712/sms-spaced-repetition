@@ -51,9 +51,9 @@ export const MemoryRetentionGraph: React.FC = () => {
             </p>
           </div>
 
-          {/* Visualization + neural network */}
+          {/* Visualization */}
           <div className="space-y-6">
-            <div className="bg-gradient-to-br from-red-50 to-blue-50 rounded-3xl p-8 border border-gray-200 shadow-sm">
+            <div className="bg-gradient-to-br from-red-50 to-blue-50 rounded-3xl p-8 border border-gray-200 shadow-lg">
               <div className="mb-6">
                 <h3 className="text-gray-900 text-xl mb-2">
                   Memory Retention Over Time
@@ -147,7 +147,6 @@ export const MemoryRetentionGraph: React.FC = () => {
                 </AreaChart>
               </ResponsiveContainer>
             </div>
-            <MemoryVisualization />
           </div>
         </div>
       </div>
