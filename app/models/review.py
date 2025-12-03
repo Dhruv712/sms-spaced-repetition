@@ -61,8 +61,9 @@ class ConversationState(Base):
     context = Column(Text)  # JSON string for additional state data
     message_count = Column(Integer, default=0)  # Track number of messages sent for skip reminders
     last_sent_flashcard_id = Column(Integer, ForeignKey("flashcards.id", ondelete="SET NULL"), nullable=True)  # Track last sent card to prevent duplicates
-    session_total_cards = Column(Integer, nullable=True)  # Total number of due cards in current session
-    session_current_card = Column(Integer, nullable=True)  # Current card number in session (1-indexed)
+    # TODO: Uncomment these after running /admin/migrate-session-progress-fields
+    # session_total_cards = Column(Integer, nullable=True)  # Total number of due cards in current session
+    # session_current_card = Column(Integer, nullable=True)  # Current card number in session (1-indexed)
     
     # Relationships
     user = relationship("User", back_populates="conversation_state")
