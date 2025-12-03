@@ -33,6 +33,7 @@ module.exports = {
           800: '#262626',
           900: '#171717',
         },
+        accent: '#ff4c3d',
         darkbg: '#0f0f0f',
         darksurface: '#1a1a1a',
         darktext: '#e5e5e5',

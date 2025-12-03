@@ -10,10 +10,12 @@ const LandingPage: React.FC = () => {
       <section className="relative min-h-screen px-6 py-10 flex flex-col">
         {/* Top nav */}
         <div className="max-w-6xl mx-auto w-full flex items-center justify-between mb-16">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-red-500 flex items-center justify-center">
-              <span className="text-white text-lg font-semibold">C</span>
-            </div>
+          <div className="flex items-center gap-3">
+            <img
+              src="/logo-cue.png"
+              alt="Cue logo"
+              className="h-8 w-auto"
+            />
             <span className="font-semibold text-gray-900">Cue</span>
           </div>
           <div className="hidden md:flex items-center gap-8 text-sm">
@@ -31,7 +33,7 @@ const LandingPage: React.FC = () => {
             </Link>
             <Link
               to="/register"
-              className="px-4 py-2 rounded-full bg-gray-900 text-white hover:bg-black"
+              className="px-4 py-2 rounded-full bg-accent text-white hover:brightness-95"
             >
               Get Started
             </Link>
@@ -56,7 +58,7 @@ const LandingPage: React.FC = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-4">
               <Link
                 to="/register"
-                className="group px-8 py-3 bg-gray-900 hover:bg-black text-white font-medium rounded-full transition-all duration-200 flex items-center gap-2"
+                className="group px-8 py-3 bg-accent hover:brightness-95 text-white font-medium rounded-full transition-all duration-200 flex items-center gap-2"
               >
                 Get Started Free
                 <svg
@@ -143,6 +145,55 @@ const LandingPage: React.FC = () => {
       {/* Memory retention graph (light) */}
       <MemoryRetentionGraph />
 
+      {/* Product screenshots section */}
+      <section className="py-24 px-6 bg-white">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-semibold mb-4">
+              See Cue in Action
+            </h2>
+            <p className="text-lg text-gray-500">
+              A quick look at how your cards, reviews, and progress come together.
+            </p>
+          </div>
+
+          <div className="grid lg:grid-cols-2 gap-8 mb-10">
+            <div className="rounded-3xl overflow-hidden border border-gray-200 bg-gray-50">
+              <img
+                src="/screenshots/dashboard.png"
+                alt="Cue dashboard overview"
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div className="space-y-6">
+              <div className="rounded-2xl overflow-hidden border border-gray-200 bg-gray-50">
+                <img
+                  src="/screenshots/progress_graph.png"
+                  alt="Learning progress and retention graphs in Cue"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div className="rounded-2xl overflow-hidden border border-gray-200 bg-gray-50">
+                  <img
+                    src="/screenshots/import_features.png"
+                    alt="Import features for PDFs and notes"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="rounded-2xl overflow-hidden border border-gray-200 bg-gray-50">
+                  <img
+                    src="/screenshots/sms.png"
+                    alt="SMS-based review flow"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Network visualization section (dark card on light background) */}
       <div className="bg-white">
         <MemoryVisualization />
@@ -159,7 +210,7 @@ const LandingPage: React.FC = () => {
           </p>
           <Link
             to="/register"
-            className="inline-block px-8 py-3 bg-gray-900 hover:bg-black text-white font-medium rounded-full transition-all duration-200"
+            className="inline-block px-8 py-3 bg-accent hover:brightness-95 text-white font-medium rounded-full transition-all duration-200"
           >
             Get Started Free
           </Link>
