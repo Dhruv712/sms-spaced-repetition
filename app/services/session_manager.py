@@ -194,24 +194,39 @@ def set_conversation_state(user_id: int, flashcard_id: int, db: Session, increme
             print(f"📝 Creating new conversation state for user {user_id}")
             state = ConversationState(user_id=user_id, message_count=0)
             # Starting a new session - count all due cards from SMS-enabled decks
-            total_due = count_all_due_flashcards(user_id, db, exclude_waiting_card=False)
-            state.session_total_cards = total_due
-            state.session_current_card = 1
-            print(f"📊 New session: {total_due} cards due (SMS-enabled decks only), starting with card 1")
+            # Only set session progress fields if columns exist (defensive coding for migration)
+            try:
+                total_due = count_all_due_flashcards(user_id, db, exclude_waiting_card=False)
+                if hasattr(state, 'session_total_cards'):
+                    state.session_total_cards = total_due
+                if hasattr(state, 'session_current_card'):
+                    state.session_current_card = 1
+                print(f"📊 New session: {total_due} cards due (SMS-enabled decks only), starting with card 1")
+            except Exception as e:
+                print(f"⚠️ Could not set session progress (columns may not exist yet): {e}")
         else:
             print(f"📝 Updating existing conversation state for user {user_id}")
             # Check if we're starting a new session (state is 'idle' or None)
             if state.state in (None, "idle"):
                 # Starting a new session - count all due cards from SMS-enabled decks and reset progress
-                total_due = count_all_due_flashcards(user_id, db, exclude_waiting_card=False)
-                state.session_total_cards = total_due
-                state.session_current_card = 1
-                print(f"📊 New session: {total_due} cards due (SMS-enabled decks only), starting with card 1")
+                try:
+                    total_due = count_all_due_flashcards(user_id, db, exclude_waiting_card=False)
+                    if hasattr(state, 'session_total_cards'):
+                        state.session_total_cards = total_due
+                    if hasattr(state, 'session_current_card'):
+                        state.session_current_card = 1
+                    print(f"📊 New session: {total_due} cards due (SMS-enabled decks only), starting with card 1")
+                except Exception as e:
+                    print(f"⚠️ Could not set session progress (columns may not exist yet): {e}")
             else:
                 # Continuing existing session - increment card number (keep same total)
-                if state.session_current_card is not None:
-                    state.session_current_card = (state.session_current_card or 0) + 1
-                    print(f"📊 Continuing session: card {state.session_current_card} of {state.session_total_cards}")
+                try:
+                    if hasattr(state, 'session_current_card') and state.session_current_card is not None:
+                        state.session_current_card = (state.session_current_card or 0) + 1
+                        if hasattr(state, 'session_total_cards'):
+                            print(f"📊 Continuing session: card {state.session_current_card} of {state.session_total_cards}")
+                except Exception as e:
+                    print(f"⚠️ Could not update session progress (columns may not exist yet): {e}")
 
         state.current_flashcard_id = flashcard_id
         state.last_sent_flashcard_id = flashcard_id
@@ -221,12 +236,29 @@ def set_conversation_state(user_id: int, flashcard_id: int, db: Session, increme
         if increment_message_count:
             state.message_count = (state.message_count or 0) + 1
 
-        print(f"💾 Saving conversation state: user_id={user_id}, flashcard_id={flashcard_id}, state=waiting_for_answer, message_count={state.message_count}, session_current_card={state.session_current_card}, session_total_cards={state.session_total_cards}")
+        session_current = getattr(state, 'session_current_card', None)
+        session_total = getattr(state, 'session_total_cards', None)
+        print(f"💾 Saving conversation state: user_id={user_id}, flashcard_id={flashcard_id}, state=waiting_for_answer, message_count={state.message_count}, session_current_card={session_current}, session_total_cards={session_total}")
 
         db.add(state)
-        db.commit()
-        
-        print(f"✅ Conversation state saved successfully")
+        try:
+            db.commit()
+            print(f"✅ Conversation state saved successfully")
+        except Exception as commit_error:
+            # If commit fails due to missing columns, try again without session progress fields
+            if 'session_total_cards' in str(commit_error) or 'session_current_card' in str(commit_error):
+                print(f"⚠️ Commit failed due to missing columns, retrying without session progress fields")
+                db.rollback()
+                # Remove session progress fields and try again
+                if hasattr(state, 'session_total_cards'):
+                    delattr(state, 'session_total_cards')
+                if hasattr(state, 'session_current_card'):
+                    delattr(state, 'session_current_card')
+                db.add(state)
+                db.commit()
+                print(f"✅ Conversation state saved successfully (without session progress)")
+            else:
+                raise
         
         # Verify the state was saved
         verification_state = db.query(ConversationState).filter_by(user_id=user_id).first()

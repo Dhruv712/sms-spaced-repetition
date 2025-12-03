@@ -200,8 +200,13 @@ def send_due_flashcards_to_user(user_id: int, db: Session) -> Dict[str, Any]:
             from app.models import ConversationState
             state_after = db.query(ConversationState).filter_by(user_id=user_id).first()
             message_count = state_after.message_count if state_after else 0
-            current_card = state_after.session_current_card if state_after else None
-            total_cards = state_after.session_total_cards if state_after else None
+            # Safely get session progress fields (may not exist if migration hasn't run)
+            try:
+                current_card = getattr(state_after, 'session_current_card', None) if state_after else None
+                total_cards = getattr(state_after, 'session_total_cards', None) if state_after else None
+            except Exception:
+                current_card = None
+                total_cards = None
             
             # Send the due flashcard
             result = service.send_flashcard(user.phone_number, due_card, message_count, current_card, total_cards)

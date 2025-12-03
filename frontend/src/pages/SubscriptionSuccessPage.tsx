@@ -104,8 +104,8 @@ const SubscriptionSuccessPage: React.FC = () => {
               </p>
               <button
                 onClick={() => {
-                  // Force refresh user data in AuthContext by navigating
-                  window.location.href = '/';
+                  // Navigate to dashboard
+                  navigate('/dashboard');
                 }}
                 className="px-6 py-3 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors duration-200"
               >

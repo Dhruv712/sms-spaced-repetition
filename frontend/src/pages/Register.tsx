@@ -18,7 +18,7 @@ export const Register: React.FC = () => {
     e.preventDefault();
     try {
       await register(email, password, phoneNumber, name, smsOptIn);
-      navigate('/');
+      navigate('/dashboard');
     } catch (err) {
       setError('Failed to create an account. Please try again.');
     }

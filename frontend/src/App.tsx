@@ -1,5 +1,5 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import FlashcardsPage from "./pages/FlashcardsPage";
 import ProfilePage from './pages/ProfilePage';
 import Navbar from './components/Navbar';
@@ -19,10 +19,13 @@ import SubscriptionCancelPage from './pages/SubscriptionCancelPage';
 import DashboardPage from './pages/DashboardPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import PhoneNumberModal from './components/PhoneNumberModal';
+import LandingPage from './pages/LandingPage';
 
 const AppContent: React.FC = () => {
   const { showPhoneModal, setShowPhoneModal, updatePhoneNumber } = useAuth();
   const [isSavingPhone, setIsSavingPhone] = React.useState(false);
+  const location = useLocation();
+  const isLandingPage = location.pathname === '/';
 
   const handlePhoneSave = async (phoneNumber: string, smsOptIn: boolean) => {
     setIsSavingPhone(true);
@@ -37,18 +40,11 @@ const AppContent: React.FC = () => {
 
   return (
     <>
-      <Navbar />
+      {!isLandingPage && <Navbar />}
       <Routes>
+          <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                <FlashcardsPage />
-              </ProtectedRoute>
-            }
-          />
           <Route
             path="/flashcards/:deckId?"
             element={

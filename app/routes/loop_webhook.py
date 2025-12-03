@@ -231,8 +231,8 @@ async def process_user_message(user: User, body: str, passthrough: str, db: Sess
                     if service:
                         state_after = db.query(ConversationState).filter_by(user_id=user.id).first()
                         message_count = state_after.message_count if state_after else 0
-                        current_card = state_after.session_current_card if state_after else None
-                        total_cards = state_after.session_total_cards if state_after else None
+                        current_card = getattr(state_after, 'session_current_card', None) if state_after else None
+                        total_cards = getattr(state_after, 'session_total_cards', None) if state_after else None
                         result = service.send_flashcard(user.phone_number, next_card, message_count, current_card, total_cards)
                         if result.get("success"):
                             return "Card skipped. Next flashcard sent."
@@ -643,8 +643,8 @@ async def handle_flashcard_response(
             # Get message count and session progress for skip reminder and progress indicator
             state_after = db.query(ConversationState).filter_by(user_id=user.id).first()
             message_count = state_after.message_count if state_after else 0
-            current_card = state_after.session_current_card if state_after else None
-            total_cards = state_after.session_total_cards if state_after else None
+            current_card = getattr(state_after, 'session_current_card', None) if state_after else None
+            total_cards = getattr(state_after, 'session_total_cards', None) if state_after else None
             
             # Send the next flashcard
             if service:
@@ -693,8 +693,8 @@ async def handle_start_session(user: User, service: LoopMessageService, db: Sess
         # Get message count and session progress for skip reminder and progress indicator
         state_after = db.query(ConversationState).filter_by(user_id=user.id).first()
         message_count = state_after.message_count if state_after else 0
-        current_card = state_after.session_current_card if state_after else None
-        total_cards = state_after.session_total_cards if state_after else None
+        current_card = getattr(state_after, 'session_current_card', None) if state_after else None
+        total_cards = getattr(state_after, 'session_total_cards', None) if state_after else None
         
         # Send the flashcard
         if service:

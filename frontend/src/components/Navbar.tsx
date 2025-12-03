@@ -1,12 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 const Navbar: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [darkMode, setDarkMode] = useState<boolean>(false);
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
+  
+  // Don't show navbar on landing page
+  if (location.pathname === '/') {
+    return null;
+  }
 
   useEffect(() => {
     // On mount, set dark mode from localStorage
@@ -45,7 +51,7 @@ const Navbar: React.FC = () => {
       <div className="w-full max-w-full px-4 flex justify-between items-center gap-4">
         {/* Logo/Brand */}
         <div className="flex items-center flex-shrink-0">
-          <Link to="/" className="text-xl font-bold text-primary-600 dark:text-primary-300">
+          <Link to="/dashboard" className="text-xl font-bold text-primary-600 dark:text-primary-300">
             Cue
           </Link>
         </div>
@@ -59,7 +65,7 @@ const Navbar: React.FC = () => {
                   <Link to="/dashboard" className="text-primary-600 dark:text-primary-300 hover:underline hover:text-primary-800 dark:hover:text-primary-100 transition-colors duration-200">Dashboard</Link>
                 </li>
                 <li>
-                  <Link to="/" className="text-primary-600 dark:text-primary-300 hover:underline hover:text-primary-800 dark:hover:text-primary-100 transition-colors duration-200">Flashcards</Link>
+                  <Link to="/flashcards" className="text-primary-600 dark:text-primary-300 hover:underline hover:text-primary-800 dark:hover:text-primary-100 transition-colors duration-200">Flashcards</Link>
                 </li>
                 <li>
                   <Link to="/decks" className="text-primary-600 dark:text-primary-300 hover:underline hover:text-primary-800 dark:hover:text-primary-100 transition-colors duration-200">Decks</Link>
@@ -180,7 +186,7 @@ const Navbar: React.FC = () => {
                   Dashboard
                 </Link>
                 <Link 
-                  to="/" 
+                  to="/flashcards" 
                   onClick={closeMenu}
                   className="block px-4 py-2 text-primary-600 dark:text-primary-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors duration-200"
                 >
