@@ -157,6 +157,27 @@ const LandingPage: React.FC = () => {
             </p>
           </div>
 
+          {/* SMS experience - now first and smaller */}
+          <div className="grid md:grid-cols-2 gap-10 items-center">
+            <div className="rounded-3xl overflow-hidden border border-gray-800 bg-black max-w-xs mx-auto">
+              <img
+                src="/screenshots/sms.png"
+                alt="SMS-based review flow"
+                className="w-full h-auto object-contain"
+              />
+            </div>
+            <div className="space-y-4">
+              <h3 className="text-2xl font-semibold text-white">
+                Review from wherever you are
+              </h3>
+              <p className="text-gray-400 text-lg">
+                Reviews show up right in your text messages. Reply with your
+                answer, let the LLM grade you, and get your next review
+                scheduled—no apps, no friction.
+              </p>
+            </div>
+          </div>
+
           {/* Dashboard overview */}
           <div className="grid md:grid-cols-2 gap-10 items-center">
             <div className="rounded-3xl overflow-hidden border border-gray-800 bg-black">
@@ -213,30 +234,10 @@ const LandingPage: React.FC = () => {
                 Turn your notes into cards in seconds
               </h3>
               <p className="text-gray-400 text-lg">
-                Upload PDFs or long-form notes and let Cue&apos;s LLM generate
-                high-quality flashcards automatically, so you can focus on
-                learning instead of manual data entry.
-              </p>
-            </div>
-          </div>
-
-          {/* SMS experience */}
-          <div className="grid md:grid-cols-2 gap-10 items-center md:flex-row-reverse">
-            <div className="md:order-2 rounded-3xl overflow-hidden border border-gray-800 bg-black">
-              <img
-                src="/screenshots/sms.png"
-                alt="SMS-based review flow"
-                className="w-full h-auto object-contain"
-              />
-            </div>
-            <div className="md:order-1 space-y-4">
-              <h3 className="text-2xl font-semibold text-white">
-                Review from wherever you are
-              </h3>
-              <p className="text-gray-400 text-lg">
-                Reviews show up right in your text messages. Reply with your
-                answer, let the LLM grade you, and get your next review
-                scheduled—no apps, no friction.
+                Upload PDFs or long-form notes and let an LLM generate
+                high-quality flashcards automatically. This is optional—you can
+                still create, edit, and organize cards manually whenever you
+                want.
               </p>
             </div>
           </div>

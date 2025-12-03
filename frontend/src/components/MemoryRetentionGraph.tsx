@@ -53,21 +53,21 @@ export const MemoryRetentionGraph: React.FC = () => {
 
           {/* Visualization + neural network, stacked */}
           <div className="space-y-6">
-            <div className="bg-gradient-to-br from-red-50 to-blue-50 rounded-3xl p-8 border border-gray-200 shadow-lg">
+            <div className="bg-gradient-to-br from-gray-900 to-black rounded-3xl p-8 border border-gray-800 shadow-[0_18px_45px_rgba(0,0,0,0.7)]">
               <div className="mb-6">
-                <h3 className="text-gray-900 text-xl mb-2">
+                <h3 className="text-white text-xl mb-2">
                   Memory Retention Over Time
                 </h3>
                 <div className="flex flex-wrap gap-6 text-sm">
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full bg-gray-400" />
-                    <span className="text-gray-600">
+                    <span className="text-gray-300">
                       Without Spaced Repetition
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full bg-red-500" />
-                    <span className="text-gray-600">
+                    <span className="text-gray-300">
                       With Spaced Repetition
                     </span>
                   </div>
@@ -75,17 +75,20 @@ export const MemoryRetentionGraph: React.FC = () => {
               </div>
 
               <ResponsiveContainer width="100%" height={300}>
-                <AreaChart data={data}>
+                <AreaChart
+                  data={data}
+                  margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                >
                   <defs>
                     <linearGradient id="colorWithSR" x1="0" y1="0" x2="0" y2="1">
                       <stop
                         offset="5%"
-                        stopColor="rgb(239, 68, 68)"
-                        stopOpacity={0.3}
+                        stopColor="rgba(248,113,113,1)"
+                        stopOpacity={0.35}
                       />
                       <stop
                         offset="95%"
-                        stopColor="rgb(239, 68, 68)"
+                        stopColor="rgba(248,113,113,0)"
                         stopOpacity={0}
                       />
                     </linearGradient>
@@ -98,21 +101,21 @@ export const MemoryRetentionGraph: React.FC = () => {
                     >
                       <stop
                         offset="5%"
-                        stopColor="rgb(156, 163, 175)"
-                        stopOpacity={0.3}
+                        stopColor="rgba(156,163,175,0.7)"
+                        stopOpacity={0.25}
                       />
                       <stop
                         offset="95%"
-                        stopColor="rgb(156, 163, 175)"
+                        stopColor="rgba(156,163,175,0)"
                         stopOpacity={0}
                       />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
                   <XAxis
                     dataKey="day"
-                    stroke="#9ca3af"
-                    tick={{ fill: "#6b7280" }}
+                    stroke="#4b5563"
+                    tick={{ fill: "#9ca3af" }}
                     label={{
                       value: "Days",
                       position: "insideBottom",
@@ -121,8 +124,8 @@ export const MemoryRetentionGraph: React.FC = () => {
                     }}
                   />
                   <YAxis
-                    stroke="#9ca3af"
-                    tick={{ fill: "#6b7280" }}
+                    stroke="#4b5563"
+                    tick={{ fill: "#9ca3af" }}
                     label={{
                       value: "Retention %",
                       angle: -90,
@@ -133,14 +136,14 @@ export const MemoryRetentionGraph: React.FC = () => {
                   <Area
                     type="monotone"
                     dataKey="withoutSR"
-                    stroke="rgb(156, 163, 175)"
-                    strokeWidth={2}
+                    stroke="rgba(209,213,219,0.85)"
+                    strokeWidth={2.2}
                     fill="url(#colorWithoutSR)"
                   />
                   <Area
                     type="monotone"
                     dataKey="withSR"
-                    stroke="rgb(239, 68, 68)"
+                    stroke="#ff4c3d"
                     strokeWidth={3}
                     fill="url(#colorWithSR)"
                   />
