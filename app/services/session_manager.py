@@ -245,20 +245,13 @@ def set_conversation_state(user_id: int, flashcard_id: int, db: Session, increme
             db.commit()
             print(f"✅ Conversation state saved successfully")
         except Exception as commit_error:
-            # If commit fails due to missing columns, try again without session progress fields
-            if 'session_total_cards' in str(commit_error) or 'session_current_card' in str(commit_error):
-                print(f"⚠️ Commit failed due to missing columns, retrying without session progress fields")
-                db.rollback()
-                # Remove session progress fields and try again
-                if hasattr(state, 'session_total_cards'):
-                    delattr(state, 'session_total_cards')
-                if hasattr(state, 'session_current_card'):
-                    delattr(state, 'session_current_card')
-                db.add(state)
-                db.commit()
-                print(f"✅ Conversation state saved successfully (without session progress)")
-            else:
-                raise
+            # If commit fails, it might be due to missing columns - log and re-raise
+            # The migration needs to be run first
+            error_msg = str(commit_error)
+            if 'session_total_cards' in error_msg or 'session_current_card' in error_msg or 'column' in error_msg.lower():
+                print(f"⚠️ Commit failed - columns may not exist yet. Run migration: /admin/migrate-session-progress-fields")
+                print(f"⚠️ Error: {error_msg}")
+            raise
         
         # Verify the state was saved
         verification_state = db.query(ConversationState).filter_by(user_id=user_id).first()
