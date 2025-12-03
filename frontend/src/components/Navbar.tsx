@@ -9,11 +9,6 @@ const Navbar: React.FC = () => {
   const [darkMode, setDarkMode] = useState<boolean>(false);
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
   
-  // Don't show navbar on landing page
-  if (location.pathname === '/') {
-    return null;
-  }
-
   useEffect(() => {
     // On mount, set dark mode from localStorage
     const stored = localStorage.getItem('darkMode');
@@ -22,6 +17,11 @@ const Navbar: React.FC = () => {
       document.body.classList.toggle('dark', stored === 'true');
     }
   }, []);
+
+  // Don't show navbar on landing page - must be after all hooks
+  if (location.pathname === '/') {
+    return null;
+  }
 
   const handleLogout = () => {
     logout();
