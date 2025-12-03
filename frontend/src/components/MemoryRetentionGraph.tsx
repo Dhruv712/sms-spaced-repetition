@@ -1,4 +1,5 @@
 import React from "react";
+import { MemoryVisualization } from "./MemoryVisualization";
 import {
   CartesianGrid,
   ResponsiveContainer,
@@ -50,7 +51,7 @@ export const MemoryRetentionGraph: React.FC = () => {
             </p>
           </div>
 
-          {/* Visualization */}
+          {/* Visualization + neural network, stacked */}
           <div className="space-y-6">
             <div className="bg-gradient-to-br from-red-50 to-blue-50 rounded-3xl p-8 border border-gray-200 shadow-lg">
               <div className="mb-6">
@@ -146,6 +147,7 @@ export const MemoryRetentionGraph: React.FC = () => {
                 </AreaChart>
               </ResponsiveContainer>
             </div>
+            <MemoryVisualization />
           </div>
         </div>
       </div>

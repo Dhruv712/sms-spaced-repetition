@@ -6,23 +6,29 @@ export const NeuralBackground: React.FC = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       const randomNodes = Array.from(
-        { length: 5 },
-        () => Math.floor(Math.random() * 20)
+        { length: 7 },
+        () => Math.floor(Math.random() * 40)
       );
       setActiveNodes(randomNodes);
-    }, 2000);
+    }, 2600);
 
     return () => clearInterval(interval);
   }, []);
 
-  const nodes = Array.from({ length: 20 }, (_, i) => ({
-    id: i,
-    x: ((i % 10) * 10) + 5, // 10 columns
-    y: Math.floor(i / 10) * 40 + 10, // 2 rows
-  }));
+  const cols = 8;
+  const rows = 5;
+  const nodes = Array.from({ length: cols * rows }, (_, i) => {
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+    return {
+      id: i,
+      x: (col / (cols - 1)) * 100,
+      y: (row / (rows - 1)) * 100,
+    };
+  });
 
   return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-30">
+    <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-40">
       <svg className="w-full h-full">
         {nodes.map((node, i) =>
           nodes.slice(i + 1).map((target, j) => {
@@ -35,7 +41,7 @@ export const NeuralBackground: React.FC = () => {
                 y1={`${node.y}%`}
                 x2={`${target.x}%`}
                 y2={`${target.y}%`}
-                stroke={isActive ? "#ff4c3d" : "#1f2937"}
+                stroke={isActive ? "#ff4c3d" : "#020617"}
                 strokeWidth={isActive ? 1.5 : 0.75}
               />
             );
@@ -56,7 +62,7 @@ export const NeuralBackground: React.FC = () => {
                 ? "0 0 18px rgba(255, 76, 61, 0.6)"
                 : "none",
               transform: isActive ? "scale(1.4)" : "scale(1)",
-              transition: "all 400ms ease-out",
+              transition: "all 700ms ease-out",
             }}
           />
         );
