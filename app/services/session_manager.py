@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session, joinedload
 from app.models import ConversationState, Flashcard, CardReview, UserDeckSmsSettings, Deck
 from datetime import datetime, timezone
-from sqlalchemy import and_, or_, inspect
+from sqlalchemy import and_, or_, text
 
 def get_next_due_flashcard(user_id: int, db: Session) -> Flashcard | None:
     """
@@ -188,7 +188,7 @@ def _has_session_progress_columns(db: Session) -> bool:
     """Check if session progress columns exist in the database"""
     try:
         # Try to query the columns - if they don't exist, this will fail
-        result = db.execute("SELECT session_total_cards, session_current_card FROM conversation_state LIMIT 1")
+        result = db.execute(text("SELECT session_total_cards, session_current_card FROM conversation_state LIMIT 1"))
         return True
     except Exception:
         return False
