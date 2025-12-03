@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session, joinedload
 from app.models import ConversationState, Flashcard, CardReview, UserDeckSmsSettings, Deck
 from datetime import datetime, timezone
-from sqlalchemy import and_, or_
+from sqlalchemy import and_, or_, inspect
 
 def get_next_due_flashcard(user_id: int, db: Session) -> Flashcard | None:
     """
@@ -184,49 +184,59 @@ def count_all_due_flashcards(user_id: int, db: Session, exclude_waiting_card: bo
     
     return base_query.count()
 
+def _has_session_progress_columns(db: Session) -> bool:
+    """Check if session progress columns exist in the database"""
+    try:
+        # Try to query the columns - if they don't exist, this will fail
+        result = db.execute("SELECT session_total_cards, session_current_card FROM conversation_state LIMIT 1")
+        return True
+    except Exception:
+        return False
+
 def set_conversation_state(user_id: int, flashcard_id: int, db: Session, increment_message_count: bool = True):
     print(f"🔧 set_conversation_state called: user_id={user_id}, flashcard_id={flashcard_id}")
     
     try:
         state = db.query(ConversationState).filter_by(user_id=user_id).first()
+        has_columns = _has_session_progress_columns(db)
 
         if not state:
             print(f"📝 Creating new conversation state for user {user_id}")
             state = ConversationState(user_id=user_id, message_count=0)
             # Starting a new session - count all due cards from SMS-enabled decks
-            # Only set session progress fields if columns exist (defensive coding for migration)
-            try:
-                total_due = count_all_due_flashcards(user_id, db, exclude_waiting_card=False)
-                if hasattr(state, 'session_total_cards'):
+            # Only set session progress fields if columns exist
+            if has_columns:
+                try:
+                    total_due = count_all_due_flashcards(user_id, db, exclude_waiting_card=False)
                     state.session_total_cards = total_due
-                if hasattr(state, 'session_current_card'):
                     state.session_current_card = 1
-                print(f"📊 New session: {total_due} cards due (SMS-enabled decks only), starting with card 1")
-            except Exception as e:
-                print(f"⚠️ Could not set session progress (columns may not exist yet): {e}")
+                    print(f"📊 New session: {total_due} cards due (SMS-enabled decks only), starting with card 1")
+                except Exception as e:
+                    print(f"⚠️ Could not set session progress: {e}")
+            else:
+                print(f"⚠️ Session progress columns not found - migration needed. App will work without progress indicator.")
         else:
             print(f"📝 Updating existing conversation state for user {user_id}")
             # Check if we're starting a new session (state is 'idle' or None)
             if state.state in (None, "idle"):
                 # Starting a new session - count all due cards from SMS-enabled decks and reset progress
-                try:
-                    total_due = count_all_due_flashcards(user_id, db, exclude_waiting_card=False)
-                    if hasattr(state, 'session_total_cards'):
+                if has_columns:
+                    try:
+                        total_due = count_all_due_flashcards(user_id, db, exclude_waiting_card=False)
                         state.session_total_cards = total_due
-                    if hasattr(state, 'session_current_card'):
                         state.session_current_card = 1
-                    print(f"📊 New session: {total_due} cards due (SMS-enabled decks only), starting with card 1")
-                except Exception as e:
-                    print(f"⚠️ Could not set session progress (columns may not exist yet): {e}")
+                        print(f"📊 New session: {total_due} cards due (SMS-enabled decks only), starting with card 1")
+                    except Exception as e:
+                        print(f"⚠️ Could not set session progress: {e}")
             else:
                 # Continuing existing session - increment card number (keep same total)
-                try:
-                    if hasattr(state, 'session_current_card') and state.session_current_card is not None:
-                        state.session_current_card = (state.session_current_card or 0) + 1
-                        if hasattr(state, 'session_total_cards'):
+                if has_columns:
+                    try:
+                        if state.session_current_card is not None:
+                            state.session_current_card = (state.session_current_card or 0) + 1
                             print(f"📊 Continuing session: card {state.session_current_card} of {state.session_total_cards}")
-                except Exception as e:
-                    print(f"⚠️ Could not update session progress (columns may not exist yet): {e}")
+                    except Exception as e:
+                        print(f"⚠️ Could not update session progress: {e}")
 
         state.current_flashcard_id = flashcard_id
         state.last_sent_flashcard_id = flashcard_id
@@ -241,17 +251,8 @@ def set_conversation_state(user_id: int, flashcard_id: int, db: Session, increme
         print(f"💾 Saving conversation state: user_id={user_id}, flashcard_id={flashcard_id}, state=waiting_for_answer, message_count={state.message_count}, session_current_card={session_current}, session_total_cards={session_total}")
 
         db.add(state)
-        try:
-            db.commit()
-            print(f"✅ Conversation state saved successfully")
-        except Exception as commit_error:
-            # If commit fails, it might be due to missing columns - log and re-raise
-            # The migration needs to be run first
-            error_msg = str(commit_error)
-            if 'session_total_cards' in error_msg or 'session_current_card' in error_msg or 'column' in error_msg.lower():
-                print(f"⚠️ Commit failed - columns may not exist yet. Run migration: /admin/migrate-session-progress-fields")
-                print(f"⚠️ Error: {error_msg}")
-            raise
+        db.commit()
+        print(f"✅ Conversation state saved successfully")
         
         # Verify the state was saved
         verification_state = db.query(ConversationState).filter_by(user_id=user_id).first()
