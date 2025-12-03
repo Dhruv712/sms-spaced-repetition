@@ -145,46 +145,99 @@ const LandingPage: React.FC = () => {
       {/* Memory retention graph + neural visualization */}
       <MemoryRetentionGraph />
 
-      {/* Product screenshots section */}
+      {/* Product screenshots section - individual feature highlights */}
       <section className="py-24 px-6 bg-black">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
+        <div className="max-w-6xl mx-auto space-y-20">
+          <div className="text-center">
             <h2 className="text-3xl md:text-4xl font-semibold mb-4 text-white">
               See Cue in Action
             </h2>
             <p className="text-lg text-gray-400">
-              A quick look at how your cards, reviews, and progress come together.
+              A closer look at how Cue helps you remember what matters.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="rounded-3xl overflow-hidden border border-gray-800 bg-black relative aspect-[16/9]">
+          {/* Dashboard overview */}
+          <div className="grid md:grid-cols-2 gap-10 items-center">
+            <div className="rounded-3xl overflow-hidden border border-gray-800 bg-black">
               <img
                 src="/screenshots/dashboard.png"
                 alt="Cue dashboard overview"
-                className="absolute inset-0 w-full h-full object-cover"
+                className="w-full h-auto object-contain"
               />
             </div>
-            <div className="rounded-3xl overflow-hidden border border-gray-800 bg-black relative aspect-[16/9]">
+            <div className="space-y-4">
+              <h3 className="text-2xl font-semibold text-white">
+                See your learning at a glance
+              </h3>
+              <p className="text-gray-400 text-lg">
+                The dashboard gives you a big-picture view of your streaks,
+                review activity, and accuracy so you always know how your
+                learning is trending.
+              </p>
+            </div>
+          </div>
+
+          {/* Progress graphs */}
+          <div className="grid md:grid-cols-2 gap-10 items-center md:flex-row-reverse">
+            <div className="md:order-2 rounded-3xl overflow-hidden border border-gray-800 bg-black">
               <img
                 src="/screenshots/progress_graph.png"
-                alt="Learning progress and retention graphs in Cue"
-                className="absolute inset-0 w-full h-full object-cover"
+                alt="Progress and accuracy graphs"
+                className="w-full h-auto object-contain"
               />
             </div>
-            <div className="rounded-3xl overflow-hidden border border-gray-800 bg-black relative aspect-[16/9]">
+            <div className="md:order-1 space-y-4">
+              <h3 className="text-2xl font-semibold text-white">
+                Track real improvement
+              </h3>
+              <p className="text-gray-400 text-lg">
+                See how your accuracy and review volume change over time. Cue
+                turns your daily reviews into trends and insights you can act
+                on.
+              </p>
+            </div>
+          </div>
+
+          {/* Import & generate */}
+          <div className="grid md:grid-cols-2 gap-10 items-center">
+            <div className="rounded-3xl overflow-hidden border border-gray-800 bg-black">
               <img
                 src="/screenshots/import_features.png"
-                alt="Import features for PDFs and notes"
-                className="absolute inset-0 w-full h-full object-cover"
+                alt="Import PDFs and generate flashcards"
+                className="w-full h-auto object-contain"
               />
             </div>
-            <div className="rounded-3xl overflow-hidden border border-gray-800 bg-black relative aspect-[16/9]">
+            <div className="space-y-4">
+              <h3 className="text-2xl font-semibold text-white">
+                Turn your notes into cards in seconds
+              </h3>
+              <p className="text-gray-400 text-lg">
+                Upload PDFs or long-form notes and let Cue&apos;s LLM generate
+                high-quality flashcards automatically, so you can focus on
+                learning instead of manual data entry.
+              </p>
+            </div>
+          </div>
+
+          {/* SMS experience */}
+          <div className="grid md:grid-cols-2 gap-10 items-center md:flex-row-reverse">
+            <div className="md:order-2 rounded-3xl overflow-hidden border border-gray-800 bg-black">
               <img
                 src="/screenshots/sms.png"
                 alt="SMS-based review flow"
-                className="absolute inset-0 w-full h-full object-cover"
+                className="w-full h-auto object-contain"
               />
+            </div>
+            <div className="md:order-1 space-y-4">
+              <h3 className="text-2xl font-semibold text-white">
+                Review from wherever you are
+              </h3>
+              <p className="text-gray-400 text-lg">
+                Reviews show up right in your text messages. Reply with your
+                answer, let the LLM grade you, and get your next review
+                scheduled—no apps, no friction.
+              </p>
             </div>
           </div>
         </div>
