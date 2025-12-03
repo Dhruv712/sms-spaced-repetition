@@ -1,4 +1,5 @@
 import React from "react";
+import { MemoryVisualization } from "./MemoryVisualization";
 import {
   CartesianGrid,
   ResponsiveContainer,
@@ -23,35 +24,35 @@ const data = [
 
 export const MemoryRetentionGraph: React.FC = () => {
   return (
-    <section id="how-it-works" className="py-32 px-6 bg-white">
+    <section id="how-it-works" className="py-32 px-6 bg-black">
       <div className="max-w-6xl mx-auto">
         <div className="grid md:grid-cols-2 gap-16 items-center">
           {/* Content */}
           <div>
-            <h2 className="mb-6 text-gray-900 text-5xl leading-tight">
+            <h2 className="mb-6 text-white text-5xl leading-tight">
               Your Brain,
               <br />
               Optimized
             </h2>
-            <p className="text-gray-600 text-lg mb-6 leading-relaxed">
+            <p className="text-gray-300 text-lg mb-6 leading-relaxed">
               Here's the thing: you forget most of what you learn. Not because
               you're bad at learning, but because your brain naturally clears
               out information you don't use.
             </p>
-            <p className="text-gray-600 text-lg mb-6 leading-relaxed">
+            <p className="text-gray-300 text-lg mb-6 leading-relaxed">
               Spaced repetition works with this reality. It shows you
               information right before you'd forget it—so your brain says
               &quot;okay, this must be important&quot; and holds onto it
               longer.
             </p>
-            <p className="text-gray-600 text-lg leading-relaxed">
+            <p className="text-gray-300 text-lg leading-relaxed">
               Do this enough times, and what used to slip away becomes
               permanent.
             </p>
           </div>
 
-          {/* Visualization */}
-          <div className="relative">
+          {/* Visualization + neural network */}
+          <div className="space-y-6">
             <div className="bg-gradient-to-br from-red-50 to-blue-50 rounded-3xl p-8 border border-gray-200 shadow-sm">
               <div className="mb-6">
                 <h3 className="text-gray-900 text-xl mb-2">
@@ -146,6 +147,7 @@ export const MemoryRetentionGraph: React.FC = () => {
                 </AreaChart>
               </ResponsiveContainer>
             </div>
+            <MemoryVisualization />
           </div>
         </div>
       </div>

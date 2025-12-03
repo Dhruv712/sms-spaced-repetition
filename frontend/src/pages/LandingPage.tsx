@@ -1,11 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { MemoryVisualization } from '../components/MemoryVisualization';
 import { MemoryRetentionGraph } from '../components/MemoryRetentionGraph';
 
 const LandingPage: React.FC = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#fdf2ff] via-white to-[#e5f0ff] text-gray-900">
+    <div className="min-h-screen bg-black text-white">
       {/* Hero Section with simple nav */}
       <section className="relative min-h-screen px-6 py-10 flex flex-col">
         {/* Top nav */}
@@ -16,18 +15,17 @@ const LandingPage: React.FC = () => {
               alt="Cue logo"
               className="h-8 w-auto"
             />
-            <span className="font-semibold text-gray-900">Cue</span>
           </div>
           <div className="hidden md:flex items-center gap-8 text-sm">
-            <a href="#features" className="text-gray-600 hover:text-gray-900">
+            <a href="#features" className="text-gray-300 hover:text-white">
               Features
             </a>
-            <a href="#how-it-works" className="text-gray-600 hover:text-gray-900">
+            <a href="#how-it-works" className="text-gray-300 hover:text-white">
               How it works
             </a>
             <Link
               to="/login"
-              className="px-4 py-2 rounded-full border border-gray-200 text-gray-900 hover:bg-gray-50"
+              className="px-4 py-2 rounded-full border border-gray-700 text-gray-100 hover:bg-gray-900"
             >
               Log in
             </Link>
@@ -43,15 +41,15 @@ const LandingPage: React.FC = () => {
         {/* Hero content */}
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center max-w-3xl mx-auto">
-            <p className="text-lg md:text-xl text-gray-500 mb-4">
+            <p className="text-lg md:text-xl text-gray-400 mb-4">
               LLM-powered flashcards that come to you.
             </p>
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-semibold tracking-tight mb-6">
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-semibold tracking-tight mb-6 text-white">
               Remember Everything
               <br />
               That Matters
             </h1>
-            <p className="text-lg md:text-xl text-gray-500 mb-10">
+            <p className="text-lg md:text-xl text-gray-400 mb-10">
               Cue uses spaced repetition and intelligent SMS reminders to make
               learning stick—automatically.
             </p>
@@ -78,12 +76,12 @@ const LandingPage: React.FC = () => {
 
               <a
                 href="#how-it-works"
-                className="px-8 py-3 bg-white border border-gray-200 text-gray-900 font-medium rounded-full hover:bg-gray-50"
+                className="px-8 py-3 bg-transparent border border-gray-700 text-gray-100 font-medium rounded-full hover:bg-gray-900"
               >
                 See How It Works
               </a>
             </div>
-            <p className="text-sm text-gray-400">
+            <p className="text-sm text-gray-500">
               No credit card required • 2 minute setup
             </p>
           </div>
@@ -91,13 +89,13 @@ const LandingPage: React.FC = () => {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-24 px-6 bg-white">
+      <section id="features" className="py-24 px-6 bg-black">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-semibold mb-4">
+            <h2 className="text-3xl md:text-4xl font-semibold mb-4 text-white">
               A Smarter Way to Learn
             </h2>
-            <p className="text-lg text-gray-500">
+            <p className="text-lg text-gray-400">
               Learning tools that actually fit into your life.
             </p>
           </div>
@@ -142,50 +140,50 @@ const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Memory retention graph (light) */}
+      {/* Memory retention graph + neural visualization */}
       <MemoryRetentionGraph />
 
       {/* Product screenshots section */}
-      <section className="py-24 px-6 bg-white">
+      <section className="py-24 px-6 bg-black">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-semibold mb-4">
+            <h2 className="text-3xl md:text-4xl font-semibold mb-4 text-white">
               See Cue in Action
             </h2>
-            <p className="text-lg text-gray-500">
+            <p className="text-lg text-gray-400">
               A quick look at how your cards, reviews, and progress come together.
             </p>
           </div>
 
           <div className="grid lg:grid-cols-2 gap-8 mb-10">
-            <div className="rounded-3xl overflow-hidden border border-gray-200 bg-gray-50">
+            <div className="rounded-3xl overflow-hidden border border-gray-800 bg-black">
               <img
                 src="/screenshots/dashboard.png"
                 alt="Cue dashboard overview"
-                className="w-full h-full object-cover"
+                className="w-full h-auto object-contain"
               />
             </div>
             <div className="space-y-6">
-              <div className="rounded-2xl overflow-hidden border border-gray-200 bg-gray-50">
+              <div className="rounded-2xl overflow-hidden border border-gray-800 bg-black">
                 <img
                   src="/screenshots/progress_graph.png"
                   alt="Learning progress and retention graphs in Cue"
-                  className="w-full h-full object-cover"
+                  className="w-full h-auto object-contain"
                 />
               </div>
               <div className="grid sm:grid-cols-2 gap-4">
-                <div className="rounded-2xl overflow-hidden border border-gray-200 bg-gray-50">
+                <div className="rounded-2xl overflow-hidden border border-gray-800 bg-black">
                   <img
                     src="/screenshots/import_features.png"
                     alt="Import features for PDFs and notes"
-                    className="w-full h-full object-cover"
+                    className="w-full h-auto object-contain"
                   />
                 </div>
-                <div className="rounded-2xl overflow-hidden border border-gray-200 bg-gray-50">
+                <div className="rounded-2xl overflow-hidden border border-gray-800 bg-black">
                   <img
                     src="/screenshots/sms.png"
                     alt="SMS-based review flow"
-                    className="w-full h-full object-cover"
+                    className="w-full h-auto object-contain"
                   />
                 </div>
               </div>
@@ -194,18 +192,13 @@ const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Network visualization section (dark card on light background) */}
-      <div className="bg-white">
-        <MemoryVisualization />
-      </div>
-
       {/* Final CTA Section */}
-      <section className="py-24 px-6 bg-white">
+      <section className="py-24 px-6 bg-black">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-semibold mb-4">
+          <h2 className="text-3xl md:text-4xl font-semibold mb-4 text-white">
             Ready to Transform How You Learn?
           </h2>
-          <p className="text-lg text-gray-500 mb-8">
+          <p className="text-lg text-gray-400 mb-8">
             Start building knowledge that lasts.
           </p>
           <Link
