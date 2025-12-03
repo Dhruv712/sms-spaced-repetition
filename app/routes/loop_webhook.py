@@ -231,7 +231,9 @@ async def process_user_message(user: User, body: str, passthrough: str, db: Sess
                     if service:
                         state_after = db.query(ConversationState).filter_by(user_id=user.id).first()
                         message_count = state_after.message_count if state_after else 0
-                        result = service.send_flashcard(user.phone_number, next_card, message_count)
+                        current_card = state_after.session_current_card if state_after else None
+                        total_cards = state_after.session_total_cards if state_after else None
+                        result = service.send_flashcard(user.phone_number, next_card, message_count, current_card, total_cards)
                         if result.get("success"):
                             return "Card skipped. Next flashcard sent."
                     return "Card skipped. Next flashcard sent."
@@ -611,7 +613,7 @@ async def handle_flashcard_response(
                 user.longest_streak_days = streak_days
             user.last_study_date = datetime.now(timezone.utc)
         
-        # Clear conversation state
+        # Clear conversation state (but keep session progress if more cards are coming)
         state = db.query(ConversationState).filter_by(user_id=user.id).first()
         if state:
             state.state = "idle"
@@ -638,13 +640,15 @@ async def handle_flashcard_response(
             # Set conversation state for the next card
             set_conversation_state(user.id, next_card.id, db)
             
-            # Get message count for skip reminder
+            # Get message count and session progress for skip reminder and progress indicator
             state_after = db.query(ConversationState).filter_by(user_id=user.id).first()
             message_count = state_after.message_count if state_after else 0
+            current_card = state_after.session_current_card if state_after else None
+            total_cards = state_after.session_total_cards if state_after else None
             
             # Send the next flashcard
             if service:
-                next_result = service.send_flashcard(user.phone_number, next_card, message_count)
+                next_result = service.send_flashcard(user.phone_number, next_card, message_count, current_card, total_cards)
                 if next_result.get("success"):
                     print(f"📤 Next flashcard sent successfully: {next_card.concept}")
                     return f"Response processed. Feedback sent. Next flashcard sent: {next_card.concept}"
@@ -686,13 +690,15 @@ async def handle_start_session(user: User, service: LoopMessageService, db: Sess
         # Set conversation state
         set_conversation_state(user.id, card.id, db)
         
-        # Get message count for skip reminder
+        # Get message count and session progress for skip reminder and progress indicator
         state_after = db.query(ConversationState).filter_by(user_id=user.id).first()
         message_count = state_after.message_count if state_after else 0
+        current_card = state_after.session_current_card if state_after else None
+        total_cards = state_after.session_total_cards if state_after else None
         
         # Send the flashcard
         if service:
-            result = service.send_flashcard(user.phone_number, card, message_count)
+            result = service.send_flashcard(user.phone_number, card, message_count, current_card, total_cards)
             if result.get("success"):
                 return f"Flashcard sent to {user.phone_number}"
             else:

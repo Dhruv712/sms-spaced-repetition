@@ -618,6 +618,41 @@ async def migrate_conversation_state_fields_public(
         return {
             "success": True,
             "message": "Conversation state fields migration completed",
+
+@router.post("/migrate-session-progress-fields")
+async def migrate_session_progress_fields(
+    request: Request,
+    db: Session = Depends(get_db)
+) -> Dict[str, Any]:
+    """
+    Add session progress tracking fields to conversation_state table
+    (Admin access required)
+    """
+    await require_admin_access(request, db)
+    try:
+        # SQL to add the session progress columns
+        sql_commands = [
+            "ALTER TABLE conversation_state ADD COLUMN IF NOT EXISTS session_total_cards INTEGER",
+            "ALTER TABLE conversation_state ADD COLUMN IF NOT EXISTS session_current_card INTEGER"
+        ]
+        
+        results = []
+        with engine.connect() as conn:
+            for i, sql in enumerate(sql_commands, 1):
+                try:
+                    conn.execute(text(sql))
+                    conn.commit()
+                    results.append(f"✅ SQL command {i} executed successfully")
+                except Exception as e:
+                    results.append(f"⚠️ SQL command {i} result: {e}")
+        
+        return {
+            "success": True,
+            "message": "Session progress fields migration completed",
+            "results": results
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error migrating database: {str(e)}")
             "results": results
         }
     except Exception as e:

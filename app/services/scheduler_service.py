@@ -167,15 +167,17 @@ def send_due_flashcards_to_user(user_id: int, db: Session = None):
         set_conversation_state(user_id, due_card.id, db)
         logger.info(f"🗣️ Set conversation state for user {user_id}, flashcard {due_card.id}")
         
-        # Get message count for skip reminder
+        # Get message count and session progress for skip reminder and progress indicator
         from app.models import ConversationState
         state_after = db.query(ConversationState).filter_by(user_id=user_id).first()
         message_count = state_after.message_count if state_after else 0
+        current_card = state_after.session_current_card if state_after else None
+        total_cards = state_after.session_total_cards if state_after else None
         
         # Send the flashcard
         try:
             service = LoopMessageService()
-            result = service.send_flashcard(user.phone_number, due_card, message_count)
+            result = service.send_flashcard(user.phone_number, due_card, message_count, current_card, total_cards)
             
             if result.get("success"):
                 logger.info(f"✅ Flashcard sent successfully to {user.phone_number}")

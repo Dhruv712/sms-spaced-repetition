@@ -128,6 +128,62 @@ def get_next_due_flashcard(user_id: int, db: Session) -> Flashcard | None:
     # Fallback: return first due card
     return all_due_cards[0]
 
+def count_all_due_flashcards(user_id: int, db: Session, exclude_waiting_card: bool = False) -> int:
+    """
+    Count all due flashcards for a user that are part of the current SMS session.
+    Only counts cards from SMS-enabled decks (or cards without decks).
+    
+    Args:
+        user_id: User ID
+        db: Database session
+        exclude_waiting_card: If True, exclude the card currently waiting for answer
+        
+    Returns:
+        Total number of due flashcards in the SMS session
+    """
+    now = datetime.now(timezone.utc)
+    
+    # Get deck IDs that are enabled for SMS for this user
+    enabled_deck_ids_result = db.query(UserDeckSmsSettings.deck_id).filter(
+        UserDeckSmsSettings.user_id == user_id,
+        UserDeckSmsSettings.sms_enabled == True
+    ).all()
+    enabled_deck_ids = [row[0] for row in enabled_deck_ids_result] if enabled_deck_ids_result else []
+    
+    # Get cards that are due (next_review_date <= now or no review exists)
+    subquery = db.query(CardReview.flashcard_id).filter(
+        CardReview.user_id == user_id,
+        CardReview.next_review_date > now
+    ).subquery()
+
+    # Base query: cards that are due
+    base_query = db.query(Flashcard).filter(
+        Flashcard.user_id == user_id,
+        ~Flashcard.id.in_(subquery)
+    )
+    
+    # Apply deck filtering: include cards without decks OR cards from enabled decks
+    # This ensures we only count cards that are part of the SMS session
+    if enabled_deck_ids:
+        base_query = base_query.filter(
+            or_(
+                Flashcard.deck_id.is_(None),  # Cards without a deck are always included
+                Flashcard.deck_id.in_(enabled_deck_ids)  # Cards from enabled decks only
+            )
+        )
+    else:
+        # If no decks are enabled, only include cards without decks
+        base_query = base_query.filter(Flashcard.deck_id.is_(None))
+    
+    # Optionally exclude the card currently waiting for answer (for accurate counting during session)
+    if exclude_waiting_card:
+        state = db.query(ConversationState).filter_by(user_id=user_id).first()
+        last_sent_id = state.last_sent_flashcard_id if state else None
+        if last_sent_id and state and state.state == "waiting_for_answer":
+            base_query = base_query.filter(Flashcard.id != last_sent_id)
+    
+    return base_query.count()
+
 def set_conversation_state(user_id: int, flashcard_id: int, db: Session, increment_message_count: bool = True):
     print(f"🔧 set_conversation_state called: user_id={user_id}, flashcard_id={flashcard_id}")
     
@@ -137,8 +193,25 @@ def set_conversation_state(user_id: int, flashcard_id: int, db: Session, increme
         if not state:
             print(f"📝 Creating new conversation state for user {user_id}")
             state = ConversationState(user_id=user_id, message_count=0)
+            # Starting a new session - count all due cards from SMS-enabled decks
+            total_due = count_all_due_flashcards(user_id, db, exclude_waiting_card=False)
+            state.session_total_cards = total_due
+            state.session_current_card = 1
+            print(f"📊 New session: {total_due} cards due (SMS-enabled decks only), starting with card 1")
         else:
             print(f"📝 Updating existing conversation state for user {user_id}")
+            # Check if we're starting a new session (state is 'idle' or None)
+            if state.state in (None, "idle"):
+                # Starting a new session - count all due cards from SMS-enabled decks and reset progress
+                total_due = count_all_due_flashcards(user_id, db, exclude_waiting_card=False)
+                state.session_total_cards = total_due
+                state.session_current_card = 1
+                print(f"📊 New session: {total_due} cards due (SMS-enabled decks only), starting with card 1")
+            else:
+                # Continuing existing session - increment card number (keep same total)
+                if state.session_current_card is not None:
+                    state.session_current_card = (state.session_current_card or 0) + 1
+                    print(f"📊 Continuing session: card {state.session_current_card} of {state.session_total_cards}")
 
         state.current_flashcard_id = flashcard_id
         state.last_sent_flashcard_id = flashcard_id
@@ -148,7 +221,7 @@ def set_conversation_state(user_id: int, flashcard_id: int, db: Session, increme
         if increment_message_count:
             state.message_count = (state.message_count or 0) + 1
 
-        print(f"💾 Saving conversation state: user_id={user_id}, flashcard_id={flashcard_id}, state=waiting_for_answer, message_count={state.message_count}")
+        print(f"💾 Saving conversation state: user_id={user_id}, flashcard_id={flashcard_id}, state=waiting_for_answer, message_count={state.message_count}, session_current_card={state.session_current_card}, session_total_cards={state.session_total_cards}")
 
         db.add(state)
         db.commit()

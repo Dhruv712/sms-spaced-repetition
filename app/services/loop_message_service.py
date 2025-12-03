@@ -28,7 +28,7 @@ class LoopMessageService:
         if not all([self.auth_key, self.secret_key, self.sender_name]):
             raise ValueError("Missing required LoopMessage environment variables")
     
-    def send_flashcard(self, phone_number: str, flashcard: Flashcard, message_count: int = 0) -> Dict[str, Any]:
+    def send_flashcard(self, phone_number: str, flashcard: Flashcard, message_count: int = 0, current_card: Optional[int] = None, total_cards: Optional[int] = None) -> Dict[str, Any]:
         """
         Send a flashcard question via LoopMessage
         
@@ -36,16 +36,23 @@ class LoopMessageService:
             phone_number: Recipient's phone number
             flashcard: Flashcard object to send (should have deck relationship loaded)
             message_count: Number of messages sent so far (for skip reminders)
+            current_card: Current card number in session (1-indexed)
+            total_cards: Total number of cards in session
             
         Returns:
             Dict containing API response
         """
+        # Build progress indicator if we have session info
+        progress_prefix = ""
+        if current_card is not None and total_cards is not None:
+            progress_prefix = f"Card {current_card} / {total_cards}\n\n"
+        
         # Build message with optional deck name
         deck_prefix = ""
         if flashcard.deck and flashcard.deck.name:
             deck_prefix = f"[{flashcard.deck.name}] "
         
-        message_text = f"{deck_prefix}{flashcard.concept}?\n\n(Reply with your answer)"
+        message_text = f"{progress_prefix}{deck_prefix}{flashcard.concept}?\n\n(Reply with your answer)"
         
         # Add skip reminder every 5 messages
         if message_count > 0 and message_count % 5 == 0:
@@ -189,13 +196,15 @@ def send_due_flashcards_to_user(user_id: int, db: Session) -> Dict[str, Any]:
             set_conversation_state(user_id, due_card.id, db)
             print(f"✅ Conversation state set to waiting_for_answer")
             
-            # Get message count for skip reminder
+            # Get message count and session progress for skip reminder and progress indicator
             from app.models import ConversationState
             state_after = db.query(ConversationState).filter_by(user_id=user_id).first()
             message_count = state_after.message_count if state_after else 0
+            current_card = state_after.session_current_card if state_after else None
+            total_cards = state_after.session_total_cards if state_after else None
             
             # Send the due flashcard
-            result = service.send_flashcard(user.phone_number, due_card, message_count)
+            result = service.send_flashcard(user.phone_number, due_card, message_count, current_card, total_cards)
             return {
                 "success": result.get("success", False),
                 "message": "flashcard_sent",
