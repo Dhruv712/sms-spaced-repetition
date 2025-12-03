@@ -618,6 +618,10 @@ async def migrate_conversation_state_fields_public(
         return {
             "success": True,
             "message": "Conversation state fields migration completed",
+            "results": results
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error migrating database: {str(e)}")
 
 @router.post("/migrate-session-progress-fields")
 async def migrate_session_progress_fields(
@@ -649,10 +653,6 @@ async def migrate_session_progress_fields(
         return {
             "success": True,
             "message": "Session progress fields migration completed",
-            "results": results
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error migrating database: {str(e)}")
             "results": results
         }
     except Exception as e:
