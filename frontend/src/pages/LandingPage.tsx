@@ -157,7 +157,29 @@ const LandingPage: React.FC = () => {
             </p>
           </div>
 
-          {/* SMS experience - now first and smaller */}
+          {/* 1) Import & generate – text left, image right */}
+          <div className="grid md:grid-cols-2 gap-10 items-center">
+            <div className="space-y-4">
+              <h3 className="text-2xl font-semibold text-white">
+                Turn your notes or documents into flashcards in seconds
+              </h3>
+              <p className="text-gray-400 text-lg">
+                Upload PDFs or long-form notes and let an LLM generate
+                high-quality flashcards automatically. This is optional—you can
+                still create, edit, and organize cards manually whenever you
+                want.
+              </p>
+            </div>
+            <div className="rounded-3xl overflow-hidden border border-gray-800 bg-black">
+              <img
+                src="/screenshots/import_features.png"
+                alt="Import PDFs and generate flashcards"
+                className="w-full h-auto object-contain"
+              />
+            </div>
+          </div>
+
+          {/* 2) SMS – image left, text right */}
           <div className="grid md:grid-cols-2 gap-10 items-center">
             <div className="rounded-3xl overflow-hidden border border-gray-800 bg-black max-w-xs mx-auto">
               <img
@@ -178,7 +200,28 @@ const LandingPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Dashboard overview */}
+          {/* 3) Track real improvement – text left, image right */}
+          <div className="grid md:grid-cols-2 gap-10 items-center">
+            <div className="space-y-4">
+              <h3 className="text-2xl font-semibold text-white">
+                Track real improvement
+              </h3>
+              <p className="text-gray-400 text-lg">
+                See how your accuracy and review volume change over time. Cue
+                turns your daily reviews into trends and insights you can act
+                on.
+              </p>
+            </div>
+            <div className="rounded-3xl overflow-hidden border border-gray-800 bg-black">
+              <img
+                src="/screenshots/progress_graph.png"
+                alt="Progress and accuracy graphs"
+                className="w-full h-auto object-contain"
+              />
+            </div>
+          </div>
+
+          {/* 4) See your learning at a glance – image left, text right */}
           <div className="grid md:grid-cols-2 gap-10 items-center">
             <div className="rounded-3xl overflow-hidden border border-gray-800 bg-black">
               <img
@@ -195,49 +238,6 @@ const LandingPage: React.FC = () => {
                 The dashboard gives you a big-picture view of your streaks,
                 review activity, and accuracy so you always know how your
                 learning is trending.
-              </p>
-            </div>
-          </div>
-
-          {/* Progress graphs */}
-          <div className="grid md:grid-cols-2 gap-10 items-center md:flex-row-reverse">
-            <div className="md:order-2 rounded-3xl overflow-hidden border border-gray-800 bg-black">
-              <img
-                src="/screenshots/progress_graph.png"
-                alt="Progress and accuracy graphs"
-                className="w-full h-auto object-contain"
-              />
-            </div>
-            <div className="md:order-1 space-y-4">
-              <h3 className="text-2xl font-semibold text-white">
-                Track real improvement
-              </h3>
-              <p className="text-gray-400 text-lg">
-                See how your accuracy and review volume change over time. Cue
-                turns your daily reviews into trends and insights you can act
-                on.
-              </p>
-            </div>
-          </div>
-
-          {/* Import & generate */}
-          <div className="grid md:grid-cols-2 gap-10 items-center">
-            <div className="rounded-3xl overflow-hidden border border-gray-800 bg-black">
-              <img
-                src="/screenshots/import_features.png"
-                alt="Import PDFs and generate flashcards"
-                className="w-full h-auto object-contain"
-              />
-            </div>
-            <div className="space-y-4">
-              <h3 className="text-2xl font-semibold text-white">
-                Turn your notes into cards in seconds
-              </h3>
-              <p className="text-gray-400 text-lg">
-                Upload PDFs or long-form notes and let an LLM generate
-                high-quality flashcards automatically. This is optional—you can
-                still create, edit, and organize cards manually whenever you
-                want.
               </p>
             </div>
           </div>
