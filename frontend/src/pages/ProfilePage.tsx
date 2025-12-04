@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
 import { buildApiUrl } from '../config';
+import { useNavigate } from 'react-router-dom';
+import { getOnboardingState, markOnboardingCompleted } from '../utils/onboarding';
 
 interface UserProfile {
   name: string;
@@ -21,7 +23,9 @@ const ProfilePage: React.FC = () => {
   const [error, setError] = useState('');
   const [countryCode, setCountryCode] = useState('+1');
   const [phoneNumber, setPhoneNumber] = useState('');
-  const { token } = useAuth();
+  const { token, user } = useAuth();
+  const navigate = useNavigate();
+  const [onboardingStep, setOnboardingStep] = useState<number>(0);
 
   useEffect(() => {
     if (!token) return;
@@ -59,6 +63,21 @@ const ProfilePage: React.FC = () => {
       });
   }, [token]);
 
+  // Onboarding: Step 4 (Profile / SMS setup)
+  useEffect(() => {
+    if (!user) return;
+    const state = getOnboardingState(user.email);
+    if (state.completed) {
+      setOnboardingStep(0);
+      return;
+    }
+    if (state.step === 4) {
+      setOnboardingStep(4);
+    } else {
+      setOnboardingStep(0);
+    }
+  }, [user]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     if (!profile) return;
     setProfile({ ...profile, [e.target.name]: e.target.value });
@@ -93,6 +112,19 @@ const ProfilePage: React.FC = () => {
     }
   };
 
+  const handleOnboardingSkip = () => {
+    if (!user) return;
+    markOnboardingCompleted(user.email);
+    setOnboardingStep(0);
+  };
+
+  const handleOnboardingFinish = () => {
+    if (!user) return;
+    markOnboardingCompleted(user.email);
+    setOnboardingStep(0);
+    navigate('/dashboard');
+  };
+
   if (!profile) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-darkbg">
@@ -106,6 +138,39 @@ const ProfilePage: React.FC = () => {
       <h1 className="text-3xl font-bold mb-6 text-gray-900 dark:text-darktext">User Profile</h1>
 
       <div className="bg-white dark:bg-darksurface rounded-lg shadow-xl p-8 max-w-2xl mx-auto border border-gray-200 dark:border-gray-700">
+        {onboardingStep === 4 && (
+          <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold text-blue-700 dark:text-blue-300 uppercase tracking-wide mb-1">
+                  Step 4 of 4
+                </p>
+                <h2 className="text-sm font-medium text-gray-900 dark:text-darktext mb-1">
+                  Turn on SMS and finish setup
+                </h2>
+                <p className="text-xs text-gray-700 dark:text-gray-300">
+                  Add your phone number, pick your timezone and text times, and enable SMS notifications so Cue can start texting you cards.
+                </p>
+              </div>
+              <div className="flex items-center gap-2 self-end md:self-auto">
+                <button
+                  type="button"
+                  onClick={handleOnboardingSkip}
+                  className="px-3 py-1.5 text-xs rounded border border-transparent text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100"
+                >
+                  Skip tour
+                </button>
+                <button
+                  type="button"
+                  onClick={handleOnboardingFinish}
+                  className="px-3 py-1.5 text-xs rounded bg-primary-600 text-white hover:bg-primary-700 transition-colors duration-200"
+                >
+                  Finish: Go to dashboard
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         {error && (
           <div className="mb-4 p-3 bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200 rounded-md">
             {error}

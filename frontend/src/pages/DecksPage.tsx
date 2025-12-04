@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
-import { Link } from 'react-router-dom';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { buildApiUrl } from '../config';
 import AnkiImport from '../components/AnkiImport';
 import PdfImport from '../components/PdfImport';
 import SmsSetupBanner from '../components/SmsSetupBanner';
+import { getOnboardingState, setOnboardingState, markOnboardingCompleted } from '../utils/onboarding';
 
 interface Deck {
   id: number;
@@ -29,6 +29,7 @@ const DecksPage: React.FC = () => {
   const { token, user } = useAuth();
   const navigate = useNavigate();
   const fileInputRefs = useRef<{ [key: number]: HTMLInputElement | null }>({});
+  const [onboardingStep, setOnboardingStep] = useState<number>(0);
 
   const fetchDecks = useCallback(async () => {
     if (!token) {
@@ -57,6 +58,34 @@ const DecksPage: React.FC = () => {
   useEffect(() => {
     fetchDecks();
   }, [fetchDecks]);
+
+  // Onboarding: Step 3 (Decks)
+  useEffect(() => {
+    if (!user) return;
+    const state = getOnboardingState(user.email);
+    if (state.completed) {
+      setOnboardingStep(0);
+      return;
+    }
+    if (state.step === 3) {
+      setOnboardingStep(3);
+    } else {
+      setOnboardingStep(0);
+    }
+  }, [user]);
+
+  const handleOnboardingSkip = () => {
+    if (!user) return;
+    markOnboardingCompleted(user.email);
+    setOnboardingStep(0);
+  };
+
+  const handleOnboardingNextFromDecks = () => {
+    if (!user) return;
+    setOnboardingState(user.email, { step: 4, completed: false });
+    setOnboardingStep(0);
+    navigate('/profile');
+  };
 
   const fetchLimits = useCallback(async () => {
     if (!token) return;
@@ -247,6 +276,39 @@ const DecksPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-secondary-50 dark:bg-secondary-900 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto">
+        {onboardingStep === 3 && (
+          <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold text-blue-700 dark:text-blue-300 uppercase tracking-wide mb-1">
+                  Step 3 of 4
+                </p>
+                <h2 className="text-sm font-medium text-gray-900 dark:text-darktext mb-1">
+                  Organize your decks and SMS
+                </h2>
+                <p className="text-xs text-gray-700 dark:text-gray-300">
+                  Create decks and turn on SMS for the ones you want Cue to text you from.
+                </p>
+              </div>
+              <div className="flex items-center gap-2 self-end md:self-auto">
+                <button
+                  type="button"
+                  onClick={handleOnboardingSkip}
+                  className="px-3 py-1.5 text-xs rounded border border-transparent text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100"
+                >
+                  Skip tour
+                </button>
+                <button
+                  type="button"
+                  onClick={handleOnboardingNextFromDecks}
+                  className="px-3 py-1.5 text-xs rounded bg-primary-600 text-white hover:bg-primary-700 transition-colors duration-200"
+                >
+                  Next: Set up SMS & profile
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         {/* SMS Setup Banner */}
         <SmsSetupBanner />
         

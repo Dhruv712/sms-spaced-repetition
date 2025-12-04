@@ -10,6 +10,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { buildApiUrl } from '../config';
 import SmsSetupBanner from '../components/SmsSetupBanner';
+import { getOnboardingState, setOnboardingState, markOnboardingCompleted } from '../utils/onboarding';
 
 interface Flashcard {
   id: number;
@@ -157,7 +158,37 @@ const FlashcardsPage: React.FC = () => {
   const queryParams = new URLSearchParams(location.search);
   const deckId = queryParams.get('deckId');
 
+  const [onboardingStep, setOnboardingStep] = useState<number>(0);
+
   console.log('FlashcardsPage render:', { token, isAuthenticated });
+
+  // Onboarding: Step 2 (Flashcards)
+  useEffect(() => {
+    if (!user) return;
+    const state = getOnboardingState(user.email);
+    if (state.completed) {
+      setOnboardingStep(0);
+      return;
+    }
+    if (state.step === 2) {
+      setOnboardingStep(2);
+    } else {
+      setOnboardingStep(0);
+    }
+  }, [user]);
+
+  const handleOnboardingSkip = () => {
+    if (!user) return;
+    markOnboardingCompleted(user.email);
+    setOnboardingStep(0);
+  };
+
+  const handleOnboardingNextFromFlashcards = () => {
+    if (!user) return;
+    setOnboardingState(user.email, { step: 3, completed: false });
+    setOnboardingStep(0);
+    navigate('/decks');
+  };
 
   const fetchLimits = useCallback(async () => {
     if (!token) return;
@@ -318,6 +349,39 @@ const FlashcardsPage: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 bg-gray-50 dark:bg-darkbg min-h-screen">
+      {onboardingStep === 2 && (
+        <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold text-blue-700 dark:text-blue-300 uppercase tracking-wide mb-1">
+                Step 2 of 4
+              </p>
+              <h2 className="text-sm font-medium text-gray-900 dark:text-darktext mb-1">
+                Create your first flashcards
+              </h2>
+              <p className="text-xs text-gray-700 dark:text-gray-300">
+                Use the form below to add a few cards. You can assign them to decks and add tags for the knowledge map.
+              </p>
+            </div>
+            <div className="flex items-center gap-2 self-end md:self-auto">
+              <button
+                type="button"
+                onClick={handleOnboardingSkip}
+                className="px-3 py-1.5 text-xs rounded border border-transparent text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100"
+              >
+                Skip tour
+              </button>
+              <button
+                type="button"
+                onClick={handleOnboardingNextFromFlashcards}
+                className="px-3 py-1.5 text-xs rounded bg-primary-600 text-white hover:bg-primary-700 transition-colors duration-200"
+              >
+                Next: Set up decks
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* SMS Review Limit Warning */}
       {limits && !user?.is_premium && limits.sms_reviews && limits.sms_reviews.remaining <= 20 && limits.sms_reviews.remaining > 0 && (
         <div className={`mb-8 rounded-lg p-6 border ${
