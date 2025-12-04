@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from app.database import get_db
 from app.models import User, ConversationState
 from app.services.auth import get_current_active_user
@@ -12,6 +12,7 @@ class UserProfile(BaseModel):
     name: str
     phone_number: str | None
     google_id: str | None
+    email: EmailStr
     study_mode: str  # 'batch' or 'distributed'
     preferred_start_hour: int  # Deprecated, kept for backward compatibility
     preferred_end_hour: int  # Deprecated, kept for backward compatibility
@@ -41,6 +42,7 @@ def get_user_profile(
         name=current_user.name,
         phone_number=current_user.phone_number,
         google_id=current_user.google_id,
+        email=current_user.email,
         study_mode=current_user.study_mode,
         preferred_start_hour=current_user.preferred_start_hour,
         preferred_end_hour=current_user.preferred_end_hour,
@@ -100,6 +102,7 @@ def update_user_profile(
         name=current_user.name,
         phone_number=current_user.phone_number,
         google_id=current_user.google_id,
+        email=current_user.email,
         study_mode=current_user.study_mode,
         preferred_start_hour=current_user.preferred_start_hour,
         preferred_end_hour=current_user.preferred_end_hour,
