@@ -43,17 +43,15 @@ const LandingPage: React.FC = () => {
         {/* Hero content */}
         <div className="flex-1 flex items-center justify-center relative z-10">
           <div className="text-center max-w-3xl mx-auto">
-            <p className="text-lg md:text-xl text-gray-400 mb-4">
-              LLM-powered flashcards that come to you.
-            </p>
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-semibold tracking-tight mb-6 text-white">
               Remember Everything
               <br />
               That Matters
             </h1>
             <p className="text-lg md:text-xl text-gray-400 mb-10">
-              Cue uses spaced repetition and intelligent SMS reminders to make
-              learning stick—automatically.
+              Turn your notes into flashcards with a click. Review them on the go from iMessage.
+              Get instant feedback and track your improvement over time.
+              Learn smarter.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-4">
               <Link
@@ -95,10 +93,10 @@ const LandingPage: React.FC = () => {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-semibold mb-4 text-white">
-              A Smarter Way to Learn
+              Built For Real Life
             </h2>
             <p className="text-lg text-gray-400">
-              Learning tools that actually fit into your life.
+            A learning tool designed to make reviewing your knowledge easy. As easy as... texting.
             </p>
           </div>
 
@@ -110,7 +108,7 @@ const LandingPage: React.FC = () => {
               </div>
               <h3 className="text-xl font-semibold mb-3">Upload & Generate</h3>
               <p className="text-gray-300">
-                Drop in a PDF—book chapters, papers, notes—and let Cue generate
+                Drop in a PDF - book chapters, papers, notes - and let Cue generate
                 flashcards for you instantly.
               </p>
             </div>
@@ -122,8 +120,8 @@ const LandingPage: React.FC = () => {
               </div>
               <h3 className="text-xl font-semibold mb-3">Review Anywhere</h3>
               <p className="text-gray-300">
-                Flashcards arrive via text. Review in line, at the gym, between
-                meetings—no app required.
+                Flashcards arrive via text. Review them in line, at the gym, or between
+                meeting. No app required, just iMessage. Android support coming soon.
               </p>
             </div>
 
@@ -135,7 +133,7 @@ const LandingPage: React.FC = () => {
               <h3 className="text-xl font-semibold mb-3">Track Your Progress</h3>
               <p className="text-gray-300">
                 Retention graphs, automatically generated improvement reports,
-                and insights into what you're mastering.
+                and insights into what you're mastering and where you're struggling.
               </p>
             </div>
           </div>
@@ -153,7 +151,7 @@ const LandingPage: React.FC = () => {
               See Cue in Action
             </h2>
             <p className="text-lg text-gray-400">
-              A closer look at how Cue helps you remember what matters.
+              A closer look at how Cue works.
             </p>
           </div>
 
@@ -165,7 +163,7 @@ const LandingPage: React.FC = () => {
               </h3>
               <p className="text-gray-400 text-lg">
                 Upload PDFs or long-form notes and let an LLM generate
-                high-quality flashcards automatically. This is optional—you can
+                high-quality flashcards automatically. This is optional - you can
                 still create, edit, and organize cards manually whenever you
                 want.
               </p>
@@ -194,8 +192,7 @@ const LandingPage: React.FC = () => {
               </h3>
               <p className="text-gray-400 text-lg">
                 Reviews show up right in your text messages. Reply with your
-                answer, let the LLM grade you, and get your next review
-                scheduled—no apps, no friction.
+                answer, and an LLM will grade you and schedule your next review.
               </p>
             </div>
           </div>
@@ -235,9 +232,9 @@ const LandingPage: React.FC = () => {
                 See your learning at a glance
               </h3>
               <p className="text-gray-400 text-lg">
-                The dashboard gives you a big-picture view of your streaks,
-                review activity, and accuracy so you always know how your
-                learning is trending.
+                Cue's dashboard gives you a big-picture view of your
+                review activity – including streaks, accuracy, and weak areas - 
+                so you always know how your learning is trending.
               </p>
             </div>
           </div>
