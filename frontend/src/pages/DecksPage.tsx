@@ -296,12 +296,12 @@ const DecksPage: React.FC = () => {
                     {/* Deck Preview Image */}
                     <div className="relative">
                       <img
-                        src={deck.image_url || "/cue_default_image.jpeg"}
+                        src={deck.image_url || "/cue_favicon.png"}
                         alt={`${deck.name} preview`}
                         className="w-16 h-16 rounded-lg object-cover border border-secondary-200 dark:border-secondary-600"
                         onError={(e) => {
                           console.error('Image failed to load:', deck.image_url);
-                          e.currentTarget.src = "/cue_default_image.jpeg";
+                          e.currentTarget.src = "/cue_favicon.png";
                         }}
                       />
                       <button
@@ -421,7 +421,23 @@ const DecksPage: React.FC = () => {
             setShowFlashcardModal(false);
             setPreselectedDeckId(null);
           }}
-          onSuccess={fetchDecks}
+          onSuccess={async (deckId) => {
+            await fetchDecks();
+            // If batch creation was done and a deck was selected, open view cards modal
+            if (deckId) {
+              // Fetch decks again to ensure we have the latest data, then find the deck
+              const response = await axios.get(buildApiUrl('/decks/'), {
+                headers: { 'Authorization': `Bearer ${token}` },
+              });
+              const updatedDecks = response.data;
+              const deck = updatedDecks.find((d: Deck) => d.id === deckId);
+              if (deck) {
+                setViewingDeckId(deckId);
+                setViewingDeckName(deck.name);
+                setShowViewCardsModal(true);
+              }
+            }
+          }}
           preselectedDeckId={preselectedDeckId}
         />
 

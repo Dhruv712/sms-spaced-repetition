@@ -17,7 +17,7 @@ interface Deck {
 interface NewFlashcardModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess: (deckId?: number | null) => void;
   preselectedDeckId?: number | null;
 }
 
@@ -104,8 +104,16 @@ const NewFlashcardModal: React.FC<NewFlashcardModalProps> = ({
         { headers: { 'Authorization': `Bearer ${token}` } }
       );
 
-      onSuccess();
+      // After single card creation, pass the deck ID if one was selected
+      const deckId = selectedDeckIds.length > 0 ? selectedDeckIds[0] : null;
+      onSuccess(deckId);
       onClose();
+      // Reset form
+      setConcept('');
+      setDefinition('');
+      setTags([]);
+      setSourceUrl('');
+      setSelectedDeckIds([]);
     } catch (err: any) {
       console.error('Error creating flashcard:', err);
       const errorMessage = err.response?.data?.detail || 'Failed to create flashcard. Please try again.';
@@ -140,7 +148,9 @@ const NewFlashcardModal: React.FC<NewFlashcardModalProps> = ({
       );
 
       if (response.data.success) {
-        onSuccess();
+        // After batch creation, pass the deck ID if one was selected
+        const deckId = selectedDeckIds.length > 0 ? selectedDeckIds[0] : null;
+        onSuccess(deckId);
         onClose();
       } else {
         setError(`Created ${response.data.created_count} cards, but some errors occurred.`);
@@ -203,17 +213,10 @@ const NewFlashcardModal: React.FC<NewFlashcardModalProps> = ({
   };
 
   const handleDeckToggle = (deckId: number) => {
-    if (mode === 'single') {
-      // In single mode, allow only one selection but allow unselecting
-      setSelectedDeckIds((prev) =>
-        prev.includes(deckId) ? [] : [deckId]
-      );
-    } else {
-      // In batch mode, allow multiple selections
-      setSelectedDeckIds((prev) =>
-        prev.includes(deckId) ? prev.filter((id) => id !== deckId) : [...prev, deckId]
-      );
-    }
+    // Only allow one deck selection for both modes
+    setSelectedDeckIds((prev) =>
+      prev.includes(deckId) ? [] : [deckId]
+    );
   };
 
   if (!isOpen) return null;
@@ -266,7 +269,7 @@ const NewFlashcardModal: React.FC<NewFlashcardModalProps> = ({
         {/* Deck Selection (for both modes) */}
         <div className="mb-6">
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Select Deck(s) {mode === 'batch' ? '(optional, can select multiple)' : '(optional, can select one or none)'}
+            Select Deck (optional, can select one or none)
           </label>
           <div className="space-y-2 max-h-40 overflow-y-auto border border-gray-300 dark:border-gray-600 rounded-lg p-2">
             {decks.length === 0 ? (
@@ -278,7 +281,8 @@ const NewFlashcardModal: React.FC<NewFlashcardModalProps> = ({
                   className="flex items-center space-x-2 p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded cursor-pointer"
                 >
                   <input
-                    type="checkbox"
+                    type="radio"
+                    name="deck-selection"
                     checked={selectedDeckIds.includes(deck.id)}
                     onChange={() => handleDeckToggle(deck.id)}
                     className="text-accent focus:ring-accent"
@@ -311,7 +315,7 @@ const NewFlashcardModal: React.FC<NewFlashcardModalProps> = ({
                   type="button"
                   onClick={handleNaturalSubmit}
                   disabled={nlLoading || !token || !nlInput.trim()}
-                  className="px-4 py-2 bg-primary-500 text-white rounded-md hover:bg-primary-600 disabled:opacity-50 transition-colors"
+                  className="px-4 py-2 bg-accent text-white rounded-md hover:bg-accent/90 disabled:opacity-50 transition-colors"
                 >
                   {nlLoading ? 'Generating...' : 'Generate'}
                 </button>
