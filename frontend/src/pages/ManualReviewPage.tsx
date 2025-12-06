@@ -141,7 +141,7 @@ const ManualReviewPage: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 bg-gray-50 dark:bg-darkbg min-h-screen">
-      <h1 className="text-3xl font-bold mb-6 text-gray-900 dark:text-darktext">Review Due Cards</h1>
+      <h1 className="text-3xl font-bold mb-6 text-gray-900 dark:text-darktext">Review Cards</h1>
       
       {/* SMS Setup Banner */}
       <SmsSetupBanner />

@@ -145,10 +145,10 @@ def calculate_potential_streak(user_id: int, db: Session) -> tuple[int, bool]:
     """
     today = datetime.now(timezone.utc).date()
     
-    # If user has never reviewed anything, potential streak should be 1 (first day)
+    # If user has never reviewed anything, potential streak should be 0 (no streak yet)
     total_reviews = db.query(CardReview).filter(CardReview.user_id == user_id).count()
     if total_reviews == 0:
-        return (1, False)
+        return (0, False)
     start_of_today = datetime.combine(today, datetime.min.time(), tzinfo=timezone.utc)
     end_of_today = datetime.combine(today, datetime.max.time(), tzinfo=timezone.utc)
     

@@ -38,24 +38,31 @@ const DashboardPage: React.FC = () => {
 
   // Onboarding: Step 1 (Dashboard)
   useEffect(() => {
-    if (!user || !user.email) return;
-    const state = getOnboardingState(user.email);
-    if (state.completed) {
-      setShowOnboarding(false);
-      return;
-    }
-    if (!state.step || state.step < 1) {
-      const initial = { step: 1, completed: false };
-      setOnboardingState(user.email, initial);
-      setOnboardingStep(1);
-      setShowOnboarding(true);
-    } else if (state.step === 1) {
-      setOnboardingStep(1);
-      setShowOnboarding(true);
-    } else {
-      setShowOnboarding(false);
-    }
-  }, [user]);
+    // Wait for user to be fully loaded and not loading
+    if (!user || !user.email || loading) return;
+    
+    // Small delay to ensure user object is fully set
+    const timer = setTimeout(() => {
+      const state = getOnboardingState(user.email);
+      if (state.completed) {
+        setShowOnboarding(false);
+        return;
+      }
+      if (!state.step || state.step < 1) {
+        const initial = { step: 1, completed: false };
+        setOnboardingState(user.email, initial);
+        setOnboardingStep(1);
+        setShowOnboarding(true);
+      } else if (state.step === 1) {
+        setOnboardingStep(1);
+        setShowOnboarding(true);
+      } else {
+        setShowOnboarding(false);
+      }
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, [user, loading]);
 
   const handleOnboardingSkip = () => {
     if (!user) return;

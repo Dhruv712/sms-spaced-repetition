@@ -62,10 +62,7 @@ const Navbar: React.FC = () => {
                   <Link to="/decks" className="text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 px-3 py-1.5 rounded-md transition-all duration-200">Decks</Link>
                 </li>
                 <li>
-                  <Link to="/history" className="text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 px-3 py-1.5 rounded-md transition-all duration-200">Review History</Link>
-                </li>
-                <li>
-                  <Link to="/review-due-cards" className="text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 px-3 py-1.5 rounded-md transition-all duration-200">Review Due Cards</Link>
+                  <Link to="/review-due-cards" className="text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 px-3 py-1.5 rounded-md transition-all duration-200">Review Cards</Link>
                 </li>
                 {user.is_admin && (
                   <li>
@@ -90,7 +87,7 @@ const Navbar: React.FC = () => {
                 {!user.is_premium ? (
                   <Link
                     to="/premium"
-                    className="px-4 py-2 bg-accent hover:bg-accent/90 text-white rounded-lg text-sm font-medium whitespace-nowrap transition-colors duration-200"
+                    className="px-4 py-2 bg-accent hover:bg-accent/90 text-white dark:text-white rounded-lg text-sm font-medium whitespace-nowrap transition-colors duration-200"
                   >
                     Get Premium
                   </Link>
@@ -171,18 +168,11 @@ const Navbar: React.FC = () => {
                   Decks
                 </Link>
                 <Link 
-                  to="/history" 
-                  onClick={closeMenu}
-                  className="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors duration-200"
-                >
-                  Review History
-                </Link>
-                <Link 
                   to="/review-due-cards" 
                   onClick={closeMenu}
                   className="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors duration-200"
                 >
-                  Review Due Cards
+                  Review Cards
                 </Link>
                 {user.is_admin && (
                   <Link 
@@ -197,7 +187,7 @@ const Navbar: React.FC = () => {
                   <Link 
                     to="/premium" 
                     onClick={closeMenu}
-                    className="block px-4 py-2 bg-accent hover:bg-accent/90 text-white rounded-lg transition-colors duration-200 font-medium text-center"
+                    className="block px-4 py-2 bg-accent hover:bg-accent/90 text-white dark:text-white rounded-lg transition-colors duration-200 font-medium text-center"
                   >
                     Get Premium
                   </Link>
