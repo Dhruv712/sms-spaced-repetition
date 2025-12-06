@@ -74,9 +74,9 @@ const DashboardPage: React.FC = () => {
 
   const handleOnboardingNextFromDashboard = () => {
     if (!user) return;
-    setOnboardingState(user.email, { step: 2, completed: false });
+    setOnboardingState(user.email, { step: 2, completed: false }); // Step 2 is now Decks (was Step 3)
     setShowOnboarding(false);
-    navigate('/flashcards');
+    navigate('/decks');
   };
 
   if (loading) {
@@ -97,7 +97,7 @@ const DashboardPage: React.FC = () => {
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
               <div>
                 <p className="text-xs font-semibold text-blue-700 dark:text-blue-300 uppercase tracking-wide mb-1">
-                  Step 1 of 4
+                  Step 1 of 3
                 </p>
                 <h2 className="text-sm font-medium text-gray-900 dark:text-darktext mb-1">
                   Welcome to your dashboard

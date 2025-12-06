@@ -49,7 +49,7 @@ const AppContent: React.FC = () => {
             path="/flashcards/:deckId?"
             element={
               <ProtectedRoute>
-                <FlashcardsPage />
+                <DecksPage />
               </ProtectedRoute>
             }
           />

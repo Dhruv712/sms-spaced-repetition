@@ -3,10 +3,11 @@ import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
 import { buildApiUrl } from '../config';
-import AnkiImport from '../components/AnkiImport';
-import PdfImport from '../components/PdfImport';
 import SmsSetupBanner from '../components/SmsSetupBanner';
 import { getOnboardingState, setOnboardingState, markOnboardingCompleted } from '../utils/onboarding';
+import NewContentModal from '../components/NewContentModal';
+import NewFlashcardModal from '../components/NewFlashcardModal';
+import NewDeckModal from '../components/NewDeckModal';
 
 interface Deck {
   id: number;
@@ -30,6 +31,10 @@ const DecksPage: React.FC = () => {
   const navigate = useNavigate();
   const fileInputRefs = useRef<{ [key: number]: HTMLInputElement | null }>({});
   const [onboardingStep, setOnboardingStep] = useState<number>(0);
+  const [showNewContentModal, setShowNewContentModal] = useState(false);
+  const [showFlashcardModal, setShowFlashcardModal] = useState(false);
+  const [showDeckModal, setShowDeckModal] = useState(false);
+  const [preselectedDeckId, setPreselectedDeckId] = useState<number | null>(null);
 
   const fetchDecks = useCallback(async () => {
     if (!token) {
@@ -59,7 +64,7 @@ const DecksPage: React.FC = () => {
     fetchDecks();
   }, [fetchDecks]);
 
-  // Onboarding: Step 3 (Decks)
+  // Onboarding: Step 2 (Decks) - was Step 3 before removing Flashcards step
   useEffect(() => {
     if (!user) return;
     const state = getOnboardingState(user.email);
@@ -67,8 +72,8 @@ const DecksPage: React.FC = () => {
       setOnboardingStep(0);
       return;
     }
-    if (state.step === 3) {
-      setOnboardingStep(3);
+    if (state.step === 2) {
+      setOnboardingStep(2);
     } else {
       setOnboardingStep(0);
     }
@@ -82,7 +87,7 @@ const DecksPage: React.FC = () => {
 
   const handleOnboardingNextFromDecks = () => {
     if (!user) return;
-    setOnboardingState(user.email, { step: 4, completed: false });
+    setOnboardingState(user.email, { step: 3, completed: false }); // Step 3 is now Profile (was Step 4)
     setOnboardingStep(0);
     navigate('/profile');
   };
@@ -276,18 +281,18 @@ const DecksPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-secondary-50 dark:bg-secondary-900 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto">
-        {onboardingStep === 3 && (
+        {onboardingStep === 2 && (
           <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
               <div>
                 <p className="text-xs font-semibold text-blue-700 dark:text-blue-300 uppercase tracking-wide mb-1">
-                  Step 3 of 4
+                  Step 2 of 3
                 </p>
                 <h2 className="text-sm font-medium text-gray-900 dark:text-darktext mb-1">
-                  Organize your decks and SMS
+                  Create decks and flashcards
                 </h2>
                 <p className="text-xs text-gray-700 dark:text-gray-300">
-                  Create decks and turn on SMS for the ones you want Cue to text you from.
+                  Click "New" to create decks and flashcards. Turn on SMS for decks you want Cue to text you from.
                 </p>
               </div>
               <div className="flex items-center gap-2 self-end md:self-auto">
@@ -312,66 +317,24 @@ const DecksPage: React.FC = () => {
         {/* SMS Setup Banner */}
         <SmsSetupBanner />
         
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-secondary-900 dark:text-white">
-            Your Flashcard Decks
-          </h1>
-          <p className="mt-2 text-secondary-600 dark:text-secondary-400">
-            Organize your flashcards into custom collections.
-          </p>
-        </div>
-
-        {/* PDF and Anki Import - Side by side for space efficiency */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div className="flex items-center justify-between mb-8">
           <div>
-            <PdfImport onSuccess={fetchDecks} />
+            <h1 className="text-3xl font-bold text-secondary-900 dark:text-white">
+              Your Flashcard Decks
+            </h1>
+            <p className="mt-2 text-secondary-600 dark:text-secondary-400">
+              Organize your flashcards into custom collections.
+            </p>
           </div>
-          <div>
-            <AnkiImport onSuccess={fetchDecks} />
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-secondary-800 rounded-lg shadow-soft p-6 mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-secondary-900 dark:text-white">Create New Deck</h2>
-            {limits && !user?.is_premium && (
-              <div className="text-right">
-                <span className={`text-sm font-medium ${decks.length >= limits.decks.limit ? 'text-red-600 dark:text-red-400' : 'text-secondary-600 dark:text-secondary-400'}`}>
-                  {decks.length} / {limits.decks.limit} decks
-                </span>
-                {decks.length >= limits.decks.limit && (
-                  <p className="text-xs text-red-600 dark:text-red-400 mt-1">Free tier limit reached</p>
-                )}
-              </div>
-            )}
-          </div>
-          {!user?.is_premium && (
-            <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded text-sm text-blue-800 dark:text-blue-300">
-              <p className="font-medium mb-1">Free Plan Limits:</p>
-              <ul className="list-disc list-inside space-y-1 text-xs">
-                <li>Maximum 3 decks</li>
-                <li>Maximum 20 flashcards per deck</li>
-                <li>Upgrade to Premium for unlimited decks and flashcards</li>
-              </ul>
-            </div>
-          )}
-          <form onSubmit={handleCreateDeck} className="flex space-x-4">
-            <input
-              type="text"
-              placeholder="Deck Name"
-              value={newDeckName}
-              onChange={(e) => setNewDeckName(e.target.value)}
-              className="flex-grow block w-full rounded-md border-secondary-300 dark:border-secondary-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-secondary-700 dark:text-white sm:text-sm"
-              required
-            />
-            <button
-              type="submit"
-              disabled={creatingDeck}
-              className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-            >
-              {creatingDeck ? 'Creating...' : 'Create Deck'}
-            </button>
-          </form>
+          <button
+            onClick={() => setShowNewContentModal(true)}
+            className="px-6 py-3 bg-accent hover:bg-accent/90 text-white rounded-lg font-medium transition-colors duration-200 flex items-center gap-2"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            New
+          </button>
         </div>
 
         <div className="bg-white dark:bg-secondary-800 rounded-lg shadow-soft p-6">
@@ -454,12 +417,15 @@ const DecksPage: React.FC = () => {
                       </button>
                     </div>
                     <div className="flex space-x-2">
-                    <Link
-                      to={`/flashcards?deckId=${deck.id}`}
+                    <button
+                      onClick={() => {
+                        setPreselectedDeckId(deck.id);
+                        setShowFlashcardModal(true);
+                      }}
                       className="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 text-sm font-medium"
                     >
                       View Cards
-                    </Link>
+                    </button>
                     <button
                       onClick={() => handleDeleteDeck(deck.id)}
                       className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-sm font-medium"
@@ -486,6 +452,40 @@ const DecksPage: React.FC = () => {
           )}
         </div>
 
+        {/* Modals */}
+        <NewContentModal
+          isOpen={showNewContentModal}
+          onClose={() => setShowNewContentModal(false)}
+          onSelectFlashcards={() => {
+            setShowNewContentModal(false);
+            setPreselectedDeckId(null);
+            setShowFlashcardModal(true);
+          }}
+          onSelectDeck={() => {
+            setShowNewContentModal(false);
+            setShowDeckModal(true);
+          }}
+        />
+
+        <NewFlashcardModal
+          isOpen={showFlashcardModal}
+          onClose={() => {
+            setShowFlashcardModal(false);
+            setPreselectedDeckId(null);
+          }}
+          onSuccess={fetchDecks}
+          preselectedDeckId={preselectedDeckId}
+        />
+
+        <NewDeckModal
+          isOpen={showDeckModal}
+          onClose={() => setShowDeckModal(false)}
+          onDeckCreated={(deckId) => {
+            setPreselectedDeckId(deckId);
+            setShowFlashcardModal(true);
+          }}
+          onSuccess={fetchDecks}
+        />
       </div>
     </div>
   );

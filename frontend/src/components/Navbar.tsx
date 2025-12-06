@@ -65,9 +65,6 @@ const Navbar: React.FC = () => {
                   <Link to="/dashboard" className="text-primary-600 dark:text-primary-300 hover:underline hover:text-primary-800 dark:hover:text-primary-100 transition-colors duration-200">Dashboard</Link>
                 </li>
                 <li>
-                  <Link to="/flashcards" className="text-primary-600 dark:text-primary-300 hover:underline hover:text-primary-800 dark:hover:text-primary-100 transition-colors duration-200">Flashcards</Link>
-                </li>
-                <li>
                   <Link to="/decks" className="text-primary-600 dark:text-primary-300 hover:underline hover:text-primary-800 dark:hover:text-primary-100 transition-colors duration-200">Decks</Link>
                 </li>
                 <li>
@@ -184,13 +181,6 @@ const Navbar: React.FC = () => {
                   className="block px-4 py-2 text-primary-600 dark:text-primary-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors duration-200"
                 >
                   Dashboard
-                </Link>
-                <Link 
-                  to="/flashcards" 
-                  onClick={closeMenu}
-                  className="block px-4 py-2 text-primary-600 dark:text-primary-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors duration-200"
-                >
-                  Flashcards
                 </Link>
                 <Link 
                   to="/decks" 

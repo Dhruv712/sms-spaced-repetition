@@ -63,7 +63,7 @@ const ProfilePage: React.FC = () => {
       });
   }, [token]);
 
-  // Onboarding: Step 4 (Profile / SMS setup)
+  // Onboarding: Step 3 (Profile / SMS setup) - was Step 4 before removing Flashcards step
   useEffect(() => {
     if (!user) return;
     const state = getOnboardingState(user.email);
@@ -71,8 +71,8 @@ const ProfilePage: React.FC = () => {
       setOnboardingStep(0);
       return;
     }
-    if (state.step === 4) {
-      setOnboardingStep(4);
+    if (state.step === 3) {
+      setOnboardingStep(3);
     } else {
       setOnboardingStep(0);
     }
@@ -138,12 +138,12 @@ const ProfilePage: React.FC = () => {
       <h1 className="text-3xl font-bold mb-6 text-gray-900 dark:text-darktext">User Profile</h1>
 
       <div className="bg-white dark:bg-darksurface rounded-lg shadow-xl p-8 max-w-2xl mx-auto border border-gray-200 dark:border-gray-700">
-        {onboardingStep === 4 && (
+        {onboardingStep === 3 && (
           <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
               <div>
                 <p className="text-xs font-semibold text-blue-700 dark:text-blue-300 uppercase tracking-wide mb-1">
-                  Step 4 of 4
+                  Step 3 of 3
                 </p>
                 <h2 className="text-sm font-medium text-gray-900 dark:text-darktext mb-1">
                   Turn on SMS and finish setup
