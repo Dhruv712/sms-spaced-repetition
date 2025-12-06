@@ -98,7 +98,7 @@ const NewFlashcardModal: React.FC<NewFlashcardModalProps> = ({
           concept,
           definition,
           tags: tags,
-          deck_id: selectedDeckIds.length === 1 ? selectedDeckIds[0] : null,
+          deck_id: selectedDeckIds.length > 0 ? selectedDeckIds[0] : null,
           source_url: sourceUrl,
         },
         { headers: { 'Authorization': `Bearer ${token}` } }
@@ -203,9 +203,17 @@ const NewFlashcardModal: React.FC<NewFlashcardModalProps> = ({
   };
 
   const handleDeckToggle = (deckId: number) => {
-    setSelectedDeckIds((prev) =>
-      prev.includes(deckId) ? prev.filter((id) => id !== deckId) : [...prev, deckId]
-    );
+    if (mode === 'single') {
+      // In single mode, allow only one selection but allow unselecting
+      setSelectedDeckIds((prev) =>
+        prev.includes(deckId) ? [] : [deckId]
+      );
+    } else {
+      // In batch mode, allow multiple selections
+      setSelectedDeckIds((prev) =>
+        prev.includes(deckId) ? prev.filter((id) => id !== deckId) : [...prev, deckId]
+      );
+    }
   };
 
   if (!isOpen) return null;
@@ -258,7 +266,7 @@ const NewFlashcardModal: React.FC<NewFlashcardModalProps> = ({
         {/* Deck Selection (for both modes) */}
         <div className="mb-6">
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Select Deck(s) {mode === 'batch' && '(optional, can select multiple)'}
+            Select Deck(s) {mode === 'batch' ? '(optional, can select multiple)' : '(optional, can select one or none)'}
           </label>
           <div className="space-y-2 max-h-40 overflow-y-auto border border-gray-300 dark:border-gray-600 rounded-lg p-2">
             {decks.length === 0 ? (
@@ -270,7 +278,7 @@ const NewFlashcardModal: React.FC<NewFlashcardModalProps> = ({
                   className="flex items-center space-x-2 p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded cursor-pointer"
                 >
                   <input
-                    type={mode === 'batch' ? 'checkbox' : 'radio'}
+                    type="checkbox"
                     checked={selectedDeckIds.includes(deck.id)}
                     onChange={() => handleDeckToggle(deck.id)}
                     className="text-accent focus:ring-accent"

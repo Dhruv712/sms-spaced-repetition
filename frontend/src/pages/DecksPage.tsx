@@ -8,6 +8,7 @@ import { getOnboardingState, setOnboardingState, markOnboardingCompleted } from 
 import NewContentModal from '../components/NewContentModal';
 import NewFlashcardModal from '../components/NewFlashcardModal';
 import NewDeckModal from '../components/NewDeckModal';
+import ViewDeckCardsModal from '../components/ViewDeckCardsModal';
 
 interface Deck {
   id: number;
@@ -31,6 +32,9 @@ const DecksPage: React.FC = () => {
   const [showNewContentModal, setShowNewContentModal] = useState(false);
   const [showFlashcardModal, setShowFlashcardModal] = useState(false);
   const [showDeckModal, setShowDeckModal] = useState(false);
+  const [showViewCardsModal, setShowViewCardsModal] = useState(false);
+  const [viewingDeckId, setViewingDeckId] = useState<number | null>(null);
+  const [viewingDeckName, setViewingDeckName] = useState<string>('');
   const [preselectedDeckId, setPreselectedDeckId] = useState<number | null>(null);
 
   const fetchDecks = useCallback(async () => {
@@ -362,8 +366,9 @@ const DecksPage: React.FC = () => {
                     <div className="flex space-x-2">
                     <button
                       onClick={() => {
-                        setPreselectedDeckId(deck.id);
-                        setShowFlashcardModal(true);
+                        setViewingDeckId(deck.id);
+                        setViewingDeckName(deck.name);
+                        setShowViewCardsModal(true);
                       }}
                       className="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 text-sm font-medium"
                     >
@@ -429,6 +434,20 @@ const DecksPage: React.FC = () => {
           }}
           onSuccess={fetchDecks}
         />
+
+        {viewingDeckId && (
+          <ViewDeckCardsModal
+            isOpen={showViewCardsModal}
+            onClose={() => {
+              setShowViewCardsModal(false);
+              setViewingDeckId(null);
+              setViewingDeckName('');
+            }}
+            deckId={viewingDeckId}
+            deckName={viewingDeckName}
+            onSuccess={fetchDecks}
+          />
+        )}
       </div>
     </div>
   );
