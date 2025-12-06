@@ -1,12 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { MemoryRetentionGraph } from '../components/MemoryRetentionGraph';
 import { NeuralBackground } from '../components/NeuralBackground';
 
 const LandingPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-black text-white">
-      {/* Hero Section with simple nav */}
+      {/* Hero Section with nav */}
       <section className="relative min-h-screen px-6 py-10 flex flex-col overflow-hidden">
         <NeuralBackground />
         {/* Top nav */}
@@ -19,15 +18,9 @@ const LandingPage: React.FC = () => {
             />
           </div>
           <div className="hidden md:flex items-center gap-8 text-sm">
-            <a href="#features" className="text-gray-300 hover:text-white">
-              Features
-            </a>
-            <a href="#how-it-works" className="text-gray-300 hover:text-white">
-              How it works
-            </a>
             <Link
               to="/login"
-              className="px-4 py-2 rounded-full border border-gray-700 text-gray-100 hover:bg-gray-900"
+              className="text-gray-300 hover:text-white"
             >
               Log in
             </Link>
@@ -73,13 +66,6 @@ const LandingPage: React.FC = () => {
                   />
                 </svg>
               </Link>
-
-              <a
-                href="#how-it-works"
-                className="px-8 py-3 bg-transparent border border-gray-700 text-gray-100 font-medium rounded-full hover:bg-gray-900"
-              >
-                See How It Works
-              </a>
             </div>
             <p className="text-sm text-gray-500">
               No credit card required • 2 minute setup
@@ -88,84 +74,47 @@ const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Features Section */}
-      <section id="features" className="py-24 px-6 bg-black">
+      {/* Section 1: Texting/SMS - First thing they see */}
+      <section className="py-24 px-6 bg-black">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-semibold mb-4 text-white">
-              Built For Real Life
-            </h2>
-            <p className="text-lg text-gray-400">
-            A learning tool designed to make reviewing your knowledge easy. As easy as... texting.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            {/* Feature 1: Upload & Generate */}
-            <div className="rounded-2xl p-8 border border-gray-800 bg-[#020617] shadow-[0_18px_45px_rgba(0,0,0,0.6)]">
-              <div className="w-12 h-12 rounded-xl bg-accent text-white flex items-center justify-center mb-6">
-                <span className="text-xl">★</span>
-              </div>
-              <h3 className="text-xl font-semibold mb-3">Upload & Generate</h3>
-              <p className="text-gray-300">
-                Drop in a PDF - book chapters, papers, notes - and let Cue generate
-                flashcards for you instantly.
-              </p>
+          <div className="grid md:grid-cols-2 gap-10 items-center">
+            <div className="rounded-3xl overflow-hidden border border-gray-800 bg-black max-w-xs mx-auto md:max-w-none">
+              <img
+                src="/screenshots/sms.png"
+                alt="SMS-based review flow"
+                className="w-full h-auto object-contain"
+              />
             </div>
-
-            {/* Feature 2: Review Anywhere */}
-            <div className="rounded-2xl p-8 border border-gray-800 bg-[#020617] shadow-[0_18px_45px_rgba(0,0,0,0.6)]">
-              <div className="w-12 h-12 rounded-xl bg-accent text-white flex items-center justify-center mb-6">
-                <span className="text-xl">💬</span>
-              </div>
-              <h3 className="text-xl font-semibold mb-3">Review Anywhere</h3>
-              <p className="text-gray-300">
-                Flashcards arrive via text. Review them in line, at the gym, or between
-                meeting. No app required, just iMessage. Android support coming soon.
-              </p>
-            </div>
-
-            {/* Feature 3: Track Your Progress */}
-            <div className="rounded-2xl p-8 border border-gray-800 bg-[#020617] shadow-[0_18px_45px_rgba(0,0,0,0.6)]">
-              <div className="w-12 h-12 rounded-xl bg-accent text-white flex items-center justify-center mb-6">
-                <span className="text-xl">📈</span>
-              </div>
-              <h3 className="text-xl font-semibold mb-3">Track Your Progress</h3>
-              <p className="text-gray-300">
-                Retention graphs, automatically generated improvement reports,
-                and insights into what you're mastering and where you're struggling.
+            <div className="space-y-4">
+              <h2 className="text-3xl md:text-4xl font-semibold text-white">
+                Review from wherever you are
+              </h2>
+              <p className="text-gray-400 text-lg">
+                Flashcards arrive right in your text messages. Reply with your
+                answer, and an LLM will grade you and schedule your next review.
+                No app required, just iMessage.
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Memory retention graph + neural visualization */}
-      <MemoryRetentionGraph />
-
-      {/* Product screenshots section - individual feature highlights */}
+      {/* Section 2: AI can create your flashcards */}
       <section className="py-24 px-6 bg-black">
-        <div className="max-w-6xl mx-auto space-y-20">
-          <div className="text-center">
-            <h2 className="text-3xl md:text-4xl font-semibold mb-4 text-white">
-              See Cue in Action
-            </h2>
-            <p className="text-lg text-gray-400">
-              A closer look at how Cue works.
-            </p>
-          </div>
-
-          {/* 1) Import & generate – text left, image right */}
+        <div className="max-w-6xl mx-auto">
           <div className="grid md:grid-cols-2 gap-10 items-center">
             <div className="space-y-4">
-              <h3 className="text-2xl font-semibold text-white">
-                Turn your notes or documents into flashcards in seconds
-              </h3>
+              <h2 className="text-3xl md:text-4xl font-semibold text-white">
+                AI creates your flashcards for you
+              </h2>
               <p className="text-gray-400 text-lg">
                 Upload PDFs or long-form notes and let an LLM generate
                 high-quality flashcards automatically. This is optional - you can
                 still create, edit, and organize cards manually whenever you
                 want.
+              </p>
+              <p className="text-gray-500 text-sm">
+                You can import PDFs and Anki decks too
               </p>
             </div>
             <div className="rounded-3xl overflow-hidden border border-gray-800 bg-black">
@@ -176,39 +125,13 @@ const LandingPage: React.FC = () => {
               />
             </div>
           </div>
+        </div>
+      </section>
 
-          {/* 2) SMS – image left, text right */}
+      {/* Section 3: Graph of accuracy over time */}
+      <section className="py-24 px-6 bg-black">
+        <div className="max-w-6xl mx-auto">
           <div className="grid md:grid-cols-2 gap-10 items-center">
-            <div className="rounded-3xl overflow-hidden border border-gray-800 bg-black max-w-xs mx-auto">
-              <img
-                src="/screenshots/sms.png"
-                alt="SMS-based review flow"
-                className="w-full h-auto object-contain"
-              />
-            </div>
-            <div className="space-y-4">
-              <h3 className="text-2xl font-semibold text-white">
-                Review from wherever you are
-              </h3>
-              <p className="text-gray-400 text-lg">
-                Reviews show up right in your text messages. Reply with your
-                answer, and an LLM will grade you and schedule your next review.
-              </p>
-            </div>
-          </div>
-
-          {/* 3) Track real improvement – text left, image right */}
-          <div className="grid md:grid-cols-2 gap-10 items-center">
-            <div className="space-y-4">
-              <h3 className="text-2xl font-semibold text-white">
-                Track real improvement
-              </h3>
-              <p className="text-gray-400 text-lg">
-                See how your accuracy and review volume change over time. Cue
-                turns your daily reviews into trends and insights you can act
-                on.
-              </p>
-            </div>
             <div className="rounded-3xl overflow-hidden border border-gray-800 bg-black">
               <img
                 src="/screenshots/progress_graph.png"
@@ -216,46 +139,42 @@ const LandingPage: React.FC = () => {
                 className="w-full h-auto object-contain"
               />
             </div>
-          </div>
-
-          {/* 4) See your learning at a glance – image left, text right */}
-          <div className="grid md:grid-cols-2 gap-10 items-center">
-            <div className="rounded-3xl overflow-hidden border border-gray-800 bg-black">
-              <img
-                src="/screenshots/dashboard.png"
-                alt="Cue dashboard overview"
-                className="w-full h-auto object-contain"
-              />
-            </div>
             <div className="space-y-4">
-              <h3 className="text-2xl font-semibold text-white">
-                See your learning at a glance
-              </h3>
+              <h2 className="text-3xl md:text-4xl font-semibold text-white">
+                Track your accuracy over time
+              </h2>
               <p className="text-gray-400 text-lg">
-                Cue's dashboard gives you a big-picture view of your
-                review activity – including streaks, accuracy, and weak areas - 
-                so you always know how your learning is trending.
+                See how your accuracy and review volume change over time. Cue
+                turns your daily reviews into trends and insights you can act
+                on.
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Final CTA Section */}
+      {/* Section 4: Spaced repetition */}
       <section className="py-24 px-6 bg-black">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-semibold mb-4 text-white">
-            Ready to Transform How You Learn?
-          </h2>
-          <p className="text-lg text-gray-400 mb-8">
-            Start building knowledge that lasts.
-          </p>
-          <Link
-            to="/register"
-            className="inline-block px-8 py-3 bg-accent hover:brightness-95 text-white font-medium rounded-full transition-all duration-200"
-          >
-            Get Started Free
-          </Link>
+        <div className="max-w-6xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-10 items-center">
+            <div className="space-y-4">
+              <h2 className="text-3xl md:text-4xl font-semibold text-white">
+                Spaced repetition that actually works
+              </h2>
+              <p className="text-gray-400 text-lg">
+                Cue uses the proven SM-2 algorithm to schedule your reviews at
+                the optimal time. Cards you know well appear less frequently,
+                while challenging cards come up more often until you master them.
+              </p>
+            </div>
+            <div className="rounded-3xl overflow-hidden border border-gray-800 bg-black">
+              <img
+                src="/screenshots/dashboard.png"
+                alt="Spaced repetition scheduling"
+                className="w-full h-auto object-contain"
+              />
+            </div>
+          </div>
         </div>
       </section>
     </div>
