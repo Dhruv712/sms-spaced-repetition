@@ -50,10 +50,10 @@ const GamifiedDashboard: React.FC<GamifiedDashboardProps> = ({ stats }) => {
     const lastWeekReviews = stats?.comparisons?.last_week || 0;
     const improvement = totalReviews - lastWeekReviews;
     
-    const stats = [];
+    const positiveStats = [];
     
     if (totalReviews > 0) {
-      stats.push({
+      positiveStats.push({
         label: "Cards Reviewed This Week",
         value: totalReviews,
         emoji: "📚",
@@ -62,7 +62,7 @@ const GamifiedDashboard: React.FC<GamifiedDashboardProps> = ({ stats }) => {
     }
     
     if (improvement > 0) {
-      stats.push({
+      positiveStats.push({
         label: "More Than Last Week",
         value: `+${improvement}`,
         emoji: "📈",
@@ -70,7 +70,7 @@ const GamifiedDashboard: React.FC<GamifiedDashboardProps> = ({ stats }) => {
       });
     }
     
-    return stats;
+    return positiveStats;
   };
 
   const positiveStats = getPositiveStats();
