@@ -38,31 +38,46 @@ const DashboardPage: React.FC = () => {
 
   // Onboarding: Step 1 (Dashboard)
   useEffect(() => {
-    // Wait for user to be fully loaded and not loading
-    if (!user || !user.email || loading) return;
+    // Wait for user to be fully loaded with email
+    if (!user || !user.email) {
+      console.log('Onboarding check skipped - user or email missing:', { user: !!user, email: user?.email });
+      return;
+    }
     
-    // Small delay to ensure user object is fully set
+    console.log('Checking onboarding state for user:', user.email);
+    
+    // Small delay to ensure user object is fully set and component is mounted
     const timer = setTimeout(() => {
-      const state = getOnboardingState(user.email);
-      if (state.completed) {
-        setShowOnboarding(false);
-        return;
+      try {
+        const state = getOnboardingState(user.email);
+        console.log('Onboarding state:', state);
+        
+        if (state.completed) {
+          console.log('Onboarding already completed');
+          setShowOnboarding(false);
+          return;
+        }
+        if (!state.step || state.step < 1) {
+          console.log('Initializing onboarding for new user');
+          const initial = { step: 1, completed: false };
+          setOnboardingState(user.email, initial);
+          setOnboardingStep(1);
+          setShowOnboarding(true);
+        } else if (state.step === 1) {
+          console.log('Showing onboarding step 1');
+          setOnboardingStep(1);
+          setShowOnboarding(true);
+        } else {
+          console.log('Onboarding step is', state.step, '- not showing step 1');
+          setShowOnboarding(false);
+        }
+      } catch (error) {
+        console.error('Error checking onboarding state:', error);
       }
-      if (!state.step || state.step < 1) {
-        const initial = { step: 1, completed: false };
-        setOnboardingState(user.email, initial);
-        setOnboardingStep(1);
-        setShowOnboarding(true);
-      } else if (state.step === 1) {
-        setOnboardingStep(1);
-        setShowOnboarding(true);
-      } else {
-        setShowOnboarding(false);
-      }
-    }, 100);
+    }, 300);
     
     return () => clearTimeout(timer);
-  }, [user, loading]);
+  }, [user]);
 
   const handleOnboardingSkip = () => {
     if (!user) return;

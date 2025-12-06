@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 
 const SmsSetupBanner: React.FC = () => {
-  const { user } = useAuth();
+  const { user, setShowPhoneModal } = useAuth();
   const [isDismissed, setIsDismissed] = useState(false);
 
   useEffect(() => {
@@ -25,20 +25,62 @@ const SmsSetupBanner: React.FC = () => {
     setIsDismissed(true);
   };
 
+  const handleAddPhone = () => {
+    setShowPhoneModal(true);
+  };
+
   // Don't show if:
   // - User doesn't exist
-  // - User doesn't have phone number
   // - User already has SMS conversation
   // - Banner has been dismissed
   if (
     !user ||
-    !user.phone_number ||
     user.has_sms_conversation ||
     isDismissed
   ) {
     return null;
   }
 
+  // Case 1: User doesn't have a phone number
+  if (!user.phone_number) {
+    return (
+      <div className="mb-8 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
+        <div className="flex items-start space-x-3">
+          <div className="flex-shrink-0">
+            <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+              <span className="text-white text-sm font-bold">📱</span>
+            </div>
+          </div>
+          <div className="flex-1">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <h3 className="text-lg font-medium text-blue-900 dark:text-blue-100 mb-2">
+                  Add Your Phone Number to Get Started
+                </h3>
+                <p className="text-blue-700 dark:text-blue-300 mb-4">
+                  Add your phone number to receive SMS flashcard reminders and use Cue's text-based features. Review cards on the go, right from your messages!
+                </p>
+                <button
+                  onClick={handleAddPhone}
+                  className="px-4 py-2 bg-accent text-white rounded-md hover:bg-accent/90 transition-colors duration-200 font-medium"
+                >
+                  Add Phone Number
+                </button>
+              </div>
+              <button
+                onClick={handleDismiss}
+                className="ml-4 flex-shrink-0 px-4 py-2 text-sm font-medium text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-800/50 rounded-md hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors duration-200"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Case 2: User has phone number but hasn't started SMS conversation
   return (
     <div className="mb-8 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
       <div className="flex items-start space-x-3">
