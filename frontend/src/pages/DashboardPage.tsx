@@ -41,8 +41,7 @@ const DashboardPage: React.FC = () => {
     console.log('Onboarding useEffect triggered:', { 
       hasUser: !!user, 
       hasEmail: !!user?.email, 
-      email: user?.email,
-      loading 
+      email: user?.email
     });
     
     // Wait for user to be fully loaded with email
