@@ -58,8 +58,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (response.ok) {
         const userData = await response.json();
         console.log('User profile fetched successfully:', userData);
+        console.log('User email:', userData.email);
         console.log('Google ID:', userData.google_id);
         console.log('Phone number:', userData.phone_number);
+        if (!userData.email) {
+          console.error('WARNING: User profile missing email field!', userData);
+        }
         setUser(userData);
         
         // Show phone modal for Google users without phone numbers
@@ -125,6 +129,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (profileResponse.ok) {
         const userData = await profileResponse.json();
+        console.log('User profile after login:', userData);
+        console.log('User email after login:', userData.email);
+        if (!userData.email) {
+          console.error('WARNING: User profile missing email after login!', userData);
+        }
         setUser(userData);
         navigate('/dashboard');
       } else {
@@ -170,6 +179,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (profileResponse.ok) {
         const userData = await profileResponse.json();
+        console.log('User profile after registration:', userData);
+        console.log('User email after registration:', userData.email);
+        if (!userData.email) {
+          console.error('WARNING: User profile missing email after registration!', userData);
+        }
         setUser(userData);
         navigate('/dashboard');
       } else {

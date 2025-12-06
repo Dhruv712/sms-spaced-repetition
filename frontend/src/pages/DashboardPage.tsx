@@ -38,9 +38,21 @@ const DashboardPage: React.FC = () => {
 
   // Onboarding: Step 1 (Dashboard)
   useEffect(() => {
+    console.log('Onboarding useEffect triggered:', { 
+      hasUser: !!user, 
+      hasEmail: !!user?.email, 
+      email: user?.email,
+      loading 
+    });
+    
     // Wait for user to be fully loaded with email
-    if (!user || !user.email) {
-      console.log('Onboarding check skipped - user or email missing:', { user: !!user, email: user?.email });
+    if (!user) {
+      console.log('Onboarding check skipped - no user object');
+      return;
+    }
+    
+    if (!user.email) {
+      console.log('Onboarding check skipped - user object missing email field. User object:', user);
       return;
     }
     
@@ -50,23 +62,26 @@ const DashboardPage: React.FC = () => {
     const timer = setTimeout(() => {
       try {
         const state = getOnboardingState(user.email);
-        console.log('Onboarding state:', state);
+        console.log('Onboarding state from localStorage:', state);
+        console.log('Onboarding key used:', `cue_onboarding_v1_${user.email}`);
         
         if (state.completed) {
-          console.log('Onboarding already completed');
+          console.log('Onboarding already completed - not showing');
           setShowOnboarding(false);
           return;
         }
         if (!state.step || state.step < 1) {
-          console.log('Initializing onboarding for new user');
+          console.log('Initializing onboarding for new user - setting step 1');
           const initial = { step: 1, completed: false };
           setOnboardingState(user.email, initial);
           setOnboardingStep(1);
           setShowOnboarding(true);
+          console.log('Onboarding should now be visible - showOnboarding set to true');
         } else if (state.step === 1) {
-          console.log('Showing onboarding step 1');
+          console.log('Showing onboarding step 1 (already initialized)');
           setOnboardingStep(1);
           setShowOnboarding(true);
+          console.log('Onboarding should now be visible - showOnboarding set to true');
         } else {
           console.log('Onboarding step is', state.step, '- not showing step 1');
           setShowOnboarding(false);
@@ -74,7 +89,7 @@ const DashboardPage: React.FC = () => {
       } catch (error) {
         console.error('Error checking onboarding state:', error);
       }
-    }, 300);
+    }, 500);
     
     return () => clearTimeout(timer);
   }, [user]);
@@ -99,6 +114,13 @@ const DashboardPage: React.FC = () => {
       </div>
     );
   }
+
+  console.log('DashboardPage render - onboarding state:', { 
+    showOnboarding, 
+    onboardingStep, 
+    shouldShow: showOnboarding && onboardingStep === 1,
+    userEmail: user?.email 
+  });
 
   return (
     <div className="min-h-screen bg-white dark:bg-darkbg py-8 px-4 sm:px-6 lg:px-8">
