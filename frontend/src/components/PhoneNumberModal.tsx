@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { recordPhoneModalSkip, clearPhoneModalSkip } from '../utils/phoneModal';
 
 interface PhoneNumberModalProps {
   isOpen: boolean;
@@ -32,6 +33,8 @@ const PhoneNumberModal: React.FC<PhoneNumberModalProps> = ({
       const fullPhoneNumber = `${countryCode}${phoneNumber.replace(/\D/g, '')}`;
       try {
         await onSave(fullPhoneNumber, smsOptIn);
+        // Clear skip timestamp when user successfully adds phone number
+        clearPhoneModalSkip();
       } catch (err: any) {
         setError(err.message || 'Failed to save phone number. Please try again.');
       }
@@ -39,6 +42,8 @@ const PhoneNumberModal: React.FC<PhoneNumberModalProps> = ({
   };
 
   const handleSkip = () => {
+    // Record that user skipped the modal
+    recordPhoneModalSkip();
     onClose();
   };
 

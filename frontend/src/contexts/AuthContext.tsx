@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { buildApiUrl } from '../config';
+import { shouldShowPhoneModal } from '../utils/phoneModal';
 
 interface User {
   email: string;
@@ -66,10 +67,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         setUser(userData);
         
-        // Show phone modal for Google users without phone numbers
+        // Show phone modal for Google users without phone numbers, but only if they haven't skipped recently
         if (userData.google_id && (!userData.phone_number || userData.phone_number === null)) {
-          console.log('Google user without phone number, showing phone modal');
-          setShowPhoneModal(true);
+          if (shouldShowPhoneModal()) {
+            console.log('Google user without phone number, showing phone modal');
+            setShowPhoneModal(true);
+          } else {
+            console.log('Google user without phone number, but skip cooldown active - not showing modal');
+          }
         } else {
           console.log('Not showing phone modal. Google ID exists:', !!userData.google_id, 'Phone number exists:', !!userData.phone_number);
         }
