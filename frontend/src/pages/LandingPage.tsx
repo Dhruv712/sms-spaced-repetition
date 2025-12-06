@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { MemoryRetentionGraph } from '../components/MemoryRetentionGraph';
 import { NeuralBackground } from '../components/NeuralBackground';
 
 const LandingPage: React.FC = () => {
@@ -152,6 +153,9 @@ const LandingPage: React.FC = () => {
           </div>
         </div>
       </section>
+
+      {/* Your Brain, Optimized - Memory Retention Graph */}
+      <MemoryRetentionGraph />
 
       {/* Section 4: Spaced repetition */}
       <section className="py-24 px-6 bg-black">

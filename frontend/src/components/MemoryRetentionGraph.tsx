@@ -74,7 +74,10 @@ export const MemoryRetentionGraph: React.FC = () => {
               </div>
 
               <ResponsiveContainer width="100%" height={300}>
-                <AreaChart data={data}>
+                <AreaChart 
+                  data={data}
+                  margin={{ bottom: 30, top: 10, left: 10, right: 10 }}
+                >
                   <defs>
                     <linearGradient id="colorWithSR" x1="0" y1="0" x2="0" y2="1">
                       <stop
@@ -114,8 +117,8 @@ export const MemoryRetentionGraph: React.FC = () => {
                     tick={{ fill: "#9ca3af" }}
                     label={{
                       value: "Days",
-                      position: "insideBottom",
-                      offset: -5,
+                      position: "outside",
+                      offset: 10,
                       fill: "#6b7280",
                     }}
                   />
