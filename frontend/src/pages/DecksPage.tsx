@@ -291,14 +291,14 @@ const DecksPage: React.FC = () => {
           ) : (
             <div className="space-y-4">
               {decks.map(deck => (
-                <div key={deck.id} className="p-4 border border-secondary-200 dark:border-secondary-700 rounded-lg flex justify-between items-center bg-secondary-50 dark:bg-secondary-900/20">
-                  <div className="flex items-center space-x-4 flex-1 min-w-0">
-                    {/* Deck Preview Image - Fixed size */}
+                <div key={deck.id} className="p-4 border border-secondary-200 dark:border-secondary-700 rounded-lg bg-secondary-50 dark:bg-secondary-900/20">
+                  <div className="flex items-start space-x-4">
+                    {/* Deck Preview Image - Smaller size */}
                     <div className="relative flex-shrink-0">
                       <img
                         src={deck.image_url || "/cue_favicon.png"}
                         alt={`${deck.name} preview`}
-                        className="w-20 h-20 rounded-lg object-cover border border-secondary-200 dark:border-secondary-600"
+                        className="w-14 h-14 rounded-lg object-cover border border-secondary-200 dark:border-secondary-600"
                         onError={(e) => {
                           console.error('Image failed to load:', deck.image_url);
                           e.currentTarget.src = "/cue_favicon.png";
@@ -307,7 +307,7 @@ const DecksPage: React.FC = () => {
                       <button
                         onClick={() => triggerFileInput(deck.id)}
                         disabled={uploadingImage === deck.id}
-                        className="absolute -bottom-1 -right-1 bg-accent hover:bg-accent/90 text-white rounded-full p-1.5 text-xs transition-colors duration-200 disabled:opacity-50 shadow-md"
+                        className="absolute -bottom-1 -right-1 bg-accent hover:bg-accent/90 text-white rounded-full p-1 text-xs transition-colors duration-200 disabled:opacity-50 shadow-md"
                         title="Upload preview image"
                       >
                         {uploadingImage === deck.id ? (
@@ -324,8 +324,9 @@ const DecksPage: React.FC = () => {
                         className="hidden"
                       />
                     </div>
+                    {/* Deck Info - Full width for title */}
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-lg font-medium text-secondary-900 dark:text-white truncate">
+                      <h3 className="text-lg font-medium text-secondary-900 dark:text-white mb-1">
                         {deck.name} ({deck.flashcards_count || 0} cards
                         {!user?.is_premium && (
                           <span className="text-sm font-normal text-secondary-500 dark:text-secondary-400">
@@ -334,65 +335,64 @@ const DecksPage: React.FC = () => {
                         )}
                         )
                       </h3>
-                      <p className="text-sm text-secondary-500 dark:text-secondary-400">Created: {new Date(deck.created_at).toLocaleDateString()}</p>
+                      <p className="text-sm text-secondary-500 dark:text-secondary-400 mb-2">Created: {new Date(deck.created_at).toLocaleDateString()}</p>
                       {!user?.is_premium && deck.flashcards_count >= 20 && (
-                        <p className="text-xs text-red-600 dark:text-red-400 mt-1">Free tier limit reached - upgrade for unlimited</p>
+                        <p className="text-xs text-red-600 dark:text-red-400 mb-2">Free tier limit reached - upgrade for unlimited</p>
                       )}
+                      {/* SMS Toggle - On its own row */}
+                      <div className="flex items-center space-x-2 mt-2">
+                        <span className={`text-xs font-medium whitespace-nowrap ${deck.sms_enabled ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}`}>
+                          {deck.sms_enabled ? '📱 SMS On' : '🔇 SMS Muted'}
+                        </span>
+                        <button
+                          onClick={() => handleToggleSms(deck.id, deck.sms_enabled || false)}
+                          disabled={togglingSms === deck.id}
+                          className={`relative inline-flex h-6 w-12 flex-shrink-0 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 ${
+                            deck.sms_enabled 
+                              ? 'bg-accent' 
+                              : 'bg-gray-300 dark:bg-gray-600'
+                          } ${togglingSms === deck.id ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          title={deck.sms_enabled ? 'Disable SMS for this deck' : 'Enable SMS for this deck'}
+                        >
+                          <span
+                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ${
+                              deck.sms_enabled ? 'translate-x-7' : 'translate-x-1'
+                            }`}
+                          />
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center space-x-4 flex-shrink-0">
-                    {/* SMS Toggle - Fixed size */}
-                    <div className="flex items-center space-x-2 flex-shrink-0">
-                      <span className={`text-xs font-medium whitespace-nowrap ${deck.sms_enabled ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}`}>
-                        {deck.sms_enabled ? '📱 SMS On' : '🔇 SMS Muted'}
-                      </span>
+                    {/* Action Buttons - Right side */}
+                    <div className="flex space-x-2 flex-shrink-0">
                       <button
-                        onClick={() => handleToggleSms(deck.id, deck.sms_enabled || false)}
-                        disabled={togglingSms === deck.id}
-                        className={`relative inline-flex h-6 w-12 flex-shrink-0 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 ${
-                          deck.sms_enabled 
-                            ? 'bg-accent' 
-                            : 'bg-gray-300 dark:bg-gray-600'
-                        } ${togglingSms === deck.id ? 'opacity-50 cursor-not-allowed' : ''}`}
-                        title={deck.sms_enabled ? 'Disable SMS for this deck' : 'Enable SMS for this deck'}
+                        onClick={() => {
+                          setViewingDeckId(deck.id);
+                          setViewingDeckName(deck.name);
+                          setShowViewCardsModal(true);
+                        }}
+                        className="px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 text-sm font-medium transition-colors duration-200"
                       >
-                        <span
-                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ${
-                            deck.sms_enabled ? 'translate-x-7' : 'translate-x-1'
-                          }`}
-                        />
+                        View Cards
+                      </button>
+                      <button
+                        onClick={() => handleDeleteDeck(deck.id)}
+                        className="px-3 py-1.5 bg-white dark:bg-gray-800 text-red-600 dark:text-red-400 border border-red-300 dark:border-red-600 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 text-sm font-medium transition-colors duration-200"
+                      >
+                        Delete
+                      </button>
+                      <button
+                        className="px-3 py-1.5 bg-accent text-white rounded-md hover:bg-accent/90 text-sm font-medium transition-colors duration-200"
+                        onClick={() => navigate(`/decks/${deck.id}/review`)}
+                      >
+                        Review Deck
+                      </button>
+                      <button
+                        onClick={() => navigate(`/decks/${deck.id}/mastery`)}
+                        className="px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 text-sm font-medium transition-colors duration-200"
+                      >
+                        Mastery Graph
                       </button>
                     </div>
-                    <div className="flex space-x-2 flex-shrink-0">
-                    <button
-                      onClick={() => {
-                        setViewingDeckId(deck.id);
-                        setViewingDeckName(deck.name);
-                        setShowViewCardsModal(true);
-                      }}
-                      className="px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 text-sm font-medium transition-colors duration-200"
-                    >
-                      View Cards
-                    </button>
-                    <button
-                      onClick={() => handleDeleteDeck(deck.id)}
-                      className="px-3 py-1.5 bg-white dark:bg-gray-800 text-red-600 dark:text-red-400 border border-red-300 dark:border-red-600 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 text-sm font-medium transition-colors duration-200"
-                    >
-                      Delete
-                    </button>
-                    <button
-                      className="px-3 py-1.5 bg-accent text-white rounded-md hover:bg-accent/90 text-sm font-medium transition-colors duration-200"
-                      onClick={() => navigate(`/decks/${deck.id}/review`)}
-                    >
-                      Review Deck
-                    </button>
-                    <button
-                      onClick={() => navigate(`/decks/${deck.id}/mastery`)}
-                      className="px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 text-sm font-medium transition-colors duration-200"
-                    >
-                      Mastery Graph
-                    </button>
-                  </div>
                   </div>
                 </div>
               ))}

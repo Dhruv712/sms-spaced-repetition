@@ -56,30 +56,30 @@ const Navbar: React.FC = () => {
             {user ? (
               <>
                 <li>
-                  <Link to="/dashboard" className="text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 px-3 py-1.5 rounded-md transition-all duration-200">Dashboard</Link>
+                  <Link to="/dashboard" className="text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 px-3 py-1.5 rounded-md transition-all duration-200">Dashboard</Link>
                 </li>
                 <li>
-                  <Link to="/decks" className="text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 px-3 py-1.5 rounded-md transition-all duration-200">Decks</Link>
+                  <Link to="/decks" className="text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 px-3 py-1.5 rounded-md transition-all duration-200">Decks</Link>
                 </li>
                 <li>
-                  <Link to="/history" className="text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 px-3 py-1.5 rounded-md transition-all duration-200">Review History</Link>
+                  <Link to="/history" className="text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 px-3 py-1.5 rounded-md transition-all duration-200">Review History</Link>
                 </li>
                 <li>
-                  <Link to="/review-due-cards" className="text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 px-3 py-1.5 rounded-md transition-all duration-200">Review Due Cards</Link>
+                  <Link to="/review-due-cards" className="text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 px-3 py-1.5 rounded-md transition-all duration-200">Review Due Cards</Link>
                 </li>
                 {user.is_admin && (
                   <li>
-                    <Link to="/admin" className="text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 px-3 py-1.5 rounded-md transition-all duration-200">Admin</Link>
+                    <Link to="/admin" className="text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 px-3 py-1.5 rounded-md transition-all duration-200">Admin</Link>
                   </li>
                 )}
               </>
             ) : (
               <>
                 <li>
-                  <Link to="/login" className="text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 px-3 py-1.5 rounded-md transition-all duration-200">Login</Link>
+                  <Link to="/login" className="text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 px-3 py-1.5 rounded-md transition-all duration-200">Login</Link>
                 </li>
                 <li>
-                  <Link to="/register" className="text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 px-3 py-1.5 rounded-md transition-all duration-200">Register</Link>
+                  <Link to="/register" className="text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 px-3 py-1.5 rounded-md transition-all duration-200">Register</Link>
                 </li>
               </>
             )}
