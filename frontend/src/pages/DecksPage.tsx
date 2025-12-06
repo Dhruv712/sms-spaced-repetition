@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { buildApiUrl } from '../config';
 import SmsSetupBanner from '../components/SmsSetupBanner';
 import { getOnboardingState, setOnboardingState, markOnboardingCompleted } from '../utils/onboarding';
@@ -20,13 +20,10 @@ interface Deck {
 
 const DecksPage: React.FC = () => {
   const [decks, setDecks] = useState<Deck[]>([]);
-  const [newDeckName, setNewDeckName] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
-  const [creatingDeck, setCreatingDeck] = useState(false);
   const [uploadingImage, setUploadingImage] = useState<number | null>(null);
   const [togglingSms, setTogglingSms] = useState<number | null>(null);
-  const [limits, setLimits] = useState<any>(null);
   const { token, user } = useAuth();
   const navigate = useNavigate();
   const fileInputRefs = useRef<{ [key: number]: HTMLInputElement | null }>({});
@@ -92,60 +89,6 @@ const DecksPage: React.FC = () => {
     navigate('/profile');
   };
 
-  const fetchLimits = useCallback(async () => {
-    if (!token) return;
-    
-    try {
-      const response = await axios.get(buildApiUrl('/subscription/limits'), {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-      setLimits(response.data);
-    } catch (err) {
-      console.error('Error fetching limits:', err);
-    }
-  }, [token]);
-
-  useEffect(() => {
-    fetchLimits();
-  }, [fetchLimits]);
-
-  const handleCreateDeck = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newDeckName.trim() || !token || creatingDeck) return;
-
-    setCreatingDeck(true);
-    setError('');
-    try {
-      const response = await axios.post(
-        buildApiUrl('/decks/'),
-        { name: newDeckName },
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        }
-      );
-      setDecks(prevDecks => [...prevDecks, response.data]);
-      setNewDeckName('');
-    } catch (err: any) {
-      console.error('Error creating deck:', err);
-      const errorMessage = err.response?.data?.detail || 'Failed to create deck. Please try again.';
-      setError(errorMessage);
-      
-      // If it's a premium limit error, suggest upgrading
-      if (errorMessage.includes('free tier limit') || errorMessage.includes('Upgrade to Premium')) {
-        setTimeout(() => {
-          if (window.confirm('You\'ve reached the free tier limit. Would you like to upgrade to Premium?')) {
-            navigate('/premium');
-          }
-        }, 100);
-      }
-    } finally {
-      setCreatingDeck(false);
-    }
-  };
 
   const handleDeleteDeck = async (deckId: number) => {
     if (!token) return;

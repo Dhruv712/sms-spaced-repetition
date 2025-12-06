@@ -42,8 +42,7 @@ const NewFlashcardModal: React.FC<NewFlashcardModalProps> = ({
   const [error, setError] = useState('');
   const [nlInput, setNlInput] = useState('');
   const [nlLoading, setNlLoading] = useState(false);
-  const { token, user } = useAuth();
-  const [limits, setLimits] = useState<any>(null);
+  const { token } = useAuth();
 
   const fetchDecks = useCallback(async () => {
     if (!token) return;
@@ -84,22 +83,6 @@ const NewFlashcardModal: React.FC<NewFlashcardModalProps> = ({
     }
   }, [isOpen, fetchDecks, preselectedDeckId]);
 
-  useEffect(() => {
-    if (!token) return;
-    const fetchLimits = async () => {
-      try {
-        const response = await axios.get(buildApiUrl('/subscription/limits'), {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-        setLimits(response.data);
-      } catch (err) {
-        console.error('Error fetching limits:', err);
-      }
-    };
-    fetchLimits();
-  }, [token]);
 
   const handleSingleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

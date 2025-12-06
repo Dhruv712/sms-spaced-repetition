@@ -305,9 +305,11 @@ async def cron_daily_summary(
     db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
     """
-    Railway cron endpoint for sending daily summaries to all users
+    Railway cron endpoint for sending daily summaries to all users.
+    
     This should be called hourly. It will only send summaries to users
-    when it's 9 PM or 10 PM in their timezone.
+    when it's 9 PM in their timezone (one summary per evening).
+    
     (Requires admin secret key in X-Admin-Secret header)
     """
     await require_admin_access(request, db)
@@ -327,14 +329,15 @@ async def cron_daily_summary(
         results = []
         for user in users:
             try:
-                # Check if it's an appropriate time in user's timezone (9 PM or 10 PM)
+                # Check if it's an appropriate time in user's timezone (9 PM only)
                 try:
                     user_tz = ZoneInfo(user.timezone)
                     now_user_tz = now_utc.astimezone(user_tz)
                     current_hour = now_user_tz.hour
                     
-                    if current_hour not in [21, 22]:  # 9 PM or 10 PM
-                        print(f"⏭️ Skipping user {user.id}: current hour {current_hour} not summary time (9-10 PM)")
+                    # Only send in the 9 PM hour to avoid multiple sends per day
+                    if current_hour != 21:  # 9 PM
+                        print(f"⏭️ Skipping user {user.id}: current hour {current_hour} not summary time (9 PM)")
                         results.append({
                             "success": True,
                             "user_id": user.id,

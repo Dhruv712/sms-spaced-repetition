@@ -1,6 +1,5 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
-import FlashcardsPage from "./pages/FlashcardsPage";
 import ProfilePage from './pages/ProfilePage';
 import Navbar from './components/Navbar';
 import ReviewHistoryPage from "./pages/ReviewHistoryPage";

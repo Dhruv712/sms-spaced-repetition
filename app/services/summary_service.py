@@ -8,29 +8,29 @@ from app.utils.config import settings
 
 def get_daily_review_summary(user_id: int, db: Session, date: datetime.date = None, user_timezone: str = "UTC") -> Dict[str, Any]:
     """
-    Generate a daily summary of flashcard reviews for a user
+    Generate a daily summary of flashcard reviews for a user.
     
     Args:
         user_id: User ID to get summary for
         db: Database session
-        date: Date to get summary for (defaults to yesterday in user's timezone)
+        date: Date to get summary for. If None, uses **today** in the user's timezone.
         user_timezone: User's timezone (defaults to UTC)
     
     Returns:
-        Dictionary with summary statistics
+        Dictionary with summary statistics for the requested calendar day
     """
     from zoneinfo import ZoneInfo
     
-    # If no date provided, use yesterday in user's timezone
+    # If no date provided, use today in user's timezone
     if date is None:
         try:
             user_tz = ZoneInfo(user_timezone)
             now_user_tz = datetime.now(timezone.utc).astimezone(user_tz)
-            # Get yesterday in user's timezone
-            date = (now_user_tz.date() - timedelta(days=1))
+            # Use today's date in the user's timezone
+            date = now_user_tz.date()
         except Exception:
-            # Fallback to UTC if timezone is invalid
-            date = (datetime.now(timezone.utc).date() - timedelta(days=1))
+            # Fallback to today's date in UTC if timezone is invalid
+            date = datetime.now(timezone.utc).date()
     
     # Get start and end of the specified date in user's timezone, then convert to UTC
     try:
@@ -374,15 +374,15 @@ def send_daily_summary_to_user(user: User, db: Session) -> Dict[str, Any]:
         from app.services.loop_message_service import LoopMessageService
         from zoneinfo import ZoneInfo
         
-        # Check if it's an appropriate time to send summary (9 PM or 10 PM in user's timezone)
+        # Check if it's an appropriate time to send summary (9 PM in user's timezone)
         try:
             user_tz = ZoneInfo(user.timezone)
             now_utc = datetime.now(timezone.utc)
             now_user_tz = now_utc.astimezone(user_tz)
             current_hour = now_user_tz.hour
             
-            # Only send summary at 9 PM or 10 PM in user's timezone
-            if current_hour not in [21, 22]:
+            # Only send summary at 9 PM in user's timezone to avoid multiple sends per day
+            if current_hour != 21:
                 return {
                     "success": True,
                     "user_id": user.id,
@@ -431,13 +431,19 @@ def format_summary_for_sms(summary: Dict[str, Any]) -> str:
     """Format summary data for SMS message"""
     
     if summary["total_reviews"] == 0:
-        return "📚 Daily Summary\n\nNo reviews today.\n\nTime to start studying! Send 'Yes' to begin a review session."
+        return (
+            "📚 Daily Summary\n\n"
+            "No reviews today.\n\n"
+            "Time to start studying! Send 'Yes' to begin a review session."
+        )
     
     message = f"📚 Daily Summary - {summary['date']}\n\n"
     message += f"📊 {summary['total_reviews']} cards reviewed\n"
     message += f"✅ {summary['correct_reviews']} correct ({summary['percent_correct']}%)\n"
     message += f"🔥 {summary['streak_days']}-day streak\n"
-    message += f"📅 {summary['next_due_cards']} cards due tomorrow\n\n"
+    # next_due_cards is "cards currently due" according to the scheduler logic;
+    # for SMS wording, keep this softer so it doesn't promise an exact “tomorrow” count.
+    message += f"📅 {summary['next_due_cards']} cards coming up soon\n\n"
     
     message += summary["message"]
     
