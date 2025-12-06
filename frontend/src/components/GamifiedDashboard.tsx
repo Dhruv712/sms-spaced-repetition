@@ -1,7 +1,6 @@
 import React from 'react';
 import ActivityHeatmap from './ActivityHeatmap';
 import DifficultCards from './DifficultCards';
-import StreakVisualization from './StreakVisualization';
 
 interface GamifiedDashboardProps {
   stats: any;

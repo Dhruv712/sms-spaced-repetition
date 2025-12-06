@@ -24,12 +24,6 @@ const Navbar: React.FC = () => {
     return null;
   }
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-    setIsMenuOpen(false);
-  };
-
   const toggleDarkMode = () => {
     setDarkMode((prev) => {
       const newMode = !prev;
