@@ -1,27 +1,40 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface PhoneNumberModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (phoneNumber: string, smsOptIn: boolean) => void;
+  onSave: (phoneNumber: string, smsOptIn: boolean) => Promise<void>;
   isSaving?: boolean;
+  error?: string | null;
 }
 
 const PhoneNumberModal: React.FC<PhoneNumberModalProps> = ({ 
   isOpen, 
   onClose, 
   onSave, 
-  isSaving = false 
+  isSaving = false,
+  error: externalError = null
 }) => {
   const [countryCode, setCountryCode] = useState('+1');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [smsOptIn, setSmsOptIn] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Update error when external error changes
+  useEffect(() => {
+    setError(externalError);
+  }, [externalError]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     if (phoneNumber.trim()) {
       const fullPhoneNumber = `${countryCode}${phoneNumber.replace(/\D/g, '')}`;
-      onSave(fullPhoneNumber, smsOptIn);
+      try {
+        await onSave(fullPhoneNumber, smsOptIn);
+      } catch (err: any) {
+        setError(err.message || 'Failed to save phone number. Please try again.');
+      }
     }
   };
 
@@ -306,6 +319,12 @@ const PhoneNumberModal: React.FC<PhoneNumberModalProps> = ({
               </p>
             </label>
           </div>
+
+          {error && (
+            <div className="mt-4 p-3 bg-red-100 dark:bg-red-900/20 border border-red-300 dark:border-red-800 rounded-md">
+              <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
+            </div>
+          )}
 
           <div className="flex gap-3 pt-4">
             <button

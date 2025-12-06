@@ -67,7 +67,7 @@ const DecksPage: React.FC = () => {
 
   // Onboarding: Step 2 (Decks) - was Step 3 before removing Flashcards step
   useEffect(() => {
-    if (!user) return;
+    if (!user || !user.email) return;
     const state = getOnboardingState(user.email);
     if (state.completed) {
       setOnboardingStep(0);
@@ -292,13 +292,13 @@ const DecksPage: React.FC = () => {
             <div className="space-y-4">
               {decks.map(deck => (
                 <div key={deck.id} className="p-4 border border-secondary-200 dark:border-secondary-700 rounded-lg flex justify-between items-center bg-secondary-50 dark:bg-secondary-900/20">
-                  <div className="flex items-center space-x-4">
-                    {/* Deck Preview Image */}
-                    <div className="relative">
+                  <div className="flex items-center space-x-4 flex-1 min-w-0">
+                    {/* Deck Preview Image - Fixed size */}
+                    <div className="relative flex-shrink-0">
                       <img
                         src={deck.image_url || "/cue_favicon.png"}
                         alt={`${deck.name} preview`}
-                        className="w-16 h-16 rounded-lg object-cover border border-secondary-200 dark:border-secondary-600"
+                        className="w-20 h-20 rounded-lg object-cover border border-secondary-200 dark:border-secondary-600"
                         onError={(e) => {
                           console.error('Image failed to load:', deck.image_url);
                           e.currentTarget.src = "/cue_favicon.png";
@@ -307,7 +307,7 @@ const DecksPage: React.FC = () => {
                       <button
                         onClick={() => triggerFileInput(deck.id)}
                         disabled={uploadingImage === deck.id}
-                        className="absolute -bottom-1 -right-1 bg-primary-600 hover:bg-primary-700 text-white rounded-full p-1 text-xs transition-colors duration-200 disabled:opacity-50"
+                        className="absolute -bottom-1 -right-1 bg-accent hover:bg-accent/90 text-white rounded-full p-1.5 text-xs transition-colors duration-200 disabled:opacity-50 shadow-md"
                         title="Upload preview image"
                       >
                         {uploadingImage === deck.id ? (
@@ -324,8 +324,8 @@ const DecksPage: React.FC = () => {
                         className="hidden"
                       />
                     </div>
-                    <div>
-                      <h3 className="text-lg font-medium text-secondary-900 dark:text-white">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-lg font-medium text-secondary-900 dark:text-white truncate">
                         {deck.name} ({deck.flashcards_count || 0} cards
                         {!user?.is_premium && (
                           <span className="text-sm font-normal text-secondary-500 dark:text-secondary-400">
@@ -340,18 +340,18 @@ const DecksPage: React.FC = () => {
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center space-x-4">
-                    {/* SMS Toggle */}
-                    <div className="flex items-center space-x-2">
-                      <span className={`text-xs font-medium ${deck.sms_enabled ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}`}>
+                  <div className="flex items-center space-x-4 flex-shrink-0">
+                    {/* SMS Toggle - Fixed size */}
+                    <div className="flex items-center space-x-2 flex-shrink-0">
+                      <span className={`text-xs font-medium whitespace-nowrap ${deck.sms_enabled ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}`}>
                         {deck.sms_enabled ? '📱 SMS On' : '🔇 SMS Muted'}
                       </span>
                       <button
                         onClick={() => handleToggleSms(deck.id, deck.sms_enabled || false)}
                         disabled={togglingSms === deck.id}
-                        className={`relative inline-flex h-6 w-12 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
+                        className={`relative inline-flex h-6 w-12 flex-shrink-0 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 ${
                           deck.sms_enabled 
-                            ? 'bg-primary-600' 
+                            ? 'bg-accent' 
                             : 'bg-gray-300 dark:bg-gray-600'
                         } ${togglingSms === deck.id ? 'opacity-50 cursor-not-allowed' : ''}`}
                         title={deck.sms_enabled ? 'Disable SMS for this deck' : 'Enable SMS for this deck'}
@@ -363,32 +363,32 @@ const DecksPage: React.FC = () => {
                         />
                       </button>
                     </div>
-                    <div className="flex space-x-2">
+                    <div className="flex space-x-2 flex-shrink-0">
                     <button
                       onClick={() => {
                         setViewingDeckId(deck.id);
                         setViewingDeckName(deck.name);
                         setShowViewCardsModal(true);
                       }}
-                      className="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 text-sm font-medium"
+                      className="px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 text-sm font-medium transition-colors duration-200"
                     >
                       View Cards
                     </button>
                     <button
                       onClick={() => handleDeleteDeck(deck.id)}
-                      className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-sm font-medium"
+                      className="px-3 py-1.5 bg-white dark:bg-gray-800 text-red-600 dark:text-red-400 border border-red-300 dark:border-red-600 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 text-sm font-medium transition-colors duration-200"
                     >
                       Delete
                     </button>
                     <button
-                      className="review-deck-btn"
+                      className="px-3 py-1.5 bg-accent text-white rounded-md hover:bg-accent/90 text-sm font-medium transition-colors duration-200"
                       onClick={() => navigate(`/decks/${deck.id}/review`)}
                     >
                       Review Deck
                     </button>
                     <button
                       onClick={() => navigate(`/decks/${deck.id}/mastery`)}
-                      className="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 text-sm font-medium"
+                      className="px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 text-sm font-medium transition-colors duration-200"
                     >
                       Mastery Graph
                     </button>

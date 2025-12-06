@@ -200,6 +200,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const profileData = {
         name: user.name,
         phone_number: phoneNumber,
+        email: user.email,
         google_id: user.google_id,
         study_mode: user.study_mode || 'batch',
         preferred_start_hour: user.preferred_start_hour || 9,
@@ -235,7 +236,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } else {
         const errorData = await response.json();
         console.error('Failed to update phone number:', response.status, errorData);
-        throw new Error('Failed to update phone number');
+        const errorMessage = errorData.detail || errorData.message || 'Failed to update phone number';
+        throw new Error(errorMessage);
       }
     } catch (error) {
       console.error('Error updating phone number:', error);

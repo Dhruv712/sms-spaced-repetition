@@ -27,12 +27,18 @@ const AppContent: React.FC = () => {
   const location = useLocation();
   const isLandingPage = location.pathname === '/';
 
+  const [phoneError, setPhoneError] = React.useState<string | null>(null);
+
   const handlePhoneSave = async (phoneNumber: string, smsOptIn: boolean) => {
     setIsSavingPhone(true);
+    setPhoneError(null);
     try {
       await updatePhoneNumber(phoneNumber, smsOptIn);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to save phone number:', error);
+      const errorMessage = error.message || 'Failed to save phone number. Please try again.';
+      setPhoneError(errorMessage);
+      throw error; // Re-throw so modal can handle it
     } finally {
       setIsSavingPhone(false);
     }
@@ -141,9 +147,13 @@ const AppContent: React.FC = () => {
         </Routes>
         <PhoneNumberModal
           isOpen={showPhoneModal}
-          onClose={() => setShowPhoneModal(false)}
+          onClose={() => {
+            setShowPhoneModal(false);
+            setPhoneError(null);
+          }}
           onSave={handlePhoneSave}
           isSaving={isSavingPhone}
+          error={phoneError}
         />
         <FloatingHelpButton />
       </>

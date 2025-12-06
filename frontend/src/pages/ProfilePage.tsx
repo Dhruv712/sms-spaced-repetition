@@ -65,7 +65,7 @@ const ProfilePage: React.FC = () => {
 
   // Onboarding: Step 3 (Profile / SMS setup) - was Step 4 before removing Flashcards step
   useEffect(() => {
-    if (!user) return;
+    if (!user || !user.email) return;
     const state = getOnboardingState(user.email);
     if (state.completed) {
       setOnboardingStep(0);

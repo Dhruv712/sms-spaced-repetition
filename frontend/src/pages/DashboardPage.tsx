@@ -38,7 +38,7 @@ const DashboardPage: React.FC = () => {
 
   // Onboarding: Step 1 (Dashboard)
   useEffect(() => {
-    if (!user) return;
+    if (!user || !user.email) return;
     const state = getOnboardingState(user.email);
     if (state.completed) {
       setShowOnboarding(false);

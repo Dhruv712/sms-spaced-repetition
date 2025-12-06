@@ -56,36 +56,30 @@ const Navbar: React.FC = () => {
             {user ? (
               <>
                 <li>
-                  <Link to="/dashboard" className="text-accent dark:text-accent hover:underline hover:text-accent/80 dark:hover:text-accent/80 transition-colors duration-200">Dashboard</Link>
+                  <Link to="/dashboard" className="text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 px-3 py-1.5 rounded-md transition-all duration-200">Dashboard</Link>
                 </li>
                 <li>
-                  <Link to="/decks" className="text-accent dark:text-accent hover:underline hover:text-accent/80 dark:hover:text-accent/80 transition-colors duration-200">Decks</Link>
+                  <Link to="/decks" className="text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 px-3 py-1.5 rounded-md transition-all duration-200">Decks</Link>
                 </li>
                 <li>
-                  <Link to="/history" className="text-accent dark:text-accent hover:underline hover:text-accent/80 dark:hover:text-accent/80 transition-colors duration-200">Review History</Link>
+                  <Link to="/history" className="text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 px-3 py-1.5 rounded-md transition-all duration-200">Review History</Link>
                 </li>
                 <li>
-                  <Link to="/review-due-cards" className="text-accent dark:text-accent hover:underline hover:text-accent/80 dark:hover:text-accent/80 transition-colors duration-200">Review Due Cards</Link>
-                </li>
-                <li>
-                  <Link to="/help" className="text-accent dark:text-accent hover:underline hover:text-accent/80 dark:hover:text-accent/80 transition-colors duration-200">Help</Link>
+                  <Link to="/review-due-cards" className="text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 px-3 py-1.5 rounded-md transition-all duration-200">Review Due Cards</Link>
                 </li>
                 {user.is_admin && (
                   <li>
-                    <Link to="/admin" className="text-accent dark:text-accent hover:underline hover:text-accent/80 dark:hover:text-accent/80 transition-colors duration-200">Admin</Link>
+                    <Link to="/admin" className="text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 px-3 py-1.5 rounded-md transition-all duration-200">Admin</Link>
                   </li>
                 )}
               </>
             ) : (
               <>
                 <li>
-                  <Link to="/login" className="text-accent dark:text-accent hover:underline hover:text-accent/80 dark:hover:text-accent/80 transition-colors duration-200">Login</Link>
+                  <Link to="/login" className="text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 px-3 py-1.5 rounded-md transition-all duration-200">Login</Link>
                 </li>
                 <li>
-                  <Link to="/register" className="text-accent dark:text-accent hover:underline hover:text-accent/80 dark:hover:text-accent/80 transition-colors duration-200">Register</Link>
-                </li>
-                <li>
-                  <Link to="/help" className="text-accent dark:text-accent hover:underline hover:text-accent/80 dark:hover:text-accent/80 transition-colors duration-200">Help</Link>
+                  <Link to="/register" className="text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 px-3 py-1.5 rounded-md transition-all duration-200">Register</Link>
                 </li>
               </>
             )}
@@ -172,36 +166,29 @@ const Navbar: React.FC = () => {
                 <Link 
                   to="/decks" 
                   onClick={closeMenu}
-                  className="block px-4 py-2 text-accent dark:text-accent hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors duration-200"
+                  className="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors duration-200"
                 >
                   Decks
                 </Link>
                 <Link 
                   to="/history" 
                   onClick={closeMenu}
-                  className="block px-4 py-2 text-accent dark:text-accent hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors duration-200"
+                  className="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors duration-200"
                 >
                   Review History
                 </Link>
                 <Link 
                   to="/review-due-cards" 
                   onClick={closeMenu}
-                  className="block px-4 py-2 text-accent dark:text-accent hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors duration-200"
+                  className="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors duration-200"
                 >
                   Review Due Cards
-                </Link>
-                <Link 
-                  to="/help" 
-                  onClick={closeMenu}
-                  className="block px-4 py-2 text-accent dark:text-accent hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors duration-200"
-                >
-                  Help
                 </Link>
                 {user.is_admin && (
                   <Link 
                     to="/admin" 
                     onClick={closeMenu}
-                    className="block px-4 py-2 text-accent dark:text-accent hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors duration-200"
+                    className="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors duration-200"
                   >
                     Admin
                   </Link>
@@ -233,23 +220,16 @@ const Navbar: React.FC = () => {
                 <Link 
                   to="/login" 
                   onClick={closeMenu}
-                  className="block px-4 py-2 text-primary-600 dark:text-primary-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors duration-200"
+                  className="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors duration-200"
                 >
                   Login
                 </Link>
                 <Link 
                   to="/register" 
                   onClick={closeMenu}
-                  className="block px-4 py-2 text-primary-600 dark:text-primary-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors duration-200"
+                  className="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors duration-200"
                 >
                   Register
-                </Link>
-                <Link 
-                  to="/help" 
-                  onClick={closeMenu}
-                  className="block px-4 py-2 text-primary-600 dark:text-primary-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors duration-200"
-                >
-                  Help
                 </Link>
               </>
             )}
