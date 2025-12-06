@@ -4,17 +4,8 @@ import { buildApiUrl } from '../config';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { getOnboardingState, setOnboardingState, markOnboardingCompleted } from '../utils/onboarding';
-import ActivityHeatmap from '../components/ActivityHeatmap';
-import AccuracyGraph from '../components/AccuracyGraph';
-import StreakVisualization from '../components/StreakVisualization';
-import ComparisonCards from '../components/ComparisonCards';
-import WeakestAreas from '../components/WeakestAreas';
-import ReviewStats from '../components/ReviewStats';
-import DailySummary from '../components/DailySummary';
 import SmsSetupBanner from '../components/SmsSetupBanner';
-import DifficultCards from '../components/DifficultCards';
-import ConfusionBreakdown from '../components/ConfusionBreakdown';
-import KnowledgeMap from '../components/KnowledgeMap';
+import GamifiedDashboard from '../components/GamifiedDashboard';
 
 const DashboardPage: React.FC = () => {
   const { token, user } = useAuth();
@@ -129,51 +120,8 @@ const DashboardPage: React.FC = () => {
         {/* SMS Setup Banner */}
         <SmsSetupBanner />
         
-        {/* Comparison Cards */}
-        <ComparisonCards stats={stats} />
-        
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          {/* Streak Visualization */}
-          <div className="lg:col-span-1">
-            <StreakVisualization stats={stats} />
-          </div>
-          
-          {/* Activity Heatmap */}
-          <div className="lg:col-span-2">
-            <ActivityHeatmap stats={stats} />
-          </div>
-        </div>
-
-        {/* Review Stats and Today's Summary */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          <ReviewStats />
-          <DailySummary />
-        </div>
-
-        {/* Accuracy Graph */}
-        <div className="mb-8">
-          <AccuracyGraph stats={stats} />
-        </div>
-
-        {/* Weakest Areas */}
-        <div className="mb-8">
-          <WeakestAreas stats={stats} />
-        </div>
-
-        {/* Most Difficult Cards */}
-        <div className="mb-8">
-          <DifficultCards />
-        </div>
-
-        {/* Confusion Breakdown */}
-        <div className="mb-8">
-          <ConfusionBreakdown />
-        </div>
-
-        {/* Knowledge Map */}
-        <div className="mb-8">
-          <KnowledgeMap />
-        </div>
+        {/* Gamified Dashboard */}
+        <GamifiedDashboard stats={stats} />
       </div>
     </div>
   );

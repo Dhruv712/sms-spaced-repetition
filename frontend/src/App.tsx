@@ -19,6 +19,7 @@ import DashboardPage from './pages/DashboardPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import PhoneNumberModal from './components/PhoneNumberModal';
 import LandingPage from './pages/LandingPage';
+import FloatingHelpButton from './components/FloatingHelpButton';
 
 const AppContent: React.FC = () => {
   const { showPhoneModal, setShowPhoneModal, updatePhoneNumber } = useAuth();
@@ -144,6 +145,7 @@ const AppContent: React.FC = () => {
           onSave={handlePhoneSave}
           isSaving={isSavingPhone}
         />
+        <FloatingHelpButton />
       </>
     );
   };

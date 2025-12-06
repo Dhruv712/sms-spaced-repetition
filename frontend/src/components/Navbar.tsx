@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import ProfileDropdown from './ProfileDropdown';
 
 const Navbar: React.FC = () => {
   const { user, logout } = useAuth();
@@ -68,9 +69,6 @@ const Navbar: React.FC = () => {
                   <Link to="/decks" className="text-primary-600 dark:text-primary-300 hover:underline hover:text-primary-800 dark:hover:text-primary-100 transition-colors duration-200">Decks</Link>
                 </li>
                 <li>
-                  <Link to="/profile" className="text-primary-600 dark:text-primary-300 hover:underline hover:text-primary-800 dark:hover:text-primary-100 transition-colors duration-200">Profile</Link>
-                </li>
-                <li>
                   <Link to="/history" className="text-primary-600 dark:text-primary-300 hover:underline hover:text-primary-800 dark:hover:text-primary-100 transition-colors duration-200">Review History</Link>
                 </li>
                 <li>
@@ -103,11 +101,17 @@ const Navbar: React.FC = () => {
             {user && (
               <>
                 {!user.is_premium ? (
-                  <Link to="/premium" className="text-primary-600 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-100 px-3 py-1.5 text-sm font-light whitespace-nowrap transition-colors duration-200">
+                  <Link
+                    to="/premium"
+                    className="px-4 py-2 bg-accent hover:bg-accent/90 text-white rounded-lg text-sm font-medium whitespace-nowrap transition-colors duration-200"
+                  >
                     Get Premium
                   </Link>
                 ) : (
-                  <Link to="/premium" className="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 px-3 py-1.5 text-sm font-light whitespace-nowrap transition-colors duration-200">
+                  <Link
+                    to="/premium"
+                    className="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 px-3 py-1.5 text-sm font-light whitespace-nowrap transition-colors duration-200"
+                  >
                     Premium
                   </Link>
                 )}
@@ -125,17 +129,7 @@ const Navbar: React.FC = () => {
                 <span role="img" aria-label="Dark mode">🌙</span>
               )}
             </button>
-            {user && (
-              <>
-                <span className="text-gray-600 dark:text-gray-300 text-sm whitespace-nowrap hidden lg:inline">{user.email}</span>
-                <button
-                  onClick={handleLogout}
-                  className="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 px-4 py-2 text-sm font-light whitespace-nowrap transition-colors duration-200"
-                >
-                  Logout
-                </button>
-              </>
-            )}
+            {user && <ProfileDropdown />}
           </div>
         </div>
 
@@ -190,13 +184,6 @@ const Navbar: React.FC = () => {
                   Decks
                 </Link>
                 <Link 
-                  to="/profile" 
-                  onClick={closeMenu}
-                  className="block px-4 py-2 text-primary-600 dark:text-primary-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors duration-200"
-                >
-                  Profile
-                </Link>
-                <Link 
                   to="/history" 
                   onClick={closeMenu}
                   className="block px-4 py-2 text-primary-600 dark:text-primary-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors duration-200"
@@ -230,7 +217,7 @@ const Navbar: React.FC = () => {
                   <Link 
                     to="/premium" 
                     onClick={closeMenu}
-                    className="block px-4 py-2 bg-primary-600 text-white rounded hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600 transition-colors duration-200 font-medium text-center"
+                    className="block px-4 py-2 bg-accent hover:bg-accent/90 text-white rounded-lg transition-colors duration-200 font-medium text-center"
                   >
                     Get Premium
                   </Link>
@@ -244,15 +231,9 @@ const Navbar: React.FC = () => {
                     Premium
                   </Link>
                 )}
-                <div className="px-4 py-2 text-gray-600 dark:text-gray-300 text-sm">
-                  {user.email}
+                <div className="px-4 py-2 border-t border-gray-200 dark:border-gray-700">
+                  <ProfileDropdown />
                 </div>
-                <button
-                  onClick={handleLogout}
-                  className="w-full text-left px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors duration-200"
-                >
-                  Logout
-                </button>
               </>
             ) : (
               <>
