@@ -82,7 +82,7 @@ const DifficultCards: React.FC = () => {
         {difficultCards.map((card, index) => (
           <div
             key={card.flashcard_id}
-            className="border border-gray-200 dark:border-gray-700 rounded p-3 hover:border-primary-300 dark:hover:border-primary-600 transition-colors duration-200"
+            className="border border-gray-200 dark:border-gray-700 rounded p-3 hover:border-accent/80 dark:hover:border-accent transition-colors duration-200"
           >
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1 min-w-0">
@@ -91,7 +91,7 @@ const DifficultCards: React.FC = () => {
                     #{index + 1}
                   </span>
                   {card.deck_name && (
-                    <span className="inline-block px-1.5 py-0.5 text-xs font-medium bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-300 rounded">
+                    <span className="inline-block px-1.5 py-0.5 text-xs font-medium bg-accent/10 text-accent dark:bg-accent/20 dark:text-accent rounded">
                       {card.deck_name}
                     </span>
                   )}
@@ -109,7 +109,7 @@ const DifficultCards: React.FC = () => {
                 </div>
                 <button
                   onClick={() => setExpandedCard(expandedCard === card.flashcard_id ? null : card.flashcard_id)}
-                  className="text-xs text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors duration-200 whitespace-nowrap"
+                  className="text-xs text-accent dark:text-accent hover:text-accent/80 dark:hover:text-accent/80 transition-colors duration-200 whitespace-nowrap"
                 >
                   {expandedCard === card.flashcard_id ? 'Hide' : 'Show'}
                 </button>

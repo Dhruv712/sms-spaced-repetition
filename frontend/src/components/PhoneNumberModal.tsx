@@ -72,7 +72,7 @@ const PhoneNumberModal: React.FC<PhoneNumberModalProps> = ({
               <select
                 value={countryCode}
                 onChange={(e) => setCountryCode(e.target.value)}
-                className="w-24 p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-800 dark:text-darktext dark:border-gray-600 appearance-none"
+                className="w-24 p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-accent focus:border-accent dark:bg-gray-800 dark:text-darktext dark:border-gray-600 appearance-none"
               >
                 <option value="+1">🇺🇸 +1</option>
                 <option value="+44">🇬🇧 +44</option>
@@ -285,7 +285,7 @@ const PhoneNumberModal: React.FC<PhoneNumberModalProps> = ({
                 value={phoneNumber}
                 onChange={(e) => setPhoneNumber(e.target.value)}
                 placeholder="1234567890"
-                className="flex-1 p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-800 dark:text-darktext dark:border-gray-600"
+                className="flex-1 p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-accent focus:border-accent dark:bg-gray-800 dark:text-darktext dark:border-gray-600"
                 required
               />
             </div>
@@ -297,7 +297,7 @@ const PhoneNumberModal: React.FC<PhoneNumberModalProps> = ({
               type="checkbox"
               checked={smsOptIn}
               onChange={(e) => setSmsOptIn(e.target.checked)}
-              className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600 dark:checked:bg-primary-600 dark:checked:border-primary-600"
+              className="h-4 w-4 text-accent focus:ring-accent border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600 dark:checked:bg-accent dark:checked:border-accent"
             />
             <label htmlFor="sms-opt-in-modal" className="ml-2 block text-sm text-gray-900 dark:text-darktext">
               <span className="font-medium">Receive SMS notifications</span>
@@ -318,7 +318,7 @@ const PhoneNumberModal: React.FC<PhoneNumberModalProps> = ({
             <button
               type="submit"
               disabled={isSaving || !phoneNumber.trim()}
-              className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+              className="flex-1 px-4 py-2 bg-accent text-white rounded-md hover:bg-accent/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
             >
               {isSaving ? 'Saving...' : 'Save Phone Number'}
             </button>

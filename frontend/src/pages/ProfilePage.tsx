@@ -163,7 +163,7 @@ const ProfilePage: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleOnboardingFinish}
-                  className="px-3 py-1.5 text-xs rounded bg-primary-600 text-white hover:bg-primary-700 transition-colors duration-200"
+                  className="px-3 py-1.5 text-xs rounded bg-accent text-white hover:bg-accent/90 transition-colors duration-200"
                 >
                   Finish: Go to dashboard
                 </button>
@@ -189,7 +189,7 @@ const ProfilePage: React.FC = () => {
               name="name"
               value={profile.name}
               onChange={handleChange}
-              className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-800 dark:text-darktext dark:border-gray-600 transition-colors duration-200"
+              className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-accent focus:border-accent dark:bg-gray-800 dark:text-darktext dark:border-gray-600 transition-colors duration-200"
             />
           </div>
 
@@ -199,7 +199,7 @@ const ProfilePage: React.FC = () => {
               <select
                 value={countryCode}
                 onChange={(e) => setCountryCode(e.target.value)}
-                className="w-24 p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-800 dark:text-darktext dark:border-gray-600 appearance-none"
+                className="w-24 p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-accent focus:border-accent dark:bg-gray-800 dark:text-darktext dark:border-gray-600 appearance-none"
               >
                 <option value="+1">🇺🇸 +1</option>
                 <option value="+44">🇬🇧 +44</option>
@@ -406,7 +406,7 @@ const ProfilePage: React.FC = () => {
                 value={phoneNumber}
                 onChange={(e) => setPhoneNumber(e.target.value)}
                 placeholder="1234567890"
-                className="flex-1 p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-800 dark:text-darktext dark:border-gray-600 transition-colors duration-200"
+                className="flex-1 p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-accent focus:border-accent dark:bg-gray-800 dark:text-darktext dark:border-gray-600 transition-colors duration-200"
               />
             </div>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -440,7 +440,7 @@ const ProfilePage: React.FC = () => {
               name="study_mode"
               value={profile.study_mode}
               onChange={handleChange}
-              className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-800 dark:text-darktext dark:border-gray-600 appearance-none pr-8 transition-colors duration-200"
+              className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-accent focus:border-accent dark:bg-gray-800 dark:text-darktext dark:border-gray-600 appearance-none pr-8 transition-colors duration-200"
             >
               <option value="batch">Batch</option>
               <option value="distributed">Distributed</option>
@@ -453,7 +453,7 @@ const ProfilePage: React.FC = () => {
               name="timezone"
               value={profile.timezone}
               onChange={handleChange}
-              className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-800 dark:text-darktext dark:border-gray-600 transition-colors duration-200"
+              className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-accent focus:border-accent dark:bg-gray-800 dark:text-darktext dark:border-gray-600 transition-colors duration-200"
             >
               <option value="UTC">UTC</option>
               <option value="America/New_York">Eastern Time (ET)</option>
@@ -490,8 +490,8 @@ const ProfilePage: React.FC = () => {
                     key={hour}
                     className={`flex flex-col items-center justify-center p-2 border rounded-md cursor-pointer transition-colors duration-200 ${
                       isSelected
-                        ? 'bg-primary-500 text-white border-primary-600 dark:bg-primary-600 dark:border-primary-500'
-                        : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-primary-400 dark:hover:border-primary-500'
+                        ? 'bg-accent text-white border-accent dark:bg-accent dark:border-accent'
+                        : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-accent/80 dark:hover:border-accent'
                     }`}
                   >
                     <input
@@ -529,7 +529,7 @@ const ProfilePage: React.FC = () => {
               type="checkbox"
               checked={profile.sms_opt_in}
               onChange={(e) => setProfile({ ...profile, sms_opt_in: e.target.checked })}
-              className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600 dark:checked:bg-primary-600 dark:checked:border-primary-600"
+              className="h-4 w-4 text-accent focus:ring-accent border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600 dark:checked:bg-accent dark:checked:border-accent"
             />
             <label htmlFor="sms-opt-in" className="ml-2 block text-sm text-gray-900 dark:text-darktext">
               <span className="font-medium">Receive SMS notifications</span>
@@ -542,7 +542,7 @@ const ProfilePage: React.FC = () => {
           <button
             onClick={handleSave}
             disabled={isSaving}
-            className="w-full px-4 py-3 bg-primary-600 text-white rounded-md hover:bg-primary-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200"
+            className="w-full px-4 py-3 bg-accent text-white rounded-md hover:bg-accent/90 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent transition-colors duration-200"
           >
             {isSaving ? 'Saving...' : 'Save Changes'}
           </button>

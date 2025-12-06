@@ -133,7 +133,7 @@ const DeckReviewPage: React.FC = () => {
       </div>
       <div className="flex gap-2">
         <button
-          className="bg-primary-500 text-white px-4 py-2 rounded flex items-center flex-1"
+          className="bg-accent text-white px-4 py-2 rounded flex items-center flex-1"
           onClick={handleSubmit}
           disabled={isSubmitting || !!feedback || !answer.trim()}
         >

@@ -18,7 +18,7 @@ const SubscriptionCancelPage: React.FC = () => {
           <div className="space-x-4">
             <button
               onClick={() => navigate('/premium')}
-              className="px-6 py-3 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors duration-200"
+              className="px-6 py-3 bg-accent text-white rounded-md hover:bg-accent/90 transition-colors duration-200"
             >
               Try Again
             </button>

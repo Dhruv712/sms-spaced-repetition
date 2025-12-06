@@ -173,7 +173,7 @@ const FlashcardEditModal: React.FC<Props> = ({ flashcard, isOpen, onClose, onSuc
                 type="text"
                 value={concept}
                 onChange={(e) => setConcept(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-800 dark:text-darktext dark:border-gray-600 transition-colors duration-200"
+                className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-accent focus:border-accent dark:bg-gray-800 dark:text-darktext dark:border-gray-600 transition-colors duration-200"
                 placeholder="Enter concept"
               />
             </div>
@@ -184,7 +184,7 @@ const FlashcardEditModal: React.FC<Props> = ({ flashcard, isOpen, onClose, onSuc
                 value={definition}
                 onChange={(e) => setDefinition(e.target.value)}
                 rows={4}
-                className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-800 dark:text-darktext dark:border-gray-600 transition-colors duration-200"
+                className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-accent focus:border-accent dark:bg-gray-800 dark:text-darktext dark:border-gray-600 transition-colors duration-200"
                 placeholder="Enter definition"
               />
               {definition && (
@@ -209,7 +209,7 @@ const FlashcardEditModal: React.FC<Props> = ({ flashcard, isOpen, onClose, onSuc
                 type="url"
                 value={sourceUrl}
                 onChange={(e) => setSourceUrl(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-800 dark:text-darktext dark:border-gray-600 transition-colors duration-200"
+                className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-accent focus:border-accent dark:bg-gray-800 dark:text-darktext dark:border-gray-600 transition-colors duration-200"
                 placeholder="Enter source URL"
               />
             </div>
@@ -221,7 +221,7 @@ const FlashcardEditModal: React.FC<Props> = ({ flashcard, isOpen, onClose, onSuc
                   onClick={() => handleAssignToDeck(null)}
                   className={`px-3 py-1 rounded-full text-sm font-medium transition-colors duration-200 ${
                     selectedDeckId === null
-                      ? 'bg-primary-600 text-white'
+                      ? 'bg-accent text-white'
                       : 'bg-gray-200 text-gray-800 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
                   }`}
                 >
@@ -233,7 +233,7 @@ const FlashcardEditModal: React.FC<Props> = ({ flashcard, isOpen, onClose, onSuc
                     onClick={() => handleAssignToDeck(deck.id)}
                     className={`px-3 py-1 rounded-full text-sm font-medium transition-colors duration-200 ${
                       selectedDeckId === deck.id
-                        ? 'bg-primary-600 text-white'
+                        ? 'bg-accent text-white'
                         : 'bg-gray-200 text-gray-800 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
                     }`}
                   >
@@ -254,7 +254,7 @@ const FlashcardEditModal: React.FC<Props> = ({ flashcard, isOpen, onClose, onSuc
             <button
               onClick={handleSave}
               disabled={isSaving || !concept.trim() || !definition.trim()}
-              className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50 transition-colors duration-200"
+              className="px-4 py-2 bg-accent text-white rounded-md hover:bg-accent/90 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-opacity-50 transition-colors duration-200"
             >
               {isSaving ? 'Saving...' : 'Save Changes'}
             </button>

@@ -93,13 +93,13 @@ const TagSelector: React.FC<TagSelectorProps> = ({ selectedTags, onChange, exist
           {selectedTags.map((tag) => (
             <span
               key={tag}
-              className="inline-flex items-center gap-1 px-3 py-1 bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-300 rounded-full text-sm font-medium"
+              className="inline-flex items-center gap-1 px-3 py-1 bg-accent/10 text-accent dark:bg-accent/20 dark:text-accent rounded-full text-sm font-medium"
             >
               {tag}
               <button
                 type="button"
                 onClick={() => handleRemoveTag(tag)}
-                className="ml-1 text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-200"
+                className="ml-1 text-accent dark:text-accent hover:text-accent/80 dark:hover:text-accent/80"
               >
                 ×
               </button>
@@ -127,7 +127,7 @@ const TagSelector: React.FC<TagSelectorProps> = ({ selectedTags, onChange, exist
           <button
             type="button"
             onClick={() => setShowNewTagInput(true)}
-            className="px-3 py-1 border-2 border-dashed border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 rounded-full text-sm hover:border-primary-400 dark:hover:border-primary-500 hover:text-primary-600 dark:hover:text-primary-400 transition-colors duration-200"
+            className="px-3 py-1 border-2 border-dashed border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 rounded-full text-sm hover:border-accent/80 dark:hover:border-accent hover:text-accent dark:hover:text-accent transition-colors duration-200"
           >
             + New Tag
           </button>
@@ -152,13 +152,13 @@ const TagSelector: React.FC<TagSelectorProps> = ({ selectedTags, onChange, exist
               }
             }}
             placeholder="Enter new tag name"
-            className="flex-1 p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-800 dark:text-darktext text-sm"
+            className="flex-1 p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-accent focus:border-accent dark:bg-gray-800 dark:text-darktext text-sm"
           />
           <button
             type="button"
             onClick={handleAddNewTag}
             disabled={!newTagInput.trim()}
-            className="px-3 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm transition-colors duration-200"
+            className="px-3 py-2 bg-accent text-white rounded-md hover:bg-accent/90 disabled:opacity-50 disabled:cursor-not-allowed text-sm transition-colors duration-200"
           >
             Add
           </button>

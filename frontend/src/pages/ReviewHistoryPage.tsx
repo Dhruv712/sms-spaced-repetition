@@ -129,7 +129,7 @@ const ReviewHistoryPage: React.FC = () => {
             {review.flashcard?.tags && (
               <div className="flex flex-wrap gap-2 mb-4">
                 {normalizeTags(review.flashcard.tags).map((tag: string) => (
-                  <span key={tag} className="px-3 py-1 bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200 rounded-full text-sm font-medium">
+                  <span key={tag} className="px-3 py-1 bg-accent/10 text-accent dark:bg-accent/20 dark:text-accent rounded-full text-sm font-medium">
                     {tag}
                   </span>
                 ))}

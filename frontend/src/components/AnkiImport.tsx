@@ -140,9 +140,9 @@ const AnkiImport: React.FC<AnkiImportProps> = ({ onSuccess }) => {
               file:mr-4 file:py-2 file:px-4
               file:rounded file:border-0
               file:text-sm file:font-medium
-              file:bg-primary-50 file:text-primary-700
-              hover:file:bg-primary-100
-              dark:file:bg-primary-900 dark:file:text-primary-300"
+              file:bg-accent/10 file:text-accent
+              hover:file:bg-accent/20
+              dark:file:bg-accent/20 dark:file:text-accent"
           />
         </div>
 
@@ -167,7 +167,7 @@ const AnkiImport: React.FC<AnkiImportProps> = ({ onSuccess }) => {
         <button
           onClick={handleImport}
           disabled={loading || !file}
-          className="w-full px-4 py-2 bg-primary-500 text-white rounded hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 text-sm"
+          className="w-full px-4 py-2 bg-accent text-white rounded hover:bg-accent/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 text-sm"
         >
           {loading ? 'Processing... this could take a couple minutes' : 'Import Deck'}
         </button>

@@ -102,7 +102,7 @@ const HelpPage: React.FC = () => {
                   id="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="block w-full rounded-md border-secondary-300 dark:border-secondary-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-secondary-700 dark:text-white sm:text-sm px-3 py-2"
+                  className="block w-full rounded-md border-secondary-300 dark:border-secondary-600 shadow-sm focus:border-accent focus:ring-accent dark:bg-secondary-700 dark:text-white sm:text-sm px-3 py-2"
                   placeholder="your.email@example.com"
                   required={!token && !userEmail}
                 />
@@ -151,7 +151,7 @@ const HelpPage: React.FC = () => {
             <div>
               <button
                 type="submit"
-                className="w-full px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200"
+                className="w-full px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-accent hover:bg-accent/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent transition-colors duration-200"
               >
                 Open Email Client
               </button>

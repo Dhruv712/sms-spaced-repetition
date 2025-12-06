@@ -150,7 +150,7 @@ const PremiumPage: React.FC = () => {
               <button
                 onClick={handleManageSubscription}
                 disabled={loading}
-                className="px-6 py-3 bg-primary-600 text-white rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                className="px-6 py-3 bg-accent text-white rounded-md hover:bg-accent/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
               >
                 {loading ? 'Loading...' : 'Manage Subscription'}
               </button>
@@ -238,7 +238,7 @@ const PremiumPage: React.FC = () => {
           </div>
 
           {/* Premium Plan */}
-          <div className="bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-900/20 dark:to-primary-800/20 rounded-lg shadow-soft p-6 border-2 border-primary-500">
+          <div className="bg-gradient-to-br from-accent/10 to-accent/20 dark:from-accent/20 dark:to-accent/10 rounded-lg shadow-soft p-6 border-2 border-accent">
             <div className="mb-4">
               <h2 className="text-2xl font-semibold text-secondary-900 dark:text-white">
                 Premium
@@ -273,7 +273,7 @@ const PremiumPage: React.FC = () => {
             <button
               onClick={handleUpgrade}
               disabled={loading || !token}
-              className="w-full px-6 py-3 bg-primary-600 text-white rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 font-medium"
+              className="w-full px-6 py-3 bg-accent text-white rounded-md hover:bg-accent/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 font-medium"
             >
               {loading ? 'Processing...' : 'Get Premium'}
             </button>

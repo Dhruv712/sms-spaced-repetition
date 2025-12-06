@@ -153,7 +153,7 @@ const ManualReviewPage: React.FC = () => {
           </div>
           {currentFlashcard.deck_name && (
             <div className="mb-2">
-              <span className="inline-block px-2 py-1 text-xs font-medium bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-300 rounded">
+              <span className="inline-block px-2 py-1 text-xs font-medium bg-accent/10 text-accent dark:bg-accent/20 dark:text-accent rounded">
                 {currentFlashcard.deck_name}
               </span>
             </div>
@@ -165,7 +165,7 @@ const ManualReviewPage: React.FC = () => {
           {!feedback ? (
             <div className="mt-4">
               <textarea
-                className="w-full p-3 border border-gray-300 rounded-md mb-4 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-800 dark:text-darktext dark:border-gray-600 transition-colors duration-200"
+                className="w-full p-3 border border-gray-300 rounded-md mb-4 focus:ring-2 focus:ring-accent focus:border-accent dark:bg-gray-800 dark:text-darktext dark:border-gray-600 transition-colors duration-200"
                 placeholder="Type your answer here..."
                 value={answer}
                 onChange={e => setAnswer(e.target.value)}
@@ -213,14 +213,14 @@ const ManualReviewPage: React.FC = () => {
               </div>
               <div className="flex flex-wrap gap-2 mb-4">
                 {normalizeTags(currentFlashcard.tags).map((tag: string) => (
-                  <span key={tag} className="px-3 py-1 bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200 rounded-full text-sm font-medium">
+                  <span key={tag} className="px-3 py-1 bg-accent/10 text-accent dark:bg-accent/20 dark:text-accent rounded-full text-sm font-medium">
                     {tag}
                   </span>
                 ))}
               </div>
               <button
                 onClick={handleNext}
-                className="mt-4 w-full px-4 py-3 bg-primary-600 text-white rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50 transition-colors duration-200"
+                className="mt-4 w-full px-4 py-3 bg-accent text-white rounded-md hover:bg-accent/90 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-opacity-50 transition-colors duration-200"
               >
                 Next Card
               </button>

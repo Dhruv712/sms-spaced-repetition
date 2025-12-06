@@ -68,7 +68,7 @@ const SubscriptionSuccessPage: React.FC = () => {
     return (
       <div className="min-h-screen bg-secondary-50 dark:bg-secondary-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mx-auto mb-4"></div>
           <p className="text-secondary-600 dark:text-secondary-400">Processing your subscription...</p>
         </div>
       </div>
@@ -88,7 +88,7 @@ const SubscriptionSuccessPage: React.FC = () => {
               <p className="text-secondary-600 dark:text-secondary-400 mb-6">{error}</p>
               <button
                 onClick={() => navigate('/premium')}
-                className="px-6 py-3 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors duration-200"
+                className="px-6 py-3 bg-accent text-white rounded-md hover:bg-accent/90 transition-colors duration-200"
               >
                 Go to Premium Page
               </button>
@@ -107,7 +107,7 @@ const SubscriptionSuccessPage: React.FC = () => {
                   // Navigate to dashboard
                   navigate('/dashboard');
                 }}
-                className="px-6 py-3 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors duration-200"
+                className="px-6 py-3 bg-accent text-white rounded-md hover:bg-accent/90 transition-colors duration-200"
               >
                 Get Started
               </button>

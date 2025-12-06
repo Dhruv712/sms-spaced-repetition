@@ -184,13 +184,13 @@ const FlashcardForm: React.FC<Props> = ({ onSuccess }) => {
             value={nlInput}
             onChange={(e) => setNlInput(e.target.value)}
             rows={3}
-            className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-800 dark:text-darktext dark:border-gray-600 transition-colors duration-200"
+            className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-accent focus:border-accent dark:bg-gray-800 dark:text-darktext dark:border-gray-600 transition-colors duration-200"
           />
           <button
             type="button"
             onClick={handleNaturalSubmit}
             disabled={loading || !token}
-            className="w-full px-4 py-2 bg-primary-500 text-white rounded-md hover:bg-primary-600 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50 transition-colors duration-200"
+            className="w-full px-4 py-2 bg-accent text-white rounded-md hover:bg-accent/90 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-opacity-50 transition-colors duration-200"
           >
             {loading ? 'Generating...' : 'Generate from Natural Language'}
           </button>
@@ -215,7 +215,7 @@ const FlashcardForm: React.FC<Props> = ({ onSuccess }) => {
             id="deck-select"
             value={selectedDeckId || ''}
             onChange={(e) => setSelectedDeckId(e.target.value ? Number(e.target.value) : null)}
-            className="mt-1 block w-full rounded-md border-secondary-300 dark:border-secondary-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-secondary-700 dark:text-white sm:text-sm"
+            className="mt-1 block w-full rounded-md border-secondary-300 dark:border-secondary-600 shadow-sm focus:border-accent focus:ring-accent dark:bg-secondary-700 dark:text-white sm:text-sm"
           >
             <option value="">No Deck</option>
             {decks.map(deck => (
@@ -232,7 +232,7 @@ const FlashcardForm: React.FC<Props> = ({ onSuccess }) => {
             value={concept}
             onChange={(e) => setConcept(e.target.value)}
             required
-            className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-800 dark:text-darktext dark:border-gray-600 transition-colors duration-200"
+            className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-accent focus:border-accent dark:bg-gray-800 dark:text-darktext dark:border-gray-600 transition-colors duration-200"
           />
         </div>
         <div>
@@ -242,7 +242,7 @@ const FlashcardForm: React.FC<Props> = ({ onSuccess }) => {
             onChange={(e) => setDefinition(e.target.value)}
             required
             rows={4}
-            className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-800 dark:text-darktext dark:border-gray-600 transition-colors duration-200"
+            className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-accent focus:border-accent dark:bg-gray-800 dark:text-darktext dark:border-gray-600 transition-colors duration-200"
           />
           {definition && (
             <div className="mt-2 p-3 bg-gray-50 dark:bg-gray-700 rounded text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600">
@@ -261,7 +261,7 @@ const FlashcardForm: React.FC<Props> = ({ onSuccess }) => {
             placeholder="Source URL"
             value={sourceUrl}
             onChange={(e) => setSourceUrl(e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-800 dark:text-darktext dark:border-gray-600 transition-colors duration-200"
+            className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-accent focus:border-accent dark:bg-gray-800 dark:text-darktext dark:border-gray-600 transition-colors duration-200"
           />
         </div>
         <div>

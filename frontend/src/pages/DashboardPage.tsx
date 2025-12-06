@@ -73,7 +73,7 @@ const DashboardPage: React.FC = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-white dark:bg-darkbg flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-accent"></div>
       </div>
     );
   }
@@ -108,7 +108,7 @@ const DashboardPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleOnboardingNextFromDashboard}
-                  className="px-3 py-1.5 text-xs rounded bg-primary-600 text-white hover:bg-primary-700 transition-colors duration-200"
+                  className="px-3 py-1.5 text-xs rounded bg-accent text-white hover:bg-accent/90 transition-colors duration-200"
                 >
                   Next: Create flashcards
                 </button>
